@@ -1,0 +1,26 @@
+name: C++ CI
+
+on: [ push, pull_request ]
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build Debug
+        run: |
+          mkdir debug
+          cd debug
+          cmake .. -DCMAKE_BUILD_TYPE=Debug
+          make
+      - name: Build Release
+        run: |
+          mkdir release
+          cd release
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          make
+      - name: Test
+        run: |
+          ./misc/test_overlay.sh
