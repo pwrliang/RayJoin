@@ -154,7 +154,7 @@ class PIPRT : public PIP<CONTEXT_T> {
 
     LaunchParamsPIP params;
 
-    params.im = map_id;
+    params.query_map_id = map_id;
     params.src_points = points;
     params.dst_edges = d_map.get_edges().data();
     params.dst_points = d_map.get_points().data();

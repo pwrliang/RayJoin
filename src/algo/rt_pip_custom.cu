@@ -146,8 +146,6 @@ extern "C" __global__ void __raygen__pip_custom() {
     uint2 best_e_slope_storage;
     pack64(&best_e_slope, best_e_slope_storage.x, best_e_slope_storage.y);
 
-    ray_origin.y -= PRIMITIVE_EPSILON_Y;
-
     params.point_in_polygon[point_idx] = EXTERIOR_FACE_ID;
 
     optixTrace(params.traversable, ray_origin, ray_dir,
