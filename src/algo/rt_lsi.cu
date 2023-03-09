@@ -21,7 +21,7 @@ extern "C" __global__ void __anyhit__lsi() {
   using point_t = typename rayjoin::LaunchParamsLSI::point_t;
   auto base_eid = optixGetPrimitiveIndex();
   auto query_eid = optixGetPayload_0();
-  auto base_map_id = params.base_map_id;
+  auto query_map_id = params.query_map_id;
   const auto& base_e = params.base_edges[base_eid];
   const auto& base_e_p1 = params.base_points[base_e.p1_idx];
   const auto& base_e_p2 = params.base_points[base_e.p2_idx];
@@ -33,8 +33,8 @@ extern "C" __global__ void __anyhit__lsi() {
           base_e, base_e_p1, base_e_p2, query_e, query_e_p1, query_e_p2)) {
     xsect_t xsect;
 
-    xsect.eid[base_map_id] = base_eid;
-    xsect.eid[1 - base_map_id] = query_eid;
+    xsect.eid[1 - query_map_id] = base_eid;
+    xsect.eid[query_map_id] = query_eid;
     params.xsects.Append(xsect);
   }
   optixIgnoreIntersection();

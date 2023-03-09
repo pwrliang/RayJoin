@@ -27,7 +27,7 @@ extern "C" __global__ void __intersection__pip_custom() {
   double best_e_slope;
   uint2 best_e_slope_storage{optixGetPayload_3(), optixGetPayload_4()};
   auto eid = optixGetPrimitiveIndex();
-  auto src_map_id = params.im;
+  auto query_map_id = params.query_map_id;
   const auto& scaling = params.scaling;
   const auto& e = params.dst_edges[eid];
   const auto& p1 = params.dst_points[e.p1_idx];
@@ -49,7 +49,7 @@ extern "C" __global__ void __intersection__pip_custom() {
    * edges.
    */
   if (x_src_p < x_min || x_src_p > x_max ||
-      x_src_p == ((src_map_id == 0) ? x_min : x_max)) {
+      x_src_p == ((query_map_id == 0) ? x_min : x_max)) {
     return;
   }
 
@@ -59,10 +59,10 @@ extern "C" __global__ void __intersection__pip_custom() {
   auto diff_y = xsect_y - y_src_p;
 
   if (diff_y == 0) {
-    diff_y = (src_map_id == 0 ? -e.a : e.a);
+    diff_y = (query_map_id == 0 ? -e.a : e.a);
   }
   if (diff_y == 0) {
-    diff_y = (src_map_id == 0 ? -e.b : e.b);
+    diff_y = (query_map_id == 0 ? -e.b : e.b);
   }
 #ifndef NDEBUG
   if (diff_y == 0) {
@@ -95,7 +95,7 @@ extern "C" __global__ void __intersection__pip_custom() {
 
     /* If im==0 we want the bigger slope, if im==1, the smaller. */
 
-    if ((src_map_id && !flag) || (flag && !src_map_id)) {
+    if ((query_map_id && !flag) || (flag && !query_map_id)) {
       return;
     }
   }

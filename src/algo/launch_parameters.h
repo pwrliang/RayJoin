@@ -22,7 +22,7 @@ struct LaunchParamsLSI {
   using point_t = typename map_t::point_t;
   using xsect_t = dev::Intersection<internal_coord_t>;
 
-  char base_map_id;
+  char query_map_id;
   edge_t* base_edges;
   point_t* base_points;
 
@@ -46,7 +46,7 @@ struct LaunchParamsPIP {
   using point_t = typename map_t::point_t;
 
   // current map no
-  char im;
+  char query_map_id;
   ArrayView<point_t> src_points;
   edge_t* dst_edges;
   point_t* dst_points;

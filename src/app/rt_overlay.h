@@ -184,21 +184,21 @@ class RTMapOverlay {
   void IntersectEdge() {
     auto& stream = ctx_.get_stream();
     auto& scaling = ctx_.get_scaling();
-    int base_map_id = 0;
-    int query_map_id = 1 - base_map_id;
-    auto base_map = ctx_.get_map(base_map_id)->DeviceObject(),
-         query_map = ctx_.get_map(query_map_id)->DeviceObject();
+    int query_map_id = 1;
+    int base_map_id = 1 - query_map_id;
+    auto d_base_map = ctx_.get_map(base_map_id)->DeviceObject(),
+         d_query_map = ctx_.get_map(query_map_id)->DeviceObject();
     auto module_id = config_.use_triangle
                          ? ModuleIdentifier::MODULE_ID_LSI
                          : ModuleIdentifier::MODULE_ID_LSI_CUSTOM;
     LaunchParamsLSI params;
 
-    params.base_map_id = base_map_id;
+    params.query_map_id = query_map_id;
     params.scaling = scaling;
-    params.base_edges = base_map.get_edges().data();
-    params.base_points = base_map.get_points().data();
-    params.query_edges = query_map.get_edges();
-    params.query_points = query_map.get_points().data();
+    params.base_edges = d_base_map.get_edges().data();
+    params.base_points = d_base_map.get_points().data();
+    params.query_edges = d_query_map.get_edges();
+    params.query_points = d_query_map.get_points().data();
     params.traversable = traverse_handles_[base_map_id];
     params.xsects = xsect_edges_.DeviceObject();
     xsect_edges_.Clear(stream);
@@ -206,7 +206,7 @@ class RTMapOverlay {
     rt_engine_.CopyLaunchParams(stream, params);
 
     rt_engine_.Render(stream, module_id,
-                      dim3{(unsigned int) query_map.get_edges_num(), 1, 1});
+                      dim3{(unsigned int) d_query_map.get_edges_num(), 1, 1});
     stream.Sync();
 
     size_t n_xsects = xsect_edges_.size(stream);
@@ -214,13 +214,13 @@ class RTMapOverlay {
 
     ForEach(stream, n_xsects, [=] __device__(size_t idx) mutable {
       auto& xsect = d_xsects[idx];
-      const auto& query_e = query_map.get_edge(xsect.eid[query_map_id]);
-      const auto& query_e_p1 = query_map.get_point(query_e.p1_idx);
-      const auto& query_e_p2 = query_map.get_point(query_e.p2_idx);
+      const auto& query_e = d_query_map.get_edge(xsect.eid[query_map_id]);
+      const auto& query_e_p1 = d_query_map.get_point(query_e.p1_idx);
+      const auto& query_e_p2 = d_query_map.get_point(query_e.p2_idx);
 
-      const auto& base_e = base_map.get_edge(xsect.eid[base_map_id]);
-      const auto& base_e_p1 = base_map.get_point(base_e.p1_idx);
-      const auto& base_e_p2 = base_map.get_point(base_e.p2_idx);
+      const auto& base_e = d_base_map.get_edge(xsect.eid[base_map_id]);
+      const auto& base_e_p1 = d_base_map.get_point(base_e.p1_idx);
+      const auto& base_e_p2 = d_base_map.get_point(base_e.p2_idx);
 
       auto denom = (coefficient_t) query_e.a * base_e.b -
                    (coefficient_t) base_e.a * query_e.b;
@@ -305,43 +305,44 @@ class RTMapOverlay {
     out_to_file("/tmp/xsect_rt_coord.txt", xsects, true);
   }
 
-  void LocateVerticesInOtherMap(int src_map_id) {
+  void LocateVerticesInOtherMap(int query_map_id) {
     auto& stream = ctx_.get_stream();
     auto& scaling = ctx_.get_scaling();
-    int dst_map_id = 1 - src_map_id;
-    auto d_src_map = ctx_.get_map(src_map_id)->DeviceObject();
-    auto d_dst_map = ctx_.get_map(dst_map_id)->DeviceObject();
-    ArrayView<polygon_id_t> d_point_in_polygon(point_in_polygon_[src_map_id]);
+    int base_map_id = 1 - query_map_id;
+    auto d_query_map = ctx_.get_map(query_map_id)->DeviceObject();
+    auto d_base_map = ctx_.get_map(base_map_id)->DeviceObject();
+    ArrayView<polygon_id_t> d_point_in_polygon(point_in_polygon_[query_map_id]);
     auto module_id = config_.use_triangle
                          ? ModuleIdentifier::MODULE_ID_PIP
                          : ModuleIdentifier::MODULE_ID_PIP_CUSTOM;
     LaunchParamsPIP params;
 
-    params.im = src_map_id;
-    params.src_points = d_src_map.get_points();
-    params.dst_edges = d_dst_map.get_edges().data();
-    params.dst_points = d_dst_map.get_points().data();
+    params.query_map_id = query_map_id;
+    params.src_points = d_query_map.get_points();
+    params.dst_edges = d_base_map.get_edges().data();
+    params.dst_points = d_base_map.get_points().data();
     params.scaling = scaling;
-    params.traversable = traverse_handles_[dst_map_id];
+    params.traversable = traverse_handles_[base_map_id];
     params.early_term_deviant = config_.early_term_deviant;
     params.point_in_polygon =
-        thrust::raw_pointer_cast(point_in_polygon_[src_map_id].data());
+        thrust::raw_pointer_cast(point_in_polygon_[query_map_id].data());
 #ifndef NDEBUG
-    params.hit_count = ArrayView<uint32_t>(hit_count_[src_map_id]).data();
-    params.closer_count = ArrayView<uint32_t>(closer_count_[src_map_id]).data();
+    params.hit_count = ArrayView<uint32_t>(hit_count_[query_map_id]).data();
+    params.closer_count =
+        ArrayView<uint32_t>(closer_count_[query_map_id]).data();
     params.above_edge_count =
-        ArrayView<uint32_t>(above_edge_count_[src_map_id]).data();
+        ArrayView<uint32_t>(above_edge_count_[query_map_id]).data();
     params.fail_update_count =
-        ArrayView<uint32_t>(fail_update_count_[src_map_id]).data();
+        ArrayView<uint32_t>(fail_update_count_[query_map_id]).data();
 #endif
 
     thrust::fill(thrust::cuda::par.on(stream.cuda_stream()),
-                 point_in_polygon_[src_map_id].begin(),
-                 point_in_polygon_[src_map_id].end(), DONTKNOW);
+                 point_in_polygon_[query_map_id].begin(),
+                 point_in_polygon_[query_map_id].end(), DONTKNOW);
     rt_engine_.CopyLaunchParams(stream, params);
 
     rt_engine_.Render(stream, module_id,
-                      dim3{(unsigned int) d_src_map.get_points_num(), 1, 1});
+                      dim3{(unsigned int) d_query_map.get_points_num(), 1, 1});
     // For custom impl, keeping closest k records
     stream.Sync();
   }
@@ -532,7 +533,7 @@ class RTMapOverlay {
       auto module_id = config_.use_triangle
                            ? ModuleIdentifier::MODULE_ID_PIP
                            : ModuleIdentifier::MODULE_ID_PIP_CUSTOM;
-      params.im = im;
+      params.query_map_id = im;
       params.src_points = d_mid_points;
       params.dst_edges = d_dst_map.get_edges().data();
       params.dst_points = d_dst_map.get_points().data();
