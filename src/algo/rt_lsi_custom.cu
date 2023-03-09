@@ -21,6 +21,7 @@ extern "C" __global__ void __intersection__lsi() {
   using point_t = typename rayjoin::LaunchParamsLSI::point_t;
   auto base_eid = optixGetPrimitiveIndex();
   auto query_eid = optixGetPayload_0();
+  auto base_map_id = params.base_map_id;
   const auto& base_e = params.base_edges[base_eid];
   const auto& query_e = params.query_edges[query_eid];
 
@@ -33,8 +34,8 @@ extern "C" __global__ void __intersection__lsi() {
           base_e, base_e_p1, base_e_p2, query_e, query_e_p1, query_e_p2)) {
     xsect_t xsect;
 
-    xsect.eid[0] = base_eid;
-    xsect.eid[1] = query_eid;
+    xsect.eid[base_map_id] = base_eid;
+    xsect.eid[1 - base_map_id] = query_eid;
     params.xsects.Append(xsect);
   }
 }

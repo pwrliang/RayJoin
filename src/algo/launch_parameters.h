@@ -22,6 +22,7 @@ struct LaunchParamsLSI {
   using point_t = typename map_t::point_t;
   using xsect_t = dev::Intersection<internal_coord_t>;
 
+  char base_map_id;
   edge_t* base_edges;
   point_t* base_points;
 

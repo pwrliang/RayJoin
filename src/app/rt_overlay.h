@@ -184,85 +184,69 @@ class RTMapOverlay {
   void IntersectEdge() {
     auto& stream = ctx_.get_stream();
     auto& scaling = ctx_.get_scaling();
-    int src_map_id = 0;
-    int dst_map_id = 1 - src_map_id;
-    auto map1 = ctx_.get_map(src_map_id)->DeviceObject(),
-         map2 = ctx_.get_map(dst_map_id)->DeviceObject();
+    int base_map_id = 0;
+    int query_map_id = 1 - base_map_id;
+    auto base_map = ctx_.get_map(base_map_id)->DeviceObject(),
+         query_map = ctx_.get_map(query_map_id)->DeviceObject();
     auto module_id = config_.use_triangle
                          ? ModuleIdentifier::MODULE_ID_LSI
                          : ModuleIdentifier::MODULE_ID_LSI_CUSTOM;
     LaunchParamsLSI params;
 
+    params.base_map_id = base_map_id;
     params.scaling = scaling;
-    params.query_edges = map1.get_edges();
-    params.query_points = map1.get_points().data();
-    params.base_edges = map2.get_edges().data();
-    params.base_points = map2.get_points().data();
-
-    params.traversable = traverse_handles_[dst_map_id];
+    params.base_edges = base_map.get_edges().data();
+    params.base_points = base_map.get_points().data();
+    params.query_edges = query_map.get_edges();
+    params.query_points = query_map.get_points().data();
+    params.traversable = traverse_handles_[base_map_id];
     params.xsects = xsect_edges_.DeviceObject();
     xsect_edges_.Clear(stream);
 
     rt_engine_.CopyLaunchParams(stream, params);
 
-    rt_engine_.Render(
-        stream, module_id,
-        dim3{(unsigned int) ctx_.get_map(src_map_id)->get_edges_num(), 1, 1});
+    rt_engine_.Render(stream, module_id,
+                      dim3{(unsigned int) query_map.get_edges_num(), 1, 1});
+    stream.Sync();
 
     size_t n_xsects = xsect_edges_.size(stream);
-
-    thrust::sort(thrust::cuda::par.on(stream.cuda_stream()),
-                 xsect_edges_.data(), xsect_edges_.data() + n_xsects,
-                 [] __device__(const xsect_t& a, const xsect_t& b) {
-                   if (a.eid[0] != b.eid[0]) {
-                     return a.eid[0] < b.eid[0];
-                   }
-                   return a.eid[1] < b.eid[1];
-                 });
-    auto end =
-        thrust::unique(thrust::cuda::par.on(stream.cuda_stream()),
-                       xsect_edges_.data(), xsect_edges_.data() + n_xsects,
-                       [] __device__(const xsect_t& a, const xsect_t& b) {
-                         return a.eid[0] == b.eid[0] && a.eid[1] == b.eid[1];
-                       });
-    n_xsects = end - xsect_edges_.data();
-
     ArrayView<xsect_t> d_xsects(xsect_edges_.data(), n_xsects);
 
     ForEach(stream, n_xsects, [=] __device__(size_t idx) mutable {
       auto& xsect = d_xsects[idx];
-      auto eid1 = xsect.eid[0], eid2 = xsect.eid[1];
+      const auto& query_e = query_map.get_edge(xsect.eid[query_map_id]);
+      const auto& query_e_p1 = query_map.get_point(query_e.p1_idx);
+      const auto& query_e_p2 = query_map.get_point(query_e.p2_idx);
 
-      const auto& e1 = map1.get_edge(eid1);
-      const auto& e1_p1 = map1.get_point(e1.p1_idx);
-      const auto& e1_p2 = map1.get_point(e1.p2_idx);
+      const auto& base_e = base_map.get_edge(xsect.eid[base_map_id]);
+      const auto& base_e_p1 = base_map.get_point(base_e.p1_idx);
+      const auto& base_e_p2 = base_map.get_point(base_e.p2_idx);
 
-      const auto& e2 = map2.get_edge(eid2);
-      const auto& e2_p1 = map2.get_point(e2.p1_idx);
-      const auto& e2_p2 = map2.get_point(e2.p2_idx);
-
-      auto denom = (coefficient_t) e1.a * e2.b - (coefficient_t) e2.a * e1.b;
-      auto numx = (coefficient_t) e2.c * e1.b - (coefficient_t) e1.c * e2.b;
-      auto numy = (coefficient_t) e2.a * e1.c - (coefficient_t) e1.a * e2.c;
+      auto denom = (coefficient_t) query_e.a * base_e.b -
+                   (coefficient_t) base_e.a * query_e.b;
+      auto numx = (coefficient_t) base_e.c * query_e.b -
+                  (coefficient_t) query_e.c * base_e.b;
+      auto numy = (coefficient_t) base_e.a * query_e.c -
+                  (coefficient_t) query_e.a * base_e.c;
 
       tcb::rational<coefficient_t> xsect_x(numx, denom);
       tcb::rational<coefficient_t> xsect_y(numy, denom);
 
-      auto t = MIN4(e1_p1.x, e1_p2.x, e2_p1.x, e2_p2.x);
+      auto t = MIN4(query_e_p1.x, query_e_p2.x, base_e_p1.x, base_e_p2.x);
       if (xsect_x < t) {
         xsect_x = t;
       }
 
-      t = MAX4(e1_p1.x, e1_p2.x, e2_p1.x, e2_p2.x);
+      t = MAX4(query_e_p1.x, query_e_p2.x, base_e_p1.x, base_e_p2.x);
       if (xsect_x > t) {
         xsect_x = t;
       }
 
-      t = MIN4(e1_p1.y, e1_p2.y, e2_p1.y, e2_p2.y);
+      t = MIN4(query_e_p1.y, query_e_p2.y, base_e_p1.y, base_e_p2.y);
       if (xsect_y < t) {
         xsect_y = t;
       }
-      t = MAX4(e1_p1.y, e1_p2.y, e2_p1.y, e2_p2.y);
+      t = MAX4(query_e_p1.y, query_e_p2.y, base_e_p1.y, base_e_p2.y);
       if (xsect_y > t) {
         xsect_y = t;
       }
