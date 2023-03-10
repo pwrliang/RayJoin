@@ -130,6 +130,7 @@ extern "C" __global__ void __raygen__pip_custom() {
 
   for (unsigned int point_idx = OPTIX_TID_1D; point_idx < src_points.size();
        point_idx += OPTIX_TOTAL_THREADS_1D) {
+    // FIXME: Shoot two rays
     auto& p = src_points[point_idx];
     float3 ray_origin = {(float) scaling.UnscaleX(p.x),
                          (float) scaling.UnscaleY(p.y), 0};

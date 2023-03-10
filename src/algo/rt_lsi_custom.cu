@@ -43,32 +43,51 @@ extern "C" __global__ void __intersection__lsi() {
 extern "C" __global__ void __raygen__lsi() {
   const auto& scaling = params.scaling;
   const auto& edges = params.query_edges;
-  float ray_z = 0;
+  auto rounding_iter = params.rounding_iter;
+  float tmin = 0;
+  float tmax = 1;
 
   for (unsigned int eid = OPTIX_TID_1D; eid < edges.size();
        eid += OPTIX_TOTAL_THREADS_1D) {
     auto& e = edges[eid];
     auto p1 = params.query_points[e.p1_idx];
     auto p2 = params.query_points[e.p2_idx];
-    if (p1.x > p2.x) {
-      SWAP(p1, p2);
+    float x1, x2, y1, y2;
+
+    if (e.b == 0) {
+      assert(p1.x == p2.x);
+      if (p1.y > p2.y) {
+        SWAP(p1, p2);
+      }
+      x1 = x2 = scaling.UnscaleX(p1.x);
+
+      y1 = next_float_from_double(scaling.UnscaleY(p1.y), -1, rounding_iter);
+      y2 = next_float_from_double(scaling.UnscaleY(p2.y), 1, rounding_iter);
+    } else {
+      assert(p1.x != p2.x);
+      if (p1.x > p2.x) {
+        SWAP(p1, p2);
+      }
+
+      // use double is much faster than rational
+      // this does not need to be accurate
+      double a = -e.a / e.b;
+      double b = -e.c / e.b;
+
+      x1 = next_float_from_double(scaling.UnscaleX(p1.x), -1, rounding_iter);
+      y1 = scaling.UnscaleY(a * scaling.ScaleX(x1) + b);
+
+      x2 = next_float_from_double(scaling.UnscaleX(p2.x), 1, rounding_iter);
+      y2 = scaling.UnscaleY(a * scaling.ScaleX(x2) + b);
     }
-    double2 p1_coord{scaling.UnscaleX(p1.x), scaling.UnscaleY(p1.y)};
-    double2 p2_coord{scaling.UnscaleX(p2.x), scaling.UnscaleY(p2.y)};
-    double2 ext_p1 = p1_coord, ext_p2 = p2_coord;
 
-    float3 ray_origin = {(float) ext_p1.x, (float) ext_p1.y, ray_z};
-    float3 ray_dir = {(float) (ext_p2.x - ext_p1.x),
-                      (float) (ext_p2.y - ext_p1.y), ray_z};
-
-    float tmin = 0;
-    float tmax = 1;
-    float3 shifted_origin = ray_origin - RAY_OFFSET_T * ray_dir;
+    float3 ray_origin = {x1, y1, 0};
+    float3 ray_dir = {x2 - x1, y2 - y1, 0};
 
     optixTrace(params.traversable, ray_origin, ray_dir,
-               tmin,                 // tmin
-               tmax + RAY_OFFSET_T,  // tmax
-               0,                    // rayTime
+               tmin,  // tmin
+               tmax,  // tmax
+               0,     // rayTime
                OptixVisibilityMask(255),
                OPTIX_RAY_FLAG_NONE,  // OPTIX_RAY_FLAG_NONE,
                SURFACE_RAY_TYPE,     // SBT offset

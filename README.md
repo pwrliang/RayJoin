@@ -13,7 +13,6 @@
 
 Install gflags and glog:
 `sudo apt install libgflags-dev libgoogle-glog-dev`
-``
 
 Install Optix: 
 ```shell

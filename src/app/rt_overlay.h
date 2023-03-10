@@ -162,10 +162,10 @@ class RTMapOverlay {
         auto y2 = scaling.UnscaleY(p2.y);
         auto& aabb = d_aabbs[eid];
 
-        aabb.minX = min(x1, x2) - epsilon;
-        aabb.maxX = max(x1, x2) + epsilon;
-        aabb.minY = min(y1, y2) - epsilon;
-        aabb.maxY = max(y1, y2) + epsilon;
+        aabb.minX = next_float_from_double(min(x1, x2), -1, rounding_iter);
+        aabb.maxX = next_float_from_double(max(x1, x2), 1, rounding_iter);
+        aabb.minY = next_float_from_double(min(y1, y2), -1, rounding_iter);
+        aabb.maxY = next_float_from_double(max(y1, y2), 1, rounding_iter);
         aabb.minZ = -PRIMITIVE_HEIGHT / 2;
         aabb.maxZ = PRIMITIVE_HEIGHT / 2;
       });
@@ -205,7 +205,6 @@ class RTMapOverlay {
     params.traversable = traverse_handles_[base_map_id];
     params.rounding_iter = config_.rounding_iter;
     params.xsects = xsect_edges_.DeviceObject();
-
 
     xsect_edges_.Clear(stream);
 

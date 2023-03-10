@@ -44,7 +44,8 @@ extern "C" __global__ void __raygen__lsi() {
   const auto& scaling = params.scaling;
   auto edges = params.query_edges;
   auto rounding_iter = params.rounding_iter;
-  float ray_z = 0;
+  float tmin = 0;
+  float tmax = 1;
 
   for (unsigned int eid = OPTIX_TID_1D; eid < edges.size();
        eid += OPTIX_TOTAL_THREADS_1D) {
@@ -83,9 +84,6 @@ extern "C" __global__ void __raygen__lsi() {
 
     float3 ray_origin{x1, y1, 0};
     float3 ray_dir{x2 - x1, y2 - y1, 0};
-
-    float tmin = 0;
-    float tmax = 1;
 
     optixTrace(params.traversable, ray_origin, ray_dir,
                tmin,  // tmin

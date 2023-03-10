@@ -2,14 +2,10 @@
 #define RAYJOIN_CONFIG_H
 #define DONTKNOW (-1)
 #define SCALING_BOUNDING_BOX_MARGIN (1)
-#define PRIMITIVE_EPSILON_X (0.001)
-#define PRIMITIVE_EPSILON_Y (0.001)
-#define RAY_OFFSET_T (0.0001)
 #define RAY_TMAX (1e10)
 #define PRIMITIVE_HEIGHT (0.01)
 #define EXTERIOR_FACE_ID (0)
 #define FOR2 for (int im = 0; im < 2; im++)
-// #include "decimal.h"
 namespace rayjoin {
 using index_t = uint32_t;
 using polygon_id_t = int;
