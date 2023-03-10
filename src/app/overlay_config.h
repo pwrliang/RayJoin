@@ -13,6 +13,7 @@ struct OverlayConfig {
   unsigned int grid_size;
   double epsilon;
   float early_term_deviant;
+  float rounding_iter;
   float xsect_factor;
   std::string mode;
   bool fau;

@@ -133,17 +133,17 @@ extern "C" __global__ void __miss__pip() {
 }
 
 extern "C" __global__ void __raygen__pip() {
-  float3 ray_dir = {0, 1, FLT_MIN};
+  float tmin = 0;
+  float tmax = RAY_TMAX;
+  float3 ray_dir = {0, 1, 0};
   const auto& src_points = params.src_points;
   const auto& scaling = params.scaling;
+  auto rounding_iter = params.rounding_iter;
+  int dirs[] = {-1, 1};
 
   for (unsigned int point_idx = OPTIX_TID_1D; point_idx < src_points.size();
        point_idx += OPTIX_TOTAL_THREADS_1D) {
     auto& p = src_points[point_idx];
-    float3 ray_origin = {(float) scaling.UnscaleX(p.x),
-                         (float) scaling.UnscaleY(p.y), 0};
-    float tmin = 0;
-    float tmax = RAY_TMAX;
     auto best_y = std::numeric_limits<
         typename rayjoin::LaunchParamsPIP::internal_coord_t>::max();
     static_assert(sizeof(best_y) == 8,
@@ -155,18 +155,22 @@ extern "C" __global__ void __raygen__pip() {
     uint2 best_e_slope_storage;
     pack64(&best_e_slope, best_e_slope_storage.x, best_e_slope_storage.y);
 
-    ray_origin.y -= PRIMITIVE_EPSILON_Y;
+    for (int dir : dirs) {
+      float3 ray_origin = {
+          next_float_from_double(scaling.UnscaleX(p.x), dir, 1),
+          next_float_from_double(scaling.UnscaleY(p.y), -1, rounding_iter), 0};
 
-    optixTrace(params.traversable, ray_origin, ray_dir,
-               tmin,  // tmin
-               tmax,  // tmax
-               0,     // rayTime
-               OptixVisibilityMask(255),
-               OPTIX_RAY_FLAG_NONE,  // OPTIX_RAY_FLAG_NONE,
-               SURFACE_RAY_TYPE,     // SBT offset
-               RAY_TYPE_COUNT,       // SBT stride
-               SURFACE_RAY_TYPE,     // missSBTIndex
-               point_idx, best_y_storage.x, best_y_storage.y,
-               best_e_slope_storage.x, best_e_slope_storage.y);
+      optixTrace(params.traversable, ray_origin, ray_dir,
+                 tmin,  // tmin
+                 tmax,  // tmax
+                 0,     // rayTime
+                 OptixVisibilityMask(255),
+                 OPTIX_RAY_FLAG_NONE,  // OPTIX_RAY_FLAG_NONE,
+                 SURFACE_RAY_TYPE,     // SBT offset
+                 RAY_TYPE_COUNT,       // SBT stride
+                 SURFACE_RAY_TYPE,     // missSBTIndex
+                 point_idx, best_y_storage.x, best_y_storage.y,
+                 best_e_slope_storage.x, best_e_slope_storage.y);
+    }
   }
 }

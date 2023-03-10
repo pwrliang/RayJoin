@@ -11,7 +11,7 @@ MAPS="$DATASET/maps"
 for v in debug release; do
   echo "Test build type = $v"
   # fixme: add rt triangle
-  for mode in grid grid_lb rt; do
+  for mode in grid grid_lb rt rt_triangle; do
     echo "Mode = $mode"
 
     if [[ $mode == "grid_lb" ]]; then
@@ -21,11 +21,19 @@ for v in debug release; do
       lb=false
     fi
 
+    if [[ $mode == "rt_triangle" ]]; then
+      mode="rt"
+      use_triangle=true
+    else
+      use_triangle=false
+    fi
+
     "$PROJ_HOME"/$v/bin/polyover_exec -poly1 "$MAPS/br_county_clean_25_odyssey_final.txt" \
       -poly2 "$MAPS/br_soil_ascii_odyssey_final.txt" \
       -output "$MAPS/br_countyXbr_soil_result.txt" \
       -mode="$mode" \
       -lb="$lb" \
+      -triangle="$use_triangle" \
       -early_term_deviant=100
 
     diff "$MAPS/br_countyXbr_soil_result.txt" "$MAPS/br_countyXbr_soil_answer.txt" >diff.txt

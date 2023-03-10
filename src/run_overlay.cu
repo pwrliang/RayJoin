@@ -14,6 +14,49 @@
 #include "util/timer.h"
 
 namespace rayjoin {
+template <typename CONTEXT_T>
+void DebugPrint(CONTEXT_T& ctx) {
+#ifndef NDEBUG
+  auto print_edges = [](CONTEXT_T& ctx, int map_id,
+                        const thrust::device_vector<index_t>& eids) {
+    auto& stream = ctx.get_stream();
+    auto d_map = ctx.get_map(map_id)->DeviceObject();
+    auto scaling = ctx.get_scaling();
+    printf("=========== Map %d Edges ===========\n", map_id);
+    ForEach(
+        stream, eids.size(),
+        [=] __device__(size_t idx, ArrayView<index_t> eids) {
+          auto eid = eids[idx];
+          assert(eid < d_map.get_edges_num());
+          const auto& e = d_map.get_edge(eid);
+          auto& p1 = d_map.get_point(e.p1_idx);
+          auto& p2 = d_map.get_point(e.p2_idx);
+          auto x1 = scaling.UnscaleX(p1.x);
+          auto y1 = scaling.UnscaleY(p1.y);
+          auto x2 = scaling.UnscaleX(p2.x);
+          auto y2 = scaling.UnscaleY(p2.y);
+
+          printf("eid: %u (%lf, %lf) - (%lf, %lf)\n", (index_t) eid, x1, y1, x2,
+                 y2);
+        },
+        ArrayView<index_t>(eids));
+    stream.Sync();
+  };
+  {
+    thrust::device_vector<index_t> eids;
+    eids.push_back(93615);
+    eids.push_back(226567);
+    print_edges(ctx, 0, eids);
+  }
+
+  {
+    thrust::device_vector<index_t> eids;
+    eids.push_back(87230);
+    eids.push_back(230119);
+    print_edges(ctx, 1, eids);
+  }
+#endif
+}
 
 template <typename CONTEXT_T, typename OVERLAY_IMPL_T>
 void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
@@ -35,6 +78,32 @@ void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
                  << " Total xsects: " << total_n_xsects << " n diff: " << n_diff
                  << " Error rate: " << (double) n_diff / total_n_xsects * 100
                  << " %";
+
+      auto write_to = [](ArrayView<xsect_t> xsects, const char* path) {
+        pinned_vector<xsect_t> h_xsects;
+        h_xsects.resize(xsects.size());
+        thrust::copy(thrust::device, xsects.data(),
+                     xsects.data() + xsects.size(), h_xsects.begin());
+
+        thrust::sort(h_xsects.begin(), h_xsects.end(),
+                     [](const xsect_t& x1, const xsect_t& x2) {
+                       return x1.eid[0] != x2.eid[0] ? x1.eid[0] < x2.eid[0]
+                                                     : (x1.eid[1] < x2.eid[1]);
+                     });
+
+        std::ofstream ofs(path);
+
+        for (auto& xsect : h_xsects) {
+          ofs << xsect.eid[0] << " " << xsect.eid[1] << "\n";
+        }
+
+        ofs.close();
+      };
+
+      write_to(ArrayView<xsect_t>(cuda_grid.get_xsect_edges()),
+               "/tmp/xsects.grid");
+      write_to(overlay.get_xsect_edges_queue(), "/tmp/xsects.rt");
+      DebugPrint(ctx);
     } else {
       LOG(INFO) << "LSI passed check";
     }
@@ -127,51 +196,6 @@ void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
   }
 }
 
-template <typename CONTEXT_T>
-void DebugPrint(CONTEXT_T& ctx) {
-  //  > 1283995 647201
-  //      > 1283995 647208
-  //      > 1283995 647215
-  //      > 1283995 647222
-
-  auto print_edges = [](CONTEXT_T& ctx, int map_id,
-                        const thrust::device_vector<index_t>& eids) {
-    auto& stream = ctx.get_stream();
-    auto d_map = ctx.get_map(map_id)->DeviceObject();
-    auto scaling = ctx.get_scaling();
-    printf("=========== Map %d Edges ===========\n", map_id);
-    ForEach(
-        stream, eids.size(),
-        [=] __device__(size_t idx, ArrayView<index_t> eids) {
-          auto eid = eids[idx];
-          assert(eid < d_map.get_edges_num());
-          const auto& e = d_map.get_edge(eid);
-          auto& p1 = d_map.get_point(e.p1_idx);
-          auto& p2 = d_map.get_point(e.p2_idx);
-          auto x1 = scaling.UnscaleX(p1.x);
-          auto y1 = scaling.UnscaleY(p1.y);
-          auto x2 = scaling.UnscaleX(p2.x);
-          auto y2 = scaling.UnscaleY(p2.y);
-
-          printf("eid: %u (%lf, %lf) - (%lf, %lf)\n", (index_t) eid, x1, y1, x2,
-                 y2);
-        },
-        ArrayView<index_t>(eids));
-    stream.Sync();
-  };
-  {
-    thrust::device_vector<index_t> eids;
-    eids.push_back(1283995);
-    print_edges(ctx, 0, eids);
-  }
-
-  {
-    thrust::device_vector<index_t> eids;
-    eids.push_back(647201);
-    print_edges(ctx, 1, eids);
-  }
-}
-
 void RunOverlay(const OverlayConfig& config) {
   using context_t = Context<coord_t, coefficient_t>;
   timer_start();
@@ -253,28 +277,8 @@ void RunOverlay(const OverlayConfig& config) {
       timer_next("Write to file");
       overlay.WriteResult(config.output_path.c_str());
     }
-  } else if (config.mode == "lbvh") {
-//    LBVHOverlay<context_t> lbvh_overlay(ctx, config.xsect_factor);
-//
-//    timer_next("Init");
-//    lbvh_overlay.Init();
-//
-//    timer_next("Add map to grid");
-//    lbvh_overlay.AddMapToGrid();
-//
-//    timer_next("Intersect edges");
-//    lbvh_overlay.IntersectEdge();
-//
-//    FOR2 {
-//      auto prefix = "Map " + std::to_string(im) + ": ";
-//      timer_next(prefix + "Locate vertices in other map");
-//      lbvh_overlay.LocateVerticesInOtherMap(im);
-//    }
-//
-//    if (config.check) {
-//      timer_next("Check result");
-//      CheckResult(ctx, lbvh_overlay, config);
-//    }
+  } else {
+    LOG(FATAL) << "Illegal mode: " << config.mode;
   }
   timer_end();
 }

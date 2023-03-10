@@ -29,6 +29,7 @@ int main(int argc, char* argv[]) {
   config.grid_size = FLAGS_grid_size;
   config.xsect_factor = FLAGS_xsect_factor;
   config.epsilon = FLAGS_epsilon;
+  config.rounding_iter = FLAGS_rounding_iter;
   config.mode = FLAGS_mode;
   config.exec_root = exec_path.substr(0, exec_path.find_last_of("/"));
   config.check = FLAGS_check;
