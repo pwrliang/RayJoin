@@ -10,6 +10,7 @@
 #include "util/bitset.h"
 #include "util/cta_scheduler.h"
 #include "util/helper_mortonCode.h"
+#include "util/helpers.h"
 #include "util/stopwatch.h"
 #include "util/util.h"
 
@@ -80,6 +81,7 @@ class RTMapOverlay {
     auto d_map = ctx_.get_map(map_id)->DeviceObject();
     auto ne = d_map.get_edges_num();
     auto epsilon = config_.epsilon;
+    auto rounding_iter = config_.rounding_iter;
 
     if (config_.use_triangle) {
       auto bb = ctx_.get_bounding_box();
@@ -98,20 +100,18 @@ class RTMapOverlay {
         auto p2_idx = e.p2_idx;
         auto p1 = d_map.get_point(p1_idx);
         auto p2 = d_map.get_point(p2_idx);
-        auto x1 = scaling.UnscaleX(p1.x);
-        auto y1 = scaling.UnscaleY(p1.y);
-        auto x2 = scaling.UnscaleX(p2.x);
-        auto y2 = scaling.UnscaleY(p2.y);
+        float x1, x2, y1, y2;
 
         if (e.b == 0) {
           assert(p1.x == p2.x);
           if (p1.y > p2.y) {
             SWAP(p1, p2);
           }
-
           x1 = x2 = scaling.UnscaleX(p1.x);
-          y1 = scaling.UnscaleY(p1.y - delta_y);
-          y2 = scaling.UnscaleY(p2.y + delta_y);
+
+          y1 =
+              next_float_from_double(scaling.UnscaleY(p1.y), -1, rounding_iter);
+          y2 = next_float_from_double(scaling.UnscaleY(p2.y), 1, rounding_iter);
         } else {
           assert(p1.x != p2.x);
           if (p1.x > p2.x) {
@@ -123,22 +123,25 @@ class RTMapOverlay {
           double a = -e.a / e.b;
           double b = -e.c / e.b;
 
-          auto new_x1 = p1.x - delta_x;
-          auto new_y1 = a * new_x1 + b;
+          x1 =
+              next_float_from_double(scaling.UnscaleX(p1.x), -1, rounding_iter);
+          y1 = scaling.UnscaleY(a * scaling.ScaleX(x1) + b);
 
-          auto new_x2 = p2.x + delta_x;
-          auto new_y2 = a * new_x2 + b;
-
-          x1 = scaling.UnscaleX(new_x1);
-          y1 = scaling.UnscaleY(new_y1);
-          x2 = scaling.UnscaleX(new_x2);
-          y2 = scaling.UnscaleY(new_y2);
+          x2 = next_float_from_double(scaling.UnscaleX(p2.x), 1, rounding_iter);
+          y2 = scaling.UnscaleY(a * scaling.ScaleX(x2) + b);
         }
 
-        d_triangle_points[eid * 3] = {(float) x1, (float) y1, 0};
-        d_triangle_points[eid * 3 + 1] = {(float) x2, (float) y2, 0};
-        d_triangle_points[eid * 3 + 2] = {
-            (float) (x1 + x2) / 2, (float) (y1 + y2) / 2, PRIMITIVE_HEIGHT};
+        d_triangle_points[eid * 3] = {x1, y1, 0};
+        d_triangle_points[eid * 3 + 1] = {x2, y2, PRIMITIVE_HEIGHT};
+        d_triangle_points[eid * 3 + 2] = {x2, y2, -PRIMITIVE_HEIGHT};
+
+        if (eid == 0) {
+          printf("double eid: %u %.6lf %.6lf %.6lf %.6lf\n", eid,
+                 scaling.UnscaleX(p1.x), scaling.UnscaleY(p1.y),
+                 scaling.UnscaleX(p2.x), scaling.UnscaleY(p2.y));
+
+          printf("float eid: %u %.6f %.6f %.6f %.6f\n", eid, x1, y1, x2, y2);
+        }
       });
       traverse_handles_[map_id] =
           rt_engine_.BuildAccelTriangles(stream, d_triangle_points);
@@ -200,7 +203,10 @@ class RTMapOverlay {
     params.query_edges = d_query_map.get_edges();
     params.query_points = d_query_map.get_points().data();
     params.traversable = traverse_handles_[base_map_id];
+    params.rounding_iter = config_.rounding_iter;
     params.xsects = xsect_edges_.DeviceObject();
+
+
     xsect_edges_.Clear(stream);
 
     rt_engine_.CopyLaunchParams(stream, params);
@@ -324,6 +330,7 @@ class RTMapOverlay {
     params.scaling = scaling;
     params.traversable = traverse_handles_[base_map_id];
     params.early_term_deviant = config_.early_term_deviant;
+    params.rounding_iter = config_.rounding_iter;
     params.point_in_polygon =
         thrust::raw_pointer_cast(point_in_polygon_[query_map_id].data());
 #ifndef NDEBUG
@@ -540,6 +547,7 @@ class RTMapOverlay {
       params.scaling = scaling;
       params.traversable = traverse_handles_[dst_map_id];
       params.early_term_deviant = config_.early_term_deviant;
+      params.rounding_iter = config_.rounding_iter;
       params.point_in_polygon = d_mid_point_in_polygon.data();
 #ifndef NDEBUG
       params.hit_count = ArrayView<uint32_t>(hit_count_[im]).data();

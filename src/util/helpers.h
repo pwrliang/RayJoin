@@ -8,6 +8,29 @@
 #include <vector_types.h>
 
 #include "util/vec_math.h"
+/**
+ * Convert double to float with rounding
+ *
+ * @v double
+ * @dir dir = -1, round down; dir = 1 round up
+ * @iter number of calling nextafter
+ */
+__forceinline__ __device__ __host__ float next_float_from_double(double v,
+                                                                 int dir,
+                                                                 int iter = 1) {
+  if (v == 0) {
+    return 0.0f;
+  }
+  assert(dir == 1 || dir == -1);
+  auto fv = static_cast<float>(v);  // pos number
+  float to = v * dir < 0 ? 0 : dir * std::numeric_limits<float>::infinity();
+
+  for (int i = 0; i < iter; i++) {
+    fv = std::nextafter(fv, to);
+  }
+
+  return fv;
+};
 
 __forceinline__ __device__ __host__ void print_aabb(const OptixAabb& aabb) {
   printf("x: [%f,%f], y: [%f, %f], z: [%f, %f]\n", aabb.minX, aabb.maxX,

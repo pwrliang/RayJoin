@@ -19,6 +19,7 @@ DECLARE_bool(lb);
 DECLARE_bool(triangle);
 DECLARE_double(early_term_deviant);
 DECLARE_double(epsilon);
+DECLARE_int32(rounding_iter);
 DECLARE_bool(fau);
 DECLARE_int32(warmup);
 DECLARE_int32(repeat);

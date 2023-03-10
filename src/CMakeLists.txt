@@ -15,7 +15,6 @@ set(SHADERS
         algo/rt_lsi.cu
         algo/rt_lsi_custom.cu
         algo/rt_pip_custom.cu
-        ${PROJECT_SOURCE_DIR}/deps/Declib/decimal.cu
         )
 
 NVCUDA_COMPILE_MODULE(
@@ -43,7 +42,6 @@ add_executable(polyover_exec
         overlay.cc
         run_overlay.cu
         rt/rt_engine.cu
-        ${PROJECT_SOURCE_DIR}/deps/Declib/decimal.cu
         ${PROGRAM_MODULES}
         flags.cc
         )
