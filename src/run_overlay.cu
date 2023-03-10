@@ -6,7 +6,6 @@
 #include "app/rt_overlay.h"
 #include "context.h"
 #include "glog/logging.h"
-#include "lbvh/lbvh_overlay.h"
 #include "map/planar_graph.h"
 #include "run_overlay.cuh"
 #include "util/rational.h"
