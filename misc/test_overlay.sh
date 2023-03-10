@@ -10,7 +10,6 @@ MAPS="$DATASET/maps"
 
 for v in debug release; do
   echo "Test build type = $v"
-  # fixme: add rt triangle
   for mode in grid grid_lb rt rt_triangle; do
     echo "Mode = $mode"
 
