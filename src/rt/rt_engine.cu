@@ -152,10 +152,10 @@ void RTEngine::createModule(const RTConfig& config) {
 
     char log[2048];
     size_t sizeof_log = sizeof(log);
-    OPTIX_CHECK(optixModuleCreateFromPTX(
-        optix_context_, &module_compile_options_, &pipeline_compile_options,
-        programData.data(), programData.size(), log, &sizeof_log,
-        &modules_[pair.first]));
+    OPTIX_CHECK(optixModuleCreate(optix_context_, &module_compile_options_,
+                                  &pipeline_compile_options, programData.data(),
+                                  programData.size(), log, &sizeof_log,
+                                  &modules_[pair.first]));
     if (sizeof_log > 1) {
       VLOG(1) << log;
     }
@@ -311,7 +311,8 @@ void RTEngine::createPipeline(const RTConfig& config) {
 
     OptixStackSizes stack_sizes = {};
     for (auto& prog_group : program_groups) {
-      OPTIX_CHECK(optixUtilAccumulateStackSizes(prog_group, &stack_sizes));
+      OPTIX_CHECK(optixUtilAccumulateStackSizes(prog_group, &stack_sizes,
+                                                pipelines_[pair.first]));
     }
 
     uint32_t direct_callable_stack_size_from_traversal;

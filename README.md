@@ -7,9 +7,11 @@
 
 (2) [glog](https://github.com/google/glog)
 
-(3) [NVIDIA Optix 7.5+](https://developer.nvidia.com/designworks/optix/download)
+(3) [NVIDIA Optix 7.7+](https://developer.nvidia.com/designworks/optix/download)
 
 (4) [NVIDIA CUDA 11.6+](https://developer.nvidia.com/cuda-11-6-0-download-archive)
+
+(5) [NVIDIA Driver 530+](https://www.nvidia.com/download/index.aspx)
 
 Install gflags and glog:
 `sudo apt install libgflags-dev libgoogle-glog-dev`
@@ -122,3 +124,9 @@ evalute RayJoin with the following commands.
 ## 4. Implementation References
 ### 4.1 [OVERPROP](https://wrfranklin.org/pmwiki/pmwiki.php/Research/OverlayingTwoMaps)
 ### 4.2 [LBVH](https://github.com/ToruNiina/lbvh)
+
+
+## Trouble Shooting
+
+1. Fix weird bug after changing rt code: `rm -rf /var/tmp/OptixCache_${USER}`
+2. To enable printf in Optix Kernel: `export OPTIX_FORCE_DEPRECATED_LAUNCHER=1`
