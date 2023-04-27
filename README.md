@@ -21,7 +21,7 @@ Install Optix:
 export OPTIX_HOME=~/optix
 
 mkdir -p $OPTIX_HOME
-./NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64-31894579.sh --prefix=$OPTIX_HOME --exclude-subdir --skip-license
+./NVIDIA-OptiX-SDK-7.7.0-linux64-x86_64.sh --prefix=$OPTIX_HOME --exclude-subdir --skip-license
 ```
 
 ### 1.2 Building Instructions
