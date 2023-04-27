@@ -223,15 +223,17 @@ std::shared_ptr<PlanarGraph<COORD_T>> load_from(
   std::string escaped_path;
   std::replace_copy(path.begin(), path.end(), std::back_inserter(escaped_path),
                     '/', '-');
-  DIR* dir = opendir(serialize_prefix.c_str());
-  if (dir) {
-    closedir(dir);
-  } else if (ENOENT == errno) {
-    if (mkdir(serialize_prefix.c_str(), 0755)) {
-      LOG(FATAL) << "Cannot create dir " << path;
+  if (!serialize_prefix.empty()) {
+    DIR* dir = opendir(serialize_prefix.c_str());
+    if (dir) {
+      closedir(dir);
+    } else if (ENOENT == errno) {
+      if (mkdir(serialize_prefix.c_str(), 0755)) {
+        LOG(FATAL) << "Cannot create dir " << path;
+      }
+    } else {
+      LOG(FATAL) << "Cannot open dir " << path;
     }
-  } else {
-    LOG(FATAL) << "Cannot open dir " << path;
   }
 
   auto ser_path = serialize_prefix + '/' + escaped_path + ".bin";
