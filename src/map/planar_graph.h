@@ -1,6 +1,8 @@
 #ifndef RAYJOIN_MAP_PLANAR_GRAPH_H
 #define RAYJOIN_MAP_PLANAR_GRAPH_H
+#include <dirent.h>
 #include <glog/logging.h>
+#include <sys/stat.h>
 
 #include <algorithm>
 #include <fstream>
@@ -221,6 +223,17 @@ std::shared_ptr<PlanarGraph<COORD_T>> load_from(
   std::string escaped_path;
   std::replace_copy(path.begin(), path.end(), std::back_inserter(escaped_path),
                     '/', '-');
+  DIR* dir = opendir(serialize_prefix.c_str());
+  if (dir) {
+    closedir(dir);
+  } else if (ENOENT == errno) {
+    if (mkdir(serialize_prefix.c_str(), 0755)) {
+      LOG(FATAL) << "Cannot create dir " << path;
+    }
+  } else {
+    LOG(FATAL) << "Cannot open dir " << path;
+  }
+
   auto ser_path = serialize_prefix + '/' + escaped_path + ".bin";
 
   if (access(ser_path.c_str(), R_OK) == 0) {
