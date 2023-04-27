@@ -65,7 +65,7 @@ void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
 
   cuda_grid.Init();
   cuda_grid.AddMapsToGrid();
-  cuda_grid.IntersectEdge();
+  cuda_grid.IntersectEdge(true);
   cuda_grid.ComputeOutputPolygons();
   {
     auto total_n_xsects = cuda_grid.get_xsect_edges().size();
