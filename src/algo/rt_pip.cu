@@ -23,8 +23,6 @@ extern "C" __global__ void __anyhit__pip() {
   auto init_best_y = std::numeric_limits<internal_coord_t>::max();
   internal_coord_t best_y;
   uint2 best_y_storage{optixGetPayload_1(), optixGetPayload_2()};
-  double best_e_slope;
-  uint2 best_e_slope_storage{optixGetPayload_3(), optixGetPayload_4()};
   auto eid = optixGetPrimitiveIndex();  // two triangles compose an edge
   auto query_map_id = params.query_map_id;
   const auto& scaling = params.scaling;
@@ -38,7 +36,6 @@ extern "C" __global__ void __anyhit__pip() {
   auto y_src_p = src_p.y;
 
   unpack64(best_y_storage.x, best_y_storage.y, &best_y);
-  unpack64(best_e_slope_storage.x, best_e_slope_storage.y, &best_e_slope);
 #ifndef NDEBUG
   params.hit_count[point_idx]++;
 #endif
@@ -90,9 +87,11 @@ extern "C" __global__ void __anyhit__pip() {
     return;
   }
 
-  double current_e_slope = (double) e.a / e.b;
-
   if (xsect_y == best_y) {
+    rayjoin::index_t best_e_eid = optixGetPayload_3();
+    auto& best_e = params.base_map_edges[best_e_eid];
+    double current_e_slope = (double) e.a / e.b;
+    auto best_e_slope = (double) best_e.a / best_e.b;
     bool flag = current_e_slope > best_e_slope;
 
     /* If im==0 we want the bigger slope, if im==1, the smaller. */
@@ -108,9 +107,7 @@ extern "C" __global__ void __anyhit__pip() {
   pack64(&best_y, best_y_storage.x, best_y_storage.y);
   optixSetPayload_1(best_y_storage.x);
   optixSetPayload_2(best_y_storage.y);
-  pack64(&current_e_slope, best_e_slope_storage.x, best_e_slope_storage.y);
-  optixSetPayload_3(best_e_slope_storage.x);
-  optixSetPayload_4(best_e_slope_storage.y);
+  optixSetPayload_3(eid);
 
 #ifndef NDEBUG
   params.closer_count[point_idx]++;
@@ -138,10 +135,7 @@ extern "C" __global__ void __raygen__pip() {
                   "Invalid internal coordinate type");  // current we use int64
     uint2 best_y_storage;
     pack64(&best_y, best_y_storage.x, best_y_storage.y);
-
-    uint64_t best_e_eid = DONTKNOW;
-    uint2 best_e_eid_storage;
-    pack64(&best_e_eid, best_e_eid_storage.x, best_e_eid_storage.y);
+    rayjoin::index_t best_e_eid = std::numeric_limits<rayjoin::index_t>::max();
 
     for (int dir : dirs) {
       float3 ray_origin = {
@@ -157,9 +151,7 @@ extern "C" __global__ void __raygen__pip() {
                  SURFACE_RAY_TYPE,     // SBT offset
                  RAY_TYPE_COUNT,       // SBT stride
                  SURFACE_RAY_TYPE,     // missSBTIndex
-                 point_idx, best_y_storage.x, best_y_storage.y,
-                 best_e_eid_storage.x, best_e_eid_storage.y);
-      unpack64(best_e_eid_storage.x, best_e_eid_storage.y, &best_e_eid);
+                 point_idx, best_y_storage.x, best_y_storage.y, best_e_eid);
 
       params.closest_eids[point_idx] = best_e_eid;
     }
