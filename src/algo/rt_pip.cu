@@ -28,12 +28,12 @@ extern "C" __global__ void __anyhit__pip() {
   auto eid = optixGetPrimitiveIndex();  // two triangles compose an edge
   auto query_map_id = params.query_map_id;
   const auto& scaling = params.scaling;
-  const auto& e = params.dst_edges[eid];
-  const auto& p1 = params.dst_points[e.p1_idx];
-  const auto& p2 = params.dst_points[e.p2_idx];
+  const auto& e = params.base_map_edges[eid];
+  const auto& p1 = params.base_map_points[e.p1_idx];
+  const auto& p2 = params.base_map_points[e.p2_idx];
   auto x_min = min(p1.x, p2.x);
   auto x_max = max(p1.x, p2.x);
-  const auto& src_p = params.src_points[point_idx];
+  const auto& src_p = params.query_points[point_idx];
   auto x_src_p = src_p.x;
   auto y_src_p = src_p.y;
 
@@ -112,40 +112,26 @@ extern "C" __global__ void __anyhit__pip() {
   optixSetPayload_3(best_e_slope_storage.x);
   optixSetPayload_4(best_e_slope_storage.y);
 
-  rayjoin::polygon_id_t ipol = 0;
-
-  if (p1.x < p2.x) {
-    ipol = e.right_polygon_id;
-  } else {
-    ipol = e.left_polygon_id;
-  }
 #ifndef NDEBUG
   params.closer_count[point_idx]++;
 #endif
-  params.point_in_polygon[point_idx] = ipol;
   optixIgnoreIntersection();
 }
 
-extern "C" __global__ void __miss__pip() {
-  auto point_idx = optixGetPayload_0();
-
-  if (params.point_in_polygon[point_idx] == DONTKNOW) {
-    params.point_in_polygon[point_idx] = EXTERIOR_FACE_ID;
-  }
-}
+extern "C" __global__ void __miss__pip() {}
 
 extern "C" __global__ void __raygen__pip() {
   float tmin = 0;
   float tmax = RAY_TMAX;
   float3 ray_dir = {0, 1, 0};
-  const auto& src_points = params.src_points;
+  const auto& query_points = params.query_points;
   const auto& scaling = params.scaling;
   auto rounding_iter = params.rounding_iter;
   int dirs[] = {-1, 1};
 
-  for (unsigned int point_idx = OPTIX_TID_1D; point_idx < src_points.size();
+  for (unsigned int point_idx = OPTIX_TID_1D; point_idx < query_points.size();
        point_idx += OPTIX_TOTAL_THREADS_1D) {
-    auto& p = src_points[point_idx];
+    auto& p = query_points[point_idx];
     auto best_y = std::numeric_limits<
         typename rayjoin::LaunchParamsPIP::internal_coord_t>::max();
     static_assert(sizeof(best_y) == 8,
@@ -153,9 +139,9 @@ extern "C" __global__ void __raygen__pip() {
     uint2 best_y_storage;
     pack64(&best_y, best_y_storage.x, best_y_storage.y);
 
-    double best_e_slope;
-    uint2 best_e_slope_storage;
-    pack64(&best_e_slope, best_e_slope_storage.x, best_e_slope_storage.y);
+    uint64_t best_e_eid = DONTKNOW;
+    uint2 best_e_eid_storage;
+    pack64(&best_e_eid, best_e_eid_storage.x, best_e_eid_storage.y);
 
     for (int dir : dirs) {
       float3 ray_origin = {
@@ -172,7 +158,10 @@ extern "C" __global__ void __raygen__pip() {
                  RAY_TYPE_COUNT,       // SBT stride
                  SURFACE_RAY_TYPE,     // missSBTIndex
                  point_idx, best_y_storage.x, best_y_storage.y,
-                 best_e_slope_storage.x, best_e_slope_storage.y);
+                 best_e_eid_storage.x, best_e_eid_storage.y);
+      unpack64(best_e_eid_storage.x, best_e_eid_storage.y, &best_e_eid);
+
+      params.closest_eids[point_idx] = best_e_eid;
     }
   }
 }

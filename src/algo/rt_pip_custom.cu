@@ -25,7 +25,6 @@ extern "C" __global__ void __intersection__pip_custom() {
   auto init_best_y = std::numeric_limits<internal_coord_t>::max();
   double best_y;
   uint2 best_y_storage{optixGetPayload_1(), optixGetPayload_2()};
-  uint2 best_e_eid_storage;
   auto eid = optixGetPrimitiveIndex();
   auto query_map_id = params.query_map_id;
   const auto& scaling = params.scaling;
@@ -92,11 +91,7 @@ extern "C" __global__ void __intersection__pip_custom() {
   }
 
   if (xsect_y == best_y) {
-    uint64_t best_e_eid;
-    best_e_eid_storage = uint2{optixGetPayload_3(), optixGetPayload_4()};
-
-    unpack64(best_e_eid_storage.x, best_e_eid_storage.y, &best_e_eid);
-
+    rayjoin::index_t best_e_eid = optixGetPayload_3();
     auto& best_e = params.base_map_edges[best_e_eid];
     auto current_e_slope = (double) e.a / e.b;
     auto best_e_slope = (double) best_e.a / best_e.b;
@@ -113,11 +108,7 @@ extern "C" __global__ void __intersection__pip_custom() {
   pack64(&best_y, best_y_storage.x, best_y_storage.y);
   optixSetPayload_1(best_y_storage.x);
   optixSetPayload_2(best_y_storage.y);
-
-  uint64_t curr_e_eid = eid;
-  pack64(&curr_e_eid, best_e_eid_storage.x, best_e_eid_storage.y);
-  optixSetPayload_3(best_e_eid_storage.x);
-  optixSetPayload_4(best_e_eid_storage.y);
+  optixSetPayload_3(eid);
 
 #ifndef NDEBUG
   params.closer_count[point_idx]++;
@@ -139,12 +130,10 @@ extern "C" __global__ void __raygen__pip_custom() {
     auto best_y = std::numeric_limits<double>::infinity();
     static_assert(sizeof(best_y) == 8,
                   "Invalid internal coordinate type");  // current we use int64
+    static_assert(sizeof(rayjoin::index_t) == 4, "Currently only support u32");
     uint2 best_y_storage;
     pack64(&best_y, best_y_storage.x, best_y_storage.y);
-    // fixme: use 32 bit eid
-    uint64_t best_e_eid = DONTKNOW;
-    uint2 best_e_eid_storage;
-    pack64(&best_e_eid, best_e_eid_storage.x, best_e_eid_storage.y);
+    rayjoin::index_t best_e_eid = std::numeric_limits<rayjoin::index_t>::max();
     float3 ray_origin;
 
     if (fy > y) {
@@ -172,10 +161,7 @@ extern "C" __global__ void __raygen__pip_custom() {
                SURFACE_RAY_TYPE,     // SBT offset
                RAY_TYPE_COUNT,       // SBT stride
                SURFACE_RAY_TYPE,     // missSBTIndex
-               point_idx, best_y_storage.x, best_y_storage.y,
-               best_e_eid_storage.x, best_e_eid_storage.y);
-
-    unpack64(best_e_eid_storage.x, best_e_eid_storage.y, &best_e_eid);
+               point_idx, best_y_storage.x, best_y_storage.y, best_e_eid);
 
     params.closest_eids[point_idx] = best_e_eid;
     //    } else {

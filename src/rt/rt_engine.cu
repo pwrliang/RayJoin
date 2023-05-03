@@ -51,8 +51,7 @@ RTConfig get_default_rt_config(const std::string& exec_root) {
   mod_pip.set_function_suffix("pip");
   mod_pip.set_launch_params_name("params");
   mod_pip.EnableAnyHit();
-  mod_pip.EnableMiss();
-  mod_pip.set_n_payload(5);
+  mod_pip.set_n_payload(4);
 
   if (access(mod_pip.get_program_name().c_str(), R_OK) != 0) {
     LOG(FATAL) << "Cannot open " << mod_pip.get_program_name();
@@ -66,7 +65,7 @@ RTConfig get_default_rt_config(const std::string& exec_root) {
   mod_pip_custom.set_launch_params_name("params");
   mod_pip_custom.EnableIsIntersection();
   mod_pip_custom.EnableAnyHit();
-  mod_pip_custom.set_n_payload(5);
+  mod_pip_custom.set_n_payload(4);
 
   if (access(mod_pip_custom.get_program_name().c_str(), R_OK) != 0) {
     LOG(FATAL) << "Cannot open " << mod_pip_custom.get_program_name();
