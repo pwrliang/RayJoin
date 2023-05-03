@@ -16,6 +16,7 @@ enum { SURFACE_RAY_TYPE = 0, RAY_TYPE_COUNT };
 extern "C" __constant__ rayjoin::LaunchParamsPIP params;
 
 extern "C" __global__ void __anyhit__pip() {
+  using coefficient_t = rayjoin::coefficient_t;
   float3 ray_orig = optixGetWorldRayOrigin();
   auto point_idx = optixGetPayload_0();
   using internal_coord_t = typename rayjoin::LaunchParamsPIP::internal_coord_t;
@@ -54,8 +55,8 @@ extern "C" __global__ void __anyhit__pip() {
 
   assert(e.b != 0);
 
-  auto xsect_y = (-e.a * x_src_p - e.c) / e.b;
-  auto diff_y = xsect_y - y_src_p;
+  auto xsect_y = (double) (-e.a * x_src_p - e.c) / e.b;
+  auto diff_y = y_src_p - xsect_y;
 
   if (diff_y == 0) {
     diff_y = (query_map_id == 0 ? -e.a : e.a);
@@ -69,7 +70,7 @@ extern "C" __global__ void __anyhit__pip() {
   }
 #endif
   // current point is above the current edge
-  if (diff_y < 0) {
+  if (diff_y > 0) {
 #ifndef NDEBUG
     params.above_edge_count[point_idx]++;
 #endif
@@ -88,6 +89,7 @@ extern "C" __global__ void __anyhit__pip() {
 #endif
     return;
   }
+
   double current_e_slope = (double) e.a / e.b;
 
   if (xsect_y == best_y) {

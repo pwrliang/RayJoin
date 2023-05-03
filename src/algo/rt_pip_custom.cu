@@ -18,31 +18,31 @@ extern "C" __constant__ rayjoin::LaunchParamsPIP params;
 extern "C" __global__ void __anyhit__pip_custom() { optixTerminateRay(); }
 
 extern "C" __global__ void __intersection__pip_custom() {
+  using coefficient_t = rayjoin::coefficient_t;
   float3 ray_orig = optixGetWorldRayOrigin();
   auto point_idx = optixGetPayload_0();
   using internal_coord_t = typename rayjoin::LaunchParamsPIP::internal_coord_t;
   auto init_best_y = std::numeric_limits<internal_coord_t>::max();
-  internal_coord_t best_y;
+  double best_y;
   uint2 best_y_storage{optixGetPayload_1(), optixGetPayload_2()};
-  double best_e_slope;
-  uint2 best_e_slope_storage{optixGetPayload_3(), optixGetPayload_4()};
+  uint2 best_e_eid_storage;
   auto eid = optixGetPrimitiveIndex();
   auto query_map_id = params.query_map_id;
   const auto& scaling = params.scaling;
-  const auto& e = params.dst_edges[eid];
-  const auto& p1 = params.dst_points[e.p1_idx];
-  const auto& p2 = params.dst_points[e.p2_idx];
+  const auto& e = params.base_map_edges[eid];
+  const auto& p1 = params.base_map_points[e.p1_idx];
+  const auto& p2 = params.base_map_points[e.p2_idx];
   auto x_min = min(p1.x, p2.x);
   auto x_max = max(p1.x, p2.x);
-  const auto& src_p = params.src_points[point_idx];
+  const auto& src_p = params.query_points[point_idx];
   auto x_src_p = src_p.x;
   auto y_src_p = src_p.y;
 
   unpack64(best_y_storage.x, best_y_storage.y, &best_y);
-  unpack64(best_e_slope_storage.x, best_e_slope_storage.y, &best_e_slope);
 #ifndef NDEBUG
   params.hit_count[point_idx]++;
 #endif
+
   /*
    * Is point outside x bounds of this edge?  Use simulation of simplicity:
    * shift map 1 by epsilon relative to map 0.  This also eliminates vertical
@@ -56,7 +56,7 @@ extern "C" __global__ void __intersection__pip_custom() {
   assert(e.b != 0);
 
   auto xsect_y = (double) (-e.a * x_src_p - e.c) / e.b;
-  auto diff_y = xsect_y - y_src_p;
+  auto diff_y = y_src_p - xsect_y;
 
   if (diff_y == 0) {
     diff_y = (query_map_id == 0 ? -e.a : e.a);
@@ -69,8 +69,9 @@ extern "C" __global__ void __intersection__pip_custom() {
     printf("Zero length edge\n");
   }
 #endif
+
   // current point is above the current edge
-  if (diff_y < 0) {
+  if (diff_y > 0) {
 #ifndef NDEBUG
     params.above_edge_count[point_idx]++;
 #endif
@@ -81,20 +82,27 @@ extern "C" __global__ void __intersection__pip_custom() {
     auto deviant = scaling.UnscaleY(xsect_y) - scaling.UnscaleY(best_y);
     // continue search only if current primitive is not deviant too much
     if (best_y != init_best_y && deviant > params.early_term_deviant) {
-      optixReportIntersection(0, 0);  // terminate ray
+      // FIXME(liang): early termination
+      //      optixReportIntersection(0, 0);  // terminate ray
     }
 #ifndef NDEBUG
     params.fail_update_count[point_idx]++;
 #endif
     return;
   }
-  double current_e_slope = (double) e.a / e.b;
 
   if (xsect_y == best_y) {
+    uint64_t best_e_eid;
+    best_e_eid_storage = uint2{optixGetPayload_3(), optixGetPayload_4()};
+
+    unpack64(best_e_eid_storage.x, best_e_eid_storage.y, &best_e_eid);
+
+    auto& best_e = params.base_map_edges[best_e_eid];
+    auto current_e_slope = (double) e.a / e.b;
+    auto best_e_slope = (double) best_e.a / best_e.b;
     bool flag = current_e_slope > best_e_slope;
 
     /* If im==0 we want the bigger slope, if im==1, the smaller. */
-
     if ((query_map_id && !flag) || (flag && !query_map_id)) {
       return;
     }
@@ -105,18 +113,11 @@ extern "C" __global__ void __intersection__pip_custom() {
   pack64(&best_y, best_y_storage.x, best_y_storage.y);
   optixSetPayload_1(best_y_storage.x);
   optixSetPayload_2(best_y_storage.y);
-  pack64(&current_e_slope, best_e_slope_storage.x, best_e_slope_storage.y);
-  optixSetPayload_3(best_e_slope_storage.x);
-  optixSetPayload_4(best_e_slope_storage.y);
 
-  rayjoin::polygon_id_t ipol = 0;
-
-  if (p1.x < p2.x) {
-    ipol = e.right_polygon_id;
-  } else {
-    ipol = e.left_polygon_id;
-  }
-  params.point_in_polygon[point_idx] = ipol;
+  uint64_t curr_e_eid = eid;
+  pack64(&curr_e_eid, best_e_eid_storage.x, best_e_eid_storage.y);
+  optixSetPayload_3(best_e_eid_storage.x);
+  optixSetPayload_4(best_e_eid_storage.y);
 
 #ifndef NDEBUG
   params.closer_count[point_idx]++;
@@ -125,29 +126,42 @@ extern "C" __global__ void __intersection__pip_custom() {
 
 extern "C" __global__ void __raygen__pip_custom() {
   float3 ray_dir = {0, 1, 0};
-  const auto& src_points = params.src_points;
+  const auto& query_points = params.query_points;
   const auto& scaling = params.scaling;
 
-  for (unsigned int point_idx = OPTIX_TID_1D; point_idx < src_points.size();
+  for (unsigned int point_idx = OPTIX_TID_1D; point_idx < query_points.size();
        point_idx += OPTIX_TOTAL_THREADS_1D) {
-    // FIXME: Shoot two rays
-    auto& p = src_points[point_idx];
-    float3 ray_origin = {(float) scaling.UnscaleX(p.x),
-                         (float) scaling.UnscaleY(p.y), 0};
-    float tmin = 0;
-    float tmax = RAY_TMAX;
-    auto best_y = std::numeric_limits<
-        typename rayjoin::LaunchParamsPIP::internal_coord_t>::max();
+    const auto& p = query_points[point_idx];
+    const auto x = scaling.UnscaleX(p.x), y = scaling.UnscaleY(p.y);
+    const auto fx = static_cast<float>(x), fy = static_cast<float>(y);
+    const float tmin = 0;
+    const float tmax = RAY_TMAX;
+    auto best_y = std::numeric_limits<double>::infinity();
     static_assert(sizeof(best_y) == 8,
                   "Invalid internal coordinate type");  // current we use int64
     uint2 best_y_storage;
     pack64(&best_y, best_y_storage.x, best_y_storage.y);
+    // fixme: use 32 bit eid
+    uint64_t best_e_eid = DONTKNOW;
+    uint2 best_e_eid_storage;
+    pack64(&best_e_eid, best_e_eid_storage.x, best_e_eid_storage.y);
+    float3 ray_origin;
 
-    double best_e_slope;
-    uint2 best_e_slope_storage;
-    pack64(&best_e_slope, best_e_slope_storage.x, best_e_slope_storage.y);
+    if (fy > y) {
+      ray_origin.y = next_float_from_double(fy, -1, 1);
+    } else {
+      ray_origin.y = fy;
+    }
 
-    params.point_in_polygon[point_idx] = EXTERIOR_FACE_ID;
+    assert(ray_origin.y <= y);
+
+    ray_origin.z = 0;
+
+    //    if (fx == x) {
+
+    ray_origin.x = fx;
+
+    //    ray_origin.x = next_float_from_double(ray_origin.x, -1, 1);
 
     optixTrace(params.traversable, ray_origin, ray_dir,
                tmin,  // tmin
@@ -159,6 +173,39 @@ extern "C" __global__ void __raygen__pip_custom() {
                RAY_TYPE_COUNT,       // SBT stride
                SURFACE_RAY_TYPE,     // missSBTIndex
                point_idx, best_y_storage.x, best_y_storage.y,
-               best_e_slope_storage.x, best_e_slope_storage.y);
+               best_e_eid_storage.x, best_e_eid_storage.y);
+
+    unpack64(best_e_eid_storage.x, best_e_eid_storage.y, &best_e_eid);
+
+    params.closest_eids[point_idx] = best_e_eid;
+    //    } else {
+    //      ray_origin.x = next_float_from_double(fx, -1, 1);
+    //
+    //      optixTrace(params.traversable, ray_origin, ray_dir,
+    //                 tmin,  // tmin
+    //                 tmax,  // tmax
+    //                 0,     // rayTime
+    //                 OptixVisibilityMask(255),
+    //                 OPTIX_RAY_FLAG_NONE,  // OPTIX_RAY_FLAG_NONE,
+    //                 SURFACE_RAY_TYPE,     // SBT offset
+    //                 RAY_TYPE_COUNT,       // SBT stride
+    //                 SURFACE_RAY_TYPE,     // missSBTIndex
+    //                 point_idx, best_y_storage.x, best_y_storage.y,
+    //                 best_e_eid_storage.x, best_e_eid_storage.y);
+    //
+    //      ray_origin.x = next_float_from_double(fx, 1, 1);
+    //
+    //      optixTrace(params.traversable, ray_origin, ray_dir,
+    //                 tmin,  // tmin
+    //                 tmax,  // tmax
+    //                 0,     // rayTime
+    //                 OptixVisibilityMask(255),
+    //                 OPTIX_RAY_FLAG_NONE,  // OPTIX_RAY_FLAG_NONE,
+    //                 SURFACE_RAY_TYPE,     // SBT offset
+    //                 RAY_TYPE_COUNT,       // SBT stride
+    //                 SURFACE_RAY_TYPE,     // missSBTIndex
+    //                 point_idx, best_y_storage.x, best_y_storage.y,
+    //                 best_e_eid_storage.x, best_e_eid_storage.y);
+    //    }
   }
 }

@@ -130,3 +130,12 @@ evalute RayJoin with the following commands.
 
 1. Fix weird bug after changing rt code: `rm -rf /var/tmp/OptixCache_${USER}`
 2. To enable printf in Optix Kernel: `export OPTIX_FORCE_DEPRECATED_LAUNCHER=1`
+
+## Notes from ArcGIS
+
+### [Polygon To Line](https://desktop.arcgis.com/en/arcmap/latest/tools/data-management-toolbox/polygon-to-line.htm)
+- In a polygon geometry, the outer boundary is always stored in a clockwise direction. If the polygon has a hole, the hole (or inner) boundary is always stored in a counterclockwise direction. Therefore, for a polygon with no neighbors to the left side (outside) of its outer boundary and the left side (inside) of the hole boundary, the resulting lines will have a value of -1 for LEFT_FID and the polygon feature ID as the RIGHT_FID.
+- If a polygon contains another polygon, one output line in the clockwise direction will be generated representing the shared boundary, with its LEFT_FID set to the outer polygon feature ID and the RIGHT_FID set to the inner polygon feature ID.
+- If two polygons share a portion of their boundaries, one output line will be generated representing the shared segment. The line direction will be arbitrary; the LEFT_FID and the RIGHT_FID will be set to the left or right polygon feature IDs accordingly.
+- If a polygon overlaps another polygon, two output lines will be generated representing each crossing boundary twice: the first line will represent the outer boundary of one of the overlapping polygons, therefore, its LEFT_FID is the feature ID of the polygon it crosses, and its RIGHT_FID will be its own polygon feature ID; the second line will be in the opposite direction, splitting the other polygon, therefore, its LEFT_FID and RIGHT_FID will be the same as the other polygon feature ID.
+- Multiparts in input polygons are not maintained; the output lines are all single part.

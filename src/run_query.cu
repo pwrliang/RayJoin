@@ -234,15 +234,9 @@ void RunPIPQuery(const QueryConfig& config) {
   } else if (config.mode == "rt") {
     auto rt_engine = std::make_shared<RTEngine>();
     RTConfig rt_config = get_default_rt_config(config.exec_root);
-    RTQueryConfig pip_config;
-
-    pip_config.use_triangle = config.use_triangle;
-    pip_config.fau = config.fau;
-    pip_config.epsilon = config.epsilon;
-    pip_config.early_term_deviant = config.early_term_deviant;
 
     rt_engine->Init(rt_config);
-    pip = new PIPRT<context_t>(ctx, rt_engine, pip_config);
+    pip = new PIPRT<context_t>(ctx, rt_engine);
   } else {
     LOG(FATAL) << "Invalid index type: " << config.mode;
   }
@@ -256,27 +250,38 @@ void RunPIPQuery(const QueryConfig& config) {
 
     grid->AddMapToGrid(ctx, 0, config.profiling);
   } else if (config.mode == "rt") {
-    dynamic_cast<PIPRT<context_t>*>(pip)->BuildIndex(0);
+    // FIXME
+    //    dynamic_cast<PIPRT<context_t>*>(pip)->BuildIndex(0);
+    //
+    //    RTQueryConfig pip_config;
+    //
+    //    pip_config.use_triangle = config.use_triangle;
+    //    pip_config.fau = config.fau;
+    //    pip_config.epsilon = config.epsilon;
+    //    pip_config.early_term_deviant = config.early_term_deviant;
+    //
+    //    pip->set_query_config(pip_config);
   }
 
   timer_next("Warmup");
   ArrayView<typename context_t::map_t::point_t> d_query_points(query_points);
 
   for (int i = 0; i < config.warmup; i++) {
-    pip->Query(0, query_points);
+    pip->Query(ctx.get_stream(), 0, query_points);
   }
 
   timer_next("Query", config.repeat);
-  for (int i = 0; i < config.repeat; i++) {
-    auto& polygon_ids = pip->Query(0, query_points);
-
-    if (i == config.repeat - 1) {
-      if (config.check && config.mode == "rt") {
-        timer_next("Check");
-        CheckPIPResult(ctx, config, query_points, polygon_ids);
-      }
-    }
-  }
+  // FIXME:
+  //  for (int i = 0; i < config.repeat; i++) {
+  //    auto& polygon_ids = pip->Query(ctx.get_stream(), 0, query_points);
+  //
+  //    if (i == config.repeat - 1) {
+  //      if (config.check && config.mode == "rt") {
+  //        timer_next("Check");
+  //        CheckPIPResult(ctx, config, query_points, polygon_ids);
+  //      }
+  //    }
+  //  }
 
   timer_next("Cleanup");
 

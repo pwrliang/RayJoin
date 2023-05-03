@@ -1,6 +1,10 @@
 #ifndef RAYJOIN_CONTEXT_H
 #define RAYJOIN_CONTEXT_H
 
+#include <libgen.h>
+#include <linux/limits.h>
+#include <unistd.h>
+
 #include <memory>
 
 #include "map/map.h"
@@ -71,6 +75,14 @@ class Context {
         maps_[im] = map;
       }
     }
+
+    char result[PATH_MAX];
+    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+    const char* path;
+    if (count != -1) {
+      path = dirname(result);
+    }
+    exec_root = std::string(path);
   }
 
   void set_query_map(std::shared_ptr<map_t> query_map) { maps_[1] = query_map; }
@@ -97,6 +109,8 @@ class Context {
 
   Stream& get_stream() { return stream_; }
 
+  const std::string& get_exec_root() const { return exec_root; }
+
  private:
   Stream stream_;
   std::array<std::shared_ptr<planar_graph_t>, 2> planar_graphs_;
@@ -104,6 +118,7 @@ class Context {
 
   bounding_box_t bb_;
   scaling_t scaling_;
+  std::string exec_root;  // folder of binary
 };
 
 }  // namespace rayjoin

@@ -49,10 +49,10 @@ struct LaunchParamsPIP {
   using point_t = typename map_t::point_t;
 
   // current map no
-  char query_map_id;
-  ArrayView<point_t> src_points;
-  edge_t* dst_edges;
-  point_t* dst_points;
+  int query_map_id;
+  ArrayView<point_t> query_points;
+  edge_t* base_map_edges;
+  point_t* base_map_points;
   Scaling<coord_t, internal_coord_t, detail::internal_coord<coord_t>::shift>
       scaling;
   // Used for BVH Traversable
@@ -63,7 +63,7 @@ struct LaunchParamsPIP {
   float early_term_deviant;
 
   // Output
-  polygon_id_t* point_in_polygon;
+  index_t* closest_eids;
 
 #ifndef NDEBUG
   uint32_t* hit_count;

@@ -18,11 +18,11 @@
 __forceinline__ __device__ __host__ float next_float_from_double(double v,
                                                                  int dir,
                                                                  int iter = 1) {
-  if (v == 0) {
-    return 0.0f;
-  }
   assert(dir == 1 || dir == -1);
   auto fv = static_cast<float>(v);  // pos number
+  if (fv == 0) {
+    return 0.0f;
+  }
   float to = v * dir < 0 ? 0 : dir * std::numeric_limits<float>::infinity();
 
   for (int i = 0; i < iter; i++) {

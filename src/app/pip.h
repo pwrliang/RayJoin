@@ -18,18 +18,22 @@ class PIP {
 
   virtual ~PIP() = default;
 
-  virtual void Init(size_t n_points) { polygon_ids_.reserve(n_points); }
+  virtual void Init(size_t n_points) { closest_eids_.reserve(n_points); }
 
-  virtual thrust::device_vector<polygon_id_t>& Query(
-      int map_id, ArrayView<point_t> points) = 0;
+  virtual void Query(Stream& stream, int base_map_id,
+                     ArrayView<point_t> query_points) = 0;
 
   CONTEXT_T& get_context() { return ctx_; }
 
   const CONTEXT_T& get_context() const { return ctx_; }
 
+  const thrust::device_vector<index_t>& get_closest_eids() const {
+    return closest_eids_;
+  }
+
  protected:
   CONTEXT_T& ctx_;
-  thrust::device_vector<polygon_id_t> polygon_ids_;
+  thrust::device_vector<index_t> closest_eids_;
   SharedValue<uint64_t> prof_counter_;
 };
 

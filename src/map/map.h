@@ -18,7 +18,7 @@ namespace dev {
 
 template <typename COEFFICIENT_T>
 struct EdgeEquation {
-  double a, b, c;  // ax + by + c=0; b >= 0
+  coefficient_t a, b, c;  // ax + by + c=0; b >= 0
 
   EdgeEquation() = default;
 
@@ -54,16 +54,10 @@ class Map {
 
   Map() = default;
 
-  DEV_HOST Map(char id,ArrayView<point_t> points, ArrayView<edge_t> edges)
+  DEV_HOST Map(char id, ArrayView<point_t> points, ArrayView<edge_t> edges)
       : id_(id), points_(points), edges_(edges) {}
 
-  DEV_HOST_INLINE int get_id() const {
-      return id_;
-  }
-
-  DEV_INLINE const point_t& get_point(index_t offset) const {
-    return points_[offset];
-  }
+  DEV_HOST_INLINE int get_id() const { return id_; }
 
   DEV_HOST_INLINE size_t get_points_num() const { return points_.size(); }
 
@@ -80,6 +74,16 @@ class Map {
   DEV_HOST_INLINE ArrayView<point_t> get_points() const { return points_; }
 
   DEV_HOST_INLINE ArrayView<edge_t> get_edges() const { return edges_; }
+
+  DEV_HOST_INLINE polygon_id_t get_face_id(const edge_t& e) const {
+    polygon_id_t ipol;
+    if (get_point(e.p1_idx).x < get_point(e.p2_idx).x) {
+      ipol = e.right_polygon_id;
+    } else {
+      ipol = e.left_polygon_id;
+    }
+    return ipol;
+  }
 
  private:
   char id_;
@@ -230,10 +234,13 @@ class Map {
         ArrayView<point_t>(points_), ArrayView<edge_t>(edges_));
 
     stream.Sync();
+    h_points_ = points_;
+    h_edges_ = edges;
   }
 
   dev_map_t DeviceObject() const {
-    return dev_map_t(id_, ArrayView<point_t>(points_), ArrayView<edge_t>(edges_));
+    return dev_map_t(id_, ArrayView<point_t>(points_),
+                     ArrayView<edge_t>(edges_));
   }
 
   char get_id() const { return id_; }
@@ -242,12 +249,88 @@ class Map {
 
   size_t get_edges_num() const { return edges_.size(); }
 
+  const point_t& get_point(size_t point_idx) const {
+    assert(point_idx < h_points_.size());
+    return h_points_[point_idx];
+  }
+
+  const edge_t& get_edge(size_t edge_idx) const {
+    assert(edge_idx < h_edges_.size());
+    return h_edges_[edge_idx];
+  }
+
+  polygon_id_t get_face_id(const edge_t& e) const {
+    polygon_id_t ipol;
+    if (get_point(e.p1_idx).x < get_point(e.p2_idx).x) {
+      ipol = e.right_polygon_id;
+    } else {
+      ipol = e.left_polygon_id;
+    }
+    return ipol;
+  }
+
   bounding_box_t bounding_box() const { return bounding_box_; }
+
+  std::string ScaledEndpointsToString(size_t eid) const {
+    return ScaledEndpointsToString(get_edge(eid));
+  }
+
+  std::string ScaledEndpointsToString(const edge_t& e) const {
+    auto& p1 = get_point(e.p1_idx);
+    auto& p2 = get_point(e.p2_idx);
+
+    std::string s;
+    s.resize(1024);
+
+    auto n = snprintf(const_cast<char*>(s.c_str()), s.size(),
+                      "(%ld, %ld) - (%ld, %ld)", p1.x, p1.y, p2.x, p2.y);
+
+    s.resize(n);
+
+    return s;
+  }
+
+  template <typename SCALING_T>
+  std::string EndpointsToString(size_t eid, const SCALING_T& scaling) const {
+    return EndpointsToString(get_edge(eid), scaling);
+  }
+
+  template <typename SCALING_T>
+  std::string EndpointsToString(const edge_t& e,
+                                const SCALING_T& scaling) const {
+    auto p1_idx = e.p1_idx;
+    auto p2_idx = e.p2_idx;
+    auto p1 = get_point(p1_idx);
+    auto p2 = get_point(p2_idx);
+    auto x1 = scaling.UnscaleX(p1.x);
+    auto y1 = scaling.UnscaleY(p1.y);
+    auto x2 = scaling.UnscaleX(p2.x);
+    auto y2 = scaling.UnscaleY(p2.y);
+
+    std::string s;
+    s.resize(1024);
+
+    auto n = snprintf(const_cast<char*>(s.c_str()), s.size(),
+                      "(%.8lf, %.8lf) - (%.8lf, %.8lf)", x1, y1, x2, y2);
+
+    s.resize(n);
+
+    return s;
+  }
+
+  bool IsPointOnLine(const edge_t& e, const point_t& p) const {
+    auto& p1 = get_point(e.p1_idx);
+    auto& p2 = get_point(e.p2_idx);
+
+    return p1.x == p.x && p1.y == p.y || p2.x == p.x && p2.y == p.y;
+  }
 
  private:
   char id_;
   thrust::device_vector<point_t> points_;
   thrust::device_vector<edge_t> edges_;
+  pinned_vector<point_t> h_points_;  // For debugging
+  pinned_vector<edge_t> h_edges_;
   bounding_box_t bounding_box_;
 };
 

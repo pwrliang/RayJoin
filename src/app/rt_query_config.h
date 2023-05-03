@@ -8,6 +8,7 @@ struct RTQueryConfig {
   bool fau = true;
   float early_term_deviant = 1;
   float epsilon = 0.0001;
+  OptixTraversableHandle handle_;
 };
 }  // namespace rayjoin
 #endif  // APP_RT_QUERY_CONFIG_H

@@ -51,8 +51,10 @@ inline std::shared_ptr<PlanarGraph<COORD_T>> read_pgraph(const char* path) {
   auto& g = *pgraph;
   typename cuda_vec<COORD_T>::type_2d* last_p = nullptr;
   std::vector<double> seg_lens;
+  size_t lno = 0;
 
   while (std::getline(ifs, line)) {
+    lno++;
     if (line.empty() || line[0] == '#' || line[0] == '%') {
       continue;
     }
@@ -67,6 +69,7 @@ inline std::shared_ptr<PlanarGraph<COORD_T>> read_pgraph(const char* path) {
                    curr_chain->last_point_idx >> curr_chain->left_polygon_id >>
                    curr_chain->right_polygon_id);
       bad_line |= np < 2;
+      // checking overlapped polygon
       //      bad_line |= curr_chain->left_polygon_id ==
       //      curr_chain->right_polygon_id;
       pgraph->row_index.push_back(g.points.size());
@@ -91,7 +94,8 @@ inline std::shared_ptr<PlanarGraph<COORD_T>> read_pgraph(const char* path) {
       np--;
     }
 
-    CHECK(!bad_line) << "Cannot parse line " << line;
+    CHECK(!bad_line) << "Bad line. Check your dataset! " << path << "[" << lno
+                     << "]: " << line;
   }
   ifs.close();
 

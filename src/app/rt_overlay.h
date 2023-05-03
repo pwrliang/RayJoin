@@ -5,6 +5,7 @@
 
 #include "app/output_chain.h"
 #include "app/overlay_config.h"
+#include "app/pip_rt.h"
 #include "grid/uniform_grid.h"
 #include "rt/rt_engine.h"
 #include "util/bitset.h"
@@ -25,7 +26,10 @@ class RTMapOverlay {
 
  public:
   explicit RTMapOverlay(CONTEXT_T& ctx, const OverlayConfig& config)
-      : ctx_(ctx), config_(config) {
+      : ctx_(ctx),
+        config_(config),
+        rt_engine_(std::make_shared<RTEngine>()),
+        pip_(ctx, rt_engine_) {
     size_t total_n_edges = 0;
 
     FOR2 {
@@ -40,9 +44,11 @@ class RTMapOverlay {
               << " Max xsects: " << max_n_xsects_;
   }
 
-  void Init(const std::string& exec_root) {
+  void Init() {
     auto& stream = ctx_.get_stream();
     size_t required_space = 0;
+    auto exec_root = ctx_.get_exec_root();
+    RTConfig rt_config = get_default_rt_config(exec_root);
 
     required_space += SIZEOF_ELEM(xsect_edges_) * max_n_xsects_ * 3;
     FOR2 {
@@ -70,9 +76,10 @@ class RTMapOverlay {
       max_ne = std::max(max_ne, ne);
     }
 
+    rt_engine_->Init(rt_config);
+    pip_.Init(max_ne);
+
     stream.Sync();
-    RTConfig rt_config = get_default_rt_config(exec_root);
-    rt_engine_.Init(rt_config);
   }
 
   void BuildBVH(int map_id) {
@@ -80,15 +87,10 @@ class RTMapOverlay {
     const auto& scaling = ctx_.get_scaling();
     auto d_map = ctx_.get_map(map_id)->DeviceObject();
     auto ne = d_map.get_edges_num();
-    auto epsilon = config_.epsilon;
     auto rounding_iter = config_.rounding_iter;
 
     if (config_.use_triangle) {
       auto bb = ctx_.get_bounding_box();
-      auto mid_x = (bb.min_x + bb.max_x) / 2.0;
-      auto mid_y = (bb.min_y + bb.max_y) / 2.0;
-      auto delta_x = scaling.ScaleX(mid_x + epsilon) - scaling.ScaleX(mid_x);
-      auto delta_y = scaling.ScaleY(mid_y + epsilon) - scaling.ScaleY(mid_y);
 
       triangle_points_.resize(d_map.get_edges_num() * 3);
 
@@ -120,8 +122,10 @@ class RTMapOverlay {
 
           // use double is much faster than rational
           // this does not need to be accurate
-          double a = -e.a / e.b;
-          double b = -e.c / e.b;
+          // use double is much faster than rational
+          // this does not need to be accurate
+          double a = (double) -e.a / e.b;
+          double b = (double) -e.c / e.b;
 
           x1 =
               next_float_from_double(scaling.UnscaleX(p1.x), -1, rounding_iter);
@@ -131,9 +135,10 @@ class RTMapOverlay {
           y2 = scaling.UnscaleY(a * scaling.ScaleX(x2) + b);
         }
 
-        d_triangle_points[eid * 3] = {x1, y1, 0};
+        d_triangle_points[eid * 3] = {x1, y1, PRIMITIVE_HEIGHT};
         d_triangle_points[eid * 3 + 1] = {x2, y2, PRIMITIVE_HEIGHT};
-        d_triangle_points[eid * 3 + 2] = {x2, y2, -PRIMITIVE_HEIGHT};
+        d_triangle_points[eid * 3 + 2] = {(x1 + x2) / 2, (y1 + y2) / 2,
+                                          PRIMITIVE_HEIGHT};
 
         if (eid == 0) {
           printf("double eid: %u %.6lf %.6lf %.6lf %.6lf\n", eid,
@@ -144,7 +149,7 @@ class RTMapOverlay {
         }
       });
       traverse_handles_[map_id] =
-          rt_engine_.BuildAccelTriangles(stream, d_triangle_points);
+          rt_engine_->BuildAccelTriangles(stream, d_triangle_points);
     } else {
       aabbs_.resize(ne);
 
@@ -169,7 +174,7 @@ class RTMapOverlay {
         aabb.minZ = -PRIMITIVE_HEIGHT / 2;
         aabb.maxZ = PRIMITIVE_HEIGHT / 2;
       });
-      traverse_handles_[map_id] = rt_engine_.BuildAccelCustom(stream, d_aabbs);
+      traverse_handles_[map_id] = rt_engine_->BuildAccelCustom(stream, d_aabbs);
     }
 
     stream.Sync();
@@ -208,10 +213,11 @@ class RTMapOverlay {
 
     xsect_edges_.Clear(stream);
 
-    rt_engine_.CopyLaunchParams(stream, params);
+    rt_engine_->CopyLaunchParams(stream, params);
 
-    rt_engine_.Render(stream, module_id,
-                      dim3{(unsigned int) d_query_map.get_edges_num(), 1, 1});
+    rt_engine_->Render(stream, module_id,
+                       dim3{(unsigned int) d_query_map.get_edges_num(), 1, 1});
+
     stream.Sync();
 
     size_t n_xsects = xsect_edges_.size(stream);
@@ -234,8 +240,8 @@ class RTMapOverlay {
       auto numy = (coefficient_t) base_e.a * query_e.c -
                   (coefficient_t) query_e.a * base_e.c;
 
-      tcb::rational<coefficient_t> xsect_x(numx, denom);
-      tcb::rational<coefficient_t> xsect_y(numy, denom);
+      tcb::rational<__int128> xsect_x(numx, denom);
+      tcb::rational<__int128> xsect_y(numy, denom);
 
       auto t = MIN4(query_e_p1.x, query_e_p2.x, base_e_p1.x, base_e_p2.x);
       if (xsect_x < t) {
@@ -311,45 +317,31 @@ class RTMapOverlay {
   }
 
   void LocateVerticesInOtherMap(int query_map_id) {
-    auto& stream = ctx_.get_stream();
-    auto& scaling = ctx_.get_scaling();
-    int base_map_id = 1 - query_map_id;
-    auto d_query_map = ctx_.get_map(query_map_id)->DeviceObject();
+    Stream& stream = ctx_.get_stream();
+    auto base_map_id = 1 - query_map_id;
     auto d_base_map = ctx_.get_map(base_map_id)->DeviceObject();
-    ArrayView<polygon_id_t> d_point_in_polygon(point_in_polygon_[query_map_id]);
-    auto module_id = config_.use_triangle
-                         ? ModuleIdentifier::MODULE_ID_PIP
-                         : ModuleIdentifier::MODULE_ID_PIP_CUSTOM;
-    LaunchParamsPIP params;
+    auto d_query_map = ctx_.get_map(query_map_id)->DeviceObject();
+    auto d_points = d_query_map.get_points();
+    auto query_config = get_rt_query_config(base_map_id);
 
-    params.query_map_id = query_map_id;
-    params.src_points = d_query_map.get_points();
-    params.dst_edges = d_base_map.get_edges().data();
-    params.dst_points = d_base_map.get_points().data();
-    params.scaling = scaling;
-    params.traversable = traverse_handles_[base_map_id];
-    params.early_term_deviant = config_.early_term_deviant;
-    params.rounding_iter = config_.rounding_iter;
-    params.point_in_polygon =
-        thrust::raw_pointer_cast(point_in_polygon_[query_map_id].data());
-#ifndef NDEBUG
-    params.hit_count = ArrayView<uint32_t>(hit_count_[query_map_id]).data();
-    params.closer_count =
-        ArrayView<uint32_t>(closer_count_[query_map_id]).data();
-    params.above_edge_count =
-        ArrayView<uint32_t>(above_edge_count_[query_map_id]).data();
-    params.fail_update_count =
-        ArrayView<uint32_t>(fail_update_count_[query_map_id]).data();
-#endif
+    pip_.set_query_config(query_config);
+    pip_.Query(stream, base_map_id, d_points);
 
-    thrust::fill(thrust::cuda::par.on(stream.cuda_stream()),
-                 point_in_polygon_[query_map_id].begin(),
-                 point_in_polygon_[query_map_id].end(), DONTKNOW);
-    rt_engine_.CopyLaunchParams(stream, params);
+    auto& closest_eid = pip_.get_closest_eids();
 
-    rt_engine_.Render(stream, module_id,
-                      dim3{(unsigned int) d_query_map.get_points_num(), 1, 1});
-    // For custom impl, keeping closest k records
+    thrust::transform(thrust::cuda::par.on(stream.cuda_stream()),
+                      closest_eid.begin(), closest_eid.end(),
+                      point_in_polygon_[query_map_id].begin(),
+                      [=] __device__(index_t eid) {
+                        // point is not in polygon
+                        if (eid == std::numeric_limits<index_t>::max()) {
+                          return EXTERIOR_FACE_ID;
+                        }
+
+                        const auto& e = d_base_map.get_edge(eid);
+
+                        return d_base_map.get_face_id(e);
+                      });
     stream.Sync();
   }
 
@@ -427,7 +419,6 @@ class RTMapOverlay {
       thrust::device_vector<index_t> unique_eids;
       thrust::device_vector<uint32_t> n_xsects_per_edge;
       thrust::device_vector<uint32_t> xsect_index;
-      thrust::device_vector<polygon_id_t> mid_point_in_polygon;
       thrust::device_vector<point_t> mid_points;
 
       auto& xsect_edges_sorted = xsect_edges_sorted_[im];
@@ -444,9 +435,9 @@ class RTMapOverlay {
           });
 
       ArrayView<xsect_t> d_xsect_edges_sorted(xsect_edges_sorted);
-      auto d_map = ctx_.get_map(im)->DeviceObject();
-      auto dst_map_id = 1 - im;
-      auto d_dst_map = ctx_.get_map(dst_map_id)->DeviceObject();
+      auto query_map_id = im, base_map_id = 1 - im;
+      auto d_query_map = ctx_.get_map(query_map_id)->DeviceObject();
+      auto d_base_map = ctx_.get_map(base_map_id)->DeviceObject();
 
       unique_eids.resize(n_xsects);
 
@@ -456,8 +447,10 @@ class RTMapOverlay {
           xsect_edges_sorted.begin(), xsect_edges_sorted.end(),
           unique_eids.begin(),
           [=] __device__(const xsect_t& xsect) { return xsect.eid[im]; });
+
       auto end = thrust::unique(thrust::cuda::par.on(stream.cuda_stream()),
                                 unique_eids.begin(), unique_eids.end());
+
       unique_eids.resize(end - unique_eids.begin());
       n_xsects_per_edge.resize(unique_eids.size());
       xsect_index.resize(unique_eids.size() + 1, 0);
@@ -489,12 +482,11 @@ class RTMapOverlay {
       // n intersection points have n-1 mid points
       uint32_t n_mid_points =
           xsect_index[xsect_index.size() - 1] - unique_eids.size();
+      // mid-points of intersections from query map
       mid_points.resize(n_mid_points);
-      mid_point_in_polygon.resize(n_mid_points, DONTKNOW);
 
       ArrayView<uint32_t> d_xsect_index(xsect_index);
       ArrayView<point_t> d_mid_points(mid_points);
-      ArrayView<polygon_id_t> d_mid_point_in_polygon(mid_point_in_polygon);
       ArrayView<index_t> d_unique_eids(unique_eids);
 
       // collect all mid points
@@ -505,25 +497,26 @@ class RTMapOverlay {
         auto n_xsect = end - begin;
 
         if (n_xsect > 1) {
-          const auto& e = d_map.get_edge(eid);
-          const auto& p1 = d_map.get_point(e.p1_idx);
+          const auto& e = d_query_map.get_edge(eid);
+          const auto& p1 = d_query_map.get_point(e.p1_idx);
           auto* curr_xsects = d_xsect_edges_sorted.data() + begin;
 
           thrust::sort(
               thrust::seq, curr_xsects, d_xsect_edges_sorted.data() + end,
               [=](const xsect_t& xsect1, const xsect_t& xsect2) {
-                auto d1 = SQ(xsect1.x - tcb::rational<coefficient_t>(p1.x)) +
-                          SQ(xsect1.y - tcb::rational<coefficient_t>(p1.y));
-                auto d2 = SQ(xsect2.x - tcb::rational<coefficient_t>(p1.x)) +
-                          SQ(xsect2.y - tcb::rational<coefficient_t>(p1.y));
+                // fixme: cast __128 directly
+                auto d1 = SQ(xsect1.x - tcb::rational<__int128>(p1.x)) +
+                          SQ(xsect1.y - tcb::rational<__int128>(p1.y));
+                auto d2 = SQ(xsect2.x - tcb::rational<__int128>(p1.x)) +
+                          SQ(xsect2.y - tcb::rational<__int128>(p1.y));
                 return d1 < d2;
               });
 
           for (int xsect_idx = 0; xsect_idx < n_xsect - 1; xsect_idx++) {
             xsect_t& xsect1 = *(curr_xsects + xsect_idx);
             xsect_t& xsect2 = *(curr_xsects + xsect_idx + 1);
-            tcb::rational<coefficient_t> x1 = xsect1.x, y1 = xsect1.y;
-            tcb::rational<coefficient_t> x2 = xsect2.x, y2 = xsect2.y;
+            tcb::rational<__int128> x1 = xsect1.x, y1 = xsect1.y;
+            tcb::rational<__int128> x2 = xsect2.x, y2 = xsect2.y;
             dev::ExactPoint<internal_coord_t> mid_p(x1 + (x2 - x1) / 2,
                                                     y1 + (y2 - y1) / 2);
 
@@ -533,32 +526,17 @@ class RTMapOverlay {
           }
         }
       });
+
       stream.Sync();
 
-      LaunchParamsPIP params;
-      auto module_id = config_.use_triangle
-                           ? ModuleIdentifier::MODULE_ID_PIP
-                           : ModuleIdentifier::MODULE_ID_PIP_CUSTOM;
-      params.query_map_id = im;
-      params.src_points = d_mid_points;
-      params.dst_edges = d_dst_map.get_edges().data();
-      params.dst_points = d_dst_map.get_points().data();
-      params.scaling = scaling;
-      params.traversable = traverse_handles_[dst_map_id];
-      params.early_term_deviant = config_.early_term_deviant;
-      params.rounding_iter = config_.rounding_iter;
-      params.point_in_polygon = d_mid_point_in_polygon.data();
-#ifndef NDEBUG
-      params.hit_count = ArrayView<uint32_t>(hit_count_[im]).data();
-      params.closer_count = ArrayView<uint32_t>(closer_count_[im]).data();
-      params.above_edge_count =
-          ArrayView<uint32_t>(above_edge_count_[im]).data();
-      params.fail_update_count =
-          ArrayView<uint32_t>(fail_update_count_[im]).data();
-#endif
-      rt_engine_.CopyLaunchParams(stream, params);
-      rt_engine_.Render(stream, module_id,
-                        dim3{(unsigned int) d_mid_points.size(), 1, 1});
+      auto query_config = get_rt_query_config(base_map_id);
+
+      pip_.set_query_config(query_config);
+      pip_.Query(stream, base_map_id, d_mid_points);
+
+      stream.Sync();
+
+      ArrayView<index_t> d_mid_point_closest_eid(pip_.get_closest_eids());
 
       // fill in polygon id for mid-points
       ForEach(stream, d_unique_eids.size(), [=] __device__(size_t idx) mutable {
@@ -571,9 +549,15 @@ class RTMapOverlay {
 
           for (int xsect_idx = 0; xsect_idx < n_xsect - 1; xsect_idx++) {
             xsect_t& xsect1 = *(curr_xsects + xsect_idx);
+            auto eid = d_mid_point_closest_eid[begin + xsect_idx - idx];
+            polygon_id_t ipol = EXTERIOR_FACE_ID;
 
-            xsect1.mid_point_polygon_id =
-                d_mid_point_in_polygon[begin + xsect_idx - idx];
+            if (eid != std::numeric_limits<index_t>::max()) {
+              const auto& e = d_base_map.get_edge(eid);
+              ipol = d_base_map.get_face_id(e);
+            }
+
+            xsect1.mid_point_polygon_id = ipol;
           }
         }
       });
@@ -597,13 +581,12 @@ class RTMapOverlay {
     LOG(INFO) << "Occupied Memory: " << bytes / 1024 / 1024 << " MB";
   }
 
-  const thrust::device_vector<polygon_id_t>& get_point_in_polygon(
-      int im) const {
-    return point_in_polygon_[im];
-  }
-
   const thrust::device_vector<xsect_t>& get_xsect_edges(int im) const {
     return xsect_edges_sorted_[im];
+  }
+
+  const thrust::device_vector<index_t>& get_closet_eids() const {
+    return pip_.get_closest_eids();
   }
 
   ArrayView<xsect_t> get_xsect_edges_queue() {
@@ -612,9 +595,22 @@ class RTMapOverlay {
   }
 
  private:
+  RTQueryConfig get_rt_query_config(int map_id) const {
+    RTQueryConfig pip_config;
+
+    pip_config.use_triangle = config_.use_triangle;
+    pip_config.fau = config_.fau;
+    pip_config.epsilon = config_.epsilon;
+    pip_config.early_term_deviant = config_.early_term_deviant;
+    pip_config.handle_ = traverse_handles_[map_id];
+    return pip_config;
+  }
+
   CONTEXT_T& ctx_;
   OverlayConfig config_;
-  RTEngine rt_engine_;
+  std::shared_ptr<RTEngine> rt_engine_;
+  // Algo
+  PIPRT<CONTEXT_T> pip_;
   uint32_t max_n_xsects_{};
   Queue<xsect_t> xsect_edges_;
   thrust::device_vector<xsect_t> xsect_edges_sorted_[2];
@@ -622,9 +618,9 @@ class RTMapOverlay {
   thrust::device_vector<polygon_id_t> point_in_polygon_[2];
   OptixTraversableHandle traverse_handles_[2];
   // RT
-  RTConfig rt_config_;
   thrust::device_vector<OptixAabb> aabbs_;
   thrust::device_vector<float3> triangle_points_;
+
   // Only for benchmark
 
 #ifndef NDEBUG

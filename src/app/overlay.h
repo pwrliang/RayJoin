@@ -31,10 +31,9 @@ class MapOverlay {
       auto points_num = map->get_points_num();
       point_in_polygon_[im].resize(points_num, DONTKNOW);
       n_edges += map->get_edges_num();
-      points_num = std::max(points_num, points_num);
     }
     lsi_.Init(xsect_factor_ * n_edges);
-    pip_.Init(max_n_points);
+    pip_.Init(max_n_points);  // allocate space
   }
 
   void AddMapsToGrid() { grid_->AddMapsToGrid(ctx_); }
@@ -45,17 +44,29 @@ class MapOverlay {
     LOG(INFO) << "Xsects: " << xsect_edges_.size();
   }
 
-  void LocateVerticesInOtherMap(int src_map_id) {
+  void LocateVerticesInOtherMap(int query_map_id) {
     auto& stream = ctx_.get_stream();
-    int dst_map_id = 1 - src_map_id;
-    auto d_src_map = ctx_.get_map(src_map_id)->DeviceObject();
-    auto d_points = d_src_map.get_points();
-    point_in_polygon_[src_map_id] = pip_.Query(dst_map_id, d_points);
+    int base_map_id = 1 - query_map_id;
+    auto d_base_map = ctx_.get_map(base_map_id)->DeviceObject();
+    auto d_query_map = ctx_.get_map(query_map_id)->DeviceObject();
+    auto d_points = d_query_map.get_points();
 
-    //    thrust::copy(thrust::cuda::par.on(stream.cuda_stream()),
-    //                 d_point_in_polygon.begin(), d_point_in_polygon.end(),
-    //                 point_in_polygon_[src_map_id].begin());
+    pip_.Query(stream, base_map_id, d_points);
 
+    auto& closest_eid = pip_.get_closest_eids();
+
+    thrust::transform(thrust::cuda::par.on(stream.cuda_stream()),
+                      closest_eid.begin(), closest_eid.end(),
+                      point_in_polygon_[query_map_id].begin(),
+                      [=] __device__(index_t eid) {
+                        // point is not in polygon
+                        if (eid == std::numeric_limits<index_t>::max()) {
+                          return EXTERIOR_FACE_ID;
+                        }
+                        const auto& e = d_base_map.get_edge(eid);
+
+                        return d_base_map.get_face_id(e);
+                      });
     stream.Sync();
   }
 
@@ -124,19 +135,19 @@ class MapOverlay {
           thrust::sort(
               thrust::seq, it.first, it.second,
               [=](const xsect_t& xsect1, const xsect_t& xsect2) {
-                auto d1 = SQ(xsect1.x - tcb::rational<coefficient_t>(p1.x)) +
-                          SQ(xsect1.y - tcb::rational<coefficient_t>(p1.y));
-                auto d2 = SQ(xsect2.x - tcb::rational<coefficient_t>(p1.x)) +
-                          SQ(xsect2.y - tcb::rational<coefficient_t>(p1.y));
+                // using __int128 in case of overflow
+                auto d1 = SQ(xsect1.x - tcb::rational<__int128>(p1.x)) +
+                          SQ(xsect1.y - tcb::rational<__int128>(p1.y));
+                auto d2 = SQ(xsect2.x - tcb::rational<__int128>(p1.x)) +
+                          SQ(xsect2.y - tcb::rational<__int128>(p1.y));
                 return d1 < d2;
               });
-
           // access consecutive intersection points
           for (int xsect_idx = 0; xsect_idx < n_xsect - 1; xsect_idx++) {
             xsect_t& xsect1 = *(it.first + xsect_idx);
             xsect_t& xsect2 = *(it.first + xsect_idx + 1);
-            tcb::rational<coefficient_t> x1 = xsect1.x, y1 = xsect1.y;
-            tcb::rational<coefficient_t> x2 = xsect2.x, y2 = xsect2.y;
+            tcb::rational<__int128> x1 = xsect1.x, y1 = xsect1.y;
+            tcb::rational<__int128> x2 = xsect2.x, y2 = xsect2.y;
             dev::ExactPoint<internal_coord_t> mid_p(x1 + (x2 - x1) / 2,
                                                     y1 + (y2 - y1) / 2);
 
@@ -160,12 +171,7 @@ class MapOverlay {
                   d_dst_map /* IN: Map to test */
               );
               if (beste != nullptr) {
-                if (d_dst_map.get_point(beste->p1_idx).x <
-                    d_dst_map.get_point(beste->p2_idx).x) {
-                  ipol = beste->right_polygon_id;
-                } else {
-                  ipol = beste->left_polygon_id;
-                }
+                ipol = d_dst_map.get_face_id(*beste);
                 break;
               }
             }
@@ -181,13 +187,12 @@ class MapOverlay {
     WriteOutputChain(ctx_, xsect_edges_sorted_, point_in_polygon_, path);
   }
 
-  const thrust::device_vector<polygon_id_t>& get_point_in_polygon(
-      int im) const {
-    return point_in_polygon_[im];
-  }
-
   const thrust::device_vector<xsect_t>& get_xsect_edges(int im) const {
     return xsect_edges_sorted_[im];
+  }
+
+  const thrust::device_vector<index_t>& get_closet_eids() const {
+    return pip_.get_closest_eids();
   }
 
   ArrayView<xsect_t> get_xsect_edges() const { return xsect_edges_; }

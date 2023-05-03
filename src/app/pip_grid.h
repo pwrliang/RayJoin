@@ -16,56 +16,47 @@ class PIPGrid : public PIP<CONTEXT_T> {
   PIPGrid(CONTEXT_T& ctx, std::shared_ptr<grid_t> grid)
       : PIP<CONTEXT_T>(ctx), grid_(std::move(grid)) {}
 
-  thrust::device_vector<polygon_id_t>& Query(int map_id,
-                                             ArrayView<point_t> d_points) {
-    auto& stream = this->ctx_.get_stream();
+  void Query(Stream& stream, int base_map_id,
+             ArrayView<point_t> d_query_points) {
     auto& scaling = this->ctx_.get_scaling();
     auto d_grid = grid_->DeviceObject();
-    auto d_map = this->ctx_.get_map(map_id)->DeviceObject();
+    auto d_base_map = this->ctx_.get_map(base_map_id)->DeviceObject();
     auto gsize = grid_->get_grid_size();
+    auto n_points = d_query_points.size();
 
-    this->polygon_ids_.resize(d_points.size());
-    thrust::fill(thrust::cuda::par.on(stream.cuda_stream()),
-                 this->polygon_ids_.begin(), this->polygon_ids_.end(),
-                 DONTKNOW);
+    this->closest_eids_.resize(n_points);
 
-    ArrayView<polygon_id_t> d_point_in_polygon(this->polygon_ids_);
+    ArrayView<index_t> d_closest_eids(this->closest_eids_);
 
-    ForEach(stream, d_points.size(), [=] __device__(size_t point_idx) mutable {
-      polygon_id_t ipol = 0;  // if not hit any edges, vertex is on face0
-      const auto& p = d_points[point_idx];
+    ForEach(stream, n_points, [=] __device__(size_t point_idx) mutable {
+      const auto& p = d_query_points[point_idx];
       auto cx = dev::calculate_cell(gsize, scaling, p.x);
       auto cy = dev::calculate_cell(gsize, scaling, p.y);
 
       assert(cx >= 0 && cx < gsize);
       assert(cy >= 0 && cy < gsize);
+      // init value means point is not in hit
+      auto closest_eid = static_cast<index_t>(DONTKNOW);
 
       // shoot a ray toward positive y-axis
       for (auto curr_cy = cy; curr_cy < gsize; curr_cy++) {
         // find a closest edge of dst-map to this vertex in
         // this cell
         auto* beste = dev::test_against_edges_of_this_cell(
-            p,       /* IN: current vertex */
-            cx,      /* IN: Current cell x */
-            curr_cy, /* IN: Current cell y */
-            d_grid,  /* IN: grid object */
-            scaling, /* IN: Scaling */
-            d_map    /* IN: Map to test */
+            p,         /* IN: current vertex */
+            cx,        /* IN: Current cell x */
+            curr_cy,   /* IN: Current cell y */
+            d_grid,    /* IN: grid object */
+            scaling,   /* IN: Scaling */
+            d_base_map /* IN: Map to test */
         );
         if (beste != nullptr) {
-          if (d_map.get_point(beste->p1_idx).x <
-              d_map.get_point(beste->p2_idx).x) {
-            ipol = beste->right_polygon_id;
-          } else {
-            ipol = beste->left_polygon_id;
-          }
+          closest_eid = beste->eid;
           break;
         }
       }
-      d_point_in_polygon[point_idx] = ipol;
+      d_closest_eids[point_idx] = closest_eid;
     });
-    stream.Sync();
-    return this->polygon_ids_;
   }
 
   std::shared_ptr<grid_t> get_grid() { return grid_; }

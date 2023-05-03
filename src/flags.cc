@@ -14,7 +14,7 @@ DEFINE_double(
     early_term_deviant, 1,
     "Stop searching when the delta of hit distance is greater the threshold");
 DEFINE_double(epsilon, 0.00001, "");
-DEFINE_int32(rounding_iter, 2, "Rounding iterations with nextafter");
+DEFINE_int32(rounding_iter, 1, "Rounding iterations with nextafter");
 DEFINE_bool(fau, false, "Free after use");
 DEFINE_int32(warmup, 5, "");
 DEFINE_int32(repeat, 5, "");

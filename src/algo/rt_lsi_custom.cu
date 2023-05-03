@@ -30,7 +30,8 @@ extern "C" __global__ void __intersection__lsi() {
   const auto& query_e_p1 = params.query_points[query_e.p1_idx];
   const auto& query_e_p2 = params.query_points[query_e.p2_idx];
 
-  if (rayjoin::dev::intersect_test<edge_t, edge_t, point_t, double>(
+  if (rayjoin::dev::intersect_test<edge_t, edge_t, point_t,
+                                   rayjoin::coefficient_t>(
           base_e, base_e_p1, base_e_p2, query_e, query_e_p1, query_e_p2)) {
     xsect_t xsect;
 
@@ -41,6 +42,7 @@ extern "C" __global__ void __intersection__lsi() {
 }
 
 extern "C" __global__ void __raygen__lsi() {
+  using coefficient_t = rayjoin::coefficient_t;
   const auto& scaling = params.scaling;
   const auto& edges = params.query_edges;
   auto rounding_iter = params.rounding_iter;
@@ -69,10 +71,8 @@ extern "C" __global__ void __raygen__lsi() {
         SWAP(p1, p2);
       }
 
-      // use double is much faster than rational
-      // this does not need to be accurate
-      double a = -e.a / e.b;
-      double b = -e.c / e.b;
+      auto a = (double) -e.a / e.b;
+      auto b = (double) -e.c / e.b;
 
       x1 = next_float_from_double(scaling.UnscaleX(p1.x), -1, rounding_iter);
       y1 = scaling.UnscaleY(a * scaling.ScaleX(x1) + b);

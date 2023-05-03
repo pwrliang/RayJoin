@@ -13,69 +13,27 @@
 #include "util/timer.h"
 
 namespace rayjoin {
-template <typename CONTEXT_T>
-void DebugPrint(CONTEXT_T& ctx) {
-#ifndef NDEBUG
-  auto print_edges = [](CONTEXT_T& ctx, int map_id,
-                        const thrust::device_vector<index_t>& eids) {
-    auto& stream = ctx.get_stream();
-    auto d_map = ctx.get_map(map_id)->DeviceObject();
-    auto scaling = ctx.get_scaling();
-    printf("=========== Map %d Edges ===========\n", map_id);
-    ForEach(
-        stream, eids.size(),
-        [=] __device__(size_t idx, ArrayView<index_t> eids) {
-          auto eid = eids[idx];
-          assert(eid < d_map.get_edges_num());
-          const auto& e = d_map.get_edge(eid);
-          auto& p1 = d_map.get_point(e.p1_idx);
-          auto& p2 = d_map.get_point(e.p2_idx);
-          auto x1 = scaling.UnscaleX(p1.x);
-          auto y1 = scaling.UnscaleY(p1.y);
-          auto x2 = scaling.UnscaleX(p2.x);
-          auto y2 = scaling.UnscaleY(p2.y);
-
-          printf("eid: %u (%lf, %lf) - (%lf, %lf)\n", (index_t) eid, x1, y1, x2,
-                 y2);
-        },
-        ArrayView<index_t>(eids));
-    stream.Sync();
-  };
-  {
-    thrust::device_vector<index_t> eids;
-    eids.push_back(93615);
-    eids.push_back(226567);
-    print_edges(ctx, 0, eids);
-  }
-
-  {
-    thrust::device_vector<index_t> eids;
-    eids.push_back(87230);
-    eids.push_back(230119);
-    print_edges(ctx, 1, eids);
-  }
-#endif
-}
-
 template <typename CONTEXT_T, typename OVERLAY_IMPL_T>
 void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
                  const OverlayConfig& config) {
   using xsect_t = dev::Intersection<typename CONTEXT_T::internal_coord_t>;
+  using map_t = typename CONTEXT_T::map_t;
   MapOverlay<CONTEXT_T> cuda_grid(ctx, config.grid_size, config.xsect_factor);
 
   cuda_grid.Init();
   cuda_grid.AddMapsToGrid();
   cuda_grid.IntersectEdge(true);
-  cuda_grid.ComputeOutputPolygons();
+  //  cuda_grid.ComputeOutputPolygons();
   {
-    auto total_n_xsects = cuda_grid.get_xsect_edges().size();
-    auto rt_n_xsects = overlay.get_xsect_edges_queue().size();
-    int n_diff = total_n_xsects - rt_n_xsects;
+    auto n_xsects_ans = cuda_grid.get_xsect_edges().size();
+    auto n_xsects_res = overlay.get_xsect_edges_queue().size();
+    int n_diff = abs((int) (n_xsects_ans - n_xsects_res));
 
     if (n_diff != 0) {
       LOG(ERROR) << "LSI "
-                 << " Total xsects: " << total_n_xsects << " n diff: " << n_diff
-                 << " Error rate: " << (double) n_diff / total_n_xsects * 100
+                 << " xsects (Answer): " << n_xsects_ans
+                 << " xsects (Result): " << n_xsects_res
+                 << " Error rate: " << (double) n_diff / n_xsects_ans * 100
                  << " %";
 
       auto write_to = [](ArrayView<xsect_t> xsects, const char* path) {
@@ -100,98 +58,81 @@ void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
       };
 
       write_to(ArrayView<xsect_t>(cuda_grid.get_xsect_edges()),
-               "/tmp/xsects.grid");
-      write_to(overlay.get_xsect_edges_queue(), "/tmp/xsects.rt");
-      DebugPrint(ctx);
+               "/tmp/xsects.ans");
+      write_to(overlay.get_xsect_edges_queue(), "/tmp/xsects.res");
     } else {
       LOG(INFO) << "LSI passed check";
     }
   }
+
   FOR2 {
     LOG(INFO) << "Checking point in polygon";
 
+    overlay.LocateVerticesInOtherMap(im);
     cuda_grid.LocateVerticesInOtherMap(im);
 
-    pinned_vector<polygon_id_t> point_in_polygon(
-        cuda_grid.get_point_in_polygon(im));
-    pinned_vector<polygon_id_t> point_in_polygon_rt(
-        overlay.get_point_in_polygon(im));
+    pinned_vector<index_t> closest_eids_ans(cuda_grid.get_closet_eids());
+    pinned_vector<index_t> closest_eids_res(overlay.get_closet_eids());
     size_t n_diff = 0;
+    size_t n_points = closest_eids_ans.size();
 
-    CHECK_EQ(point_in_polygon.size(), point_in_polygon_rt.size());
+    CHECK_EQ(closest_eids_res.size(), n_points);
 
-    for (size_t point_idx = 0; point_idx < point_in_polygon.size();
-         point_idx++) {
-      if (point_in_polygon[point_idx] != point_in_polygon_rt[point_idx]) {
-        n_diff++;
-        if (n_diff < 10) {
-          auto p = ctx.get_planar_graph(im)->points[point_idx];
+    auto query_map = ctx.get_map(im);
+    auto base_map = ctx.get_map(1 - im);
+    auto scaling = ctx.get_scaling();
 
-          printf("Diff! Map: %d point: %zu, (%lf, %lf), ans: %d, res: %d\n", im,
-                 point_idx, (double) p.x, (double) p.y,
-                 point_in_polygon[point_idx], point_in_polygon_rt[point_idx]);
+    for (size_t point_idx = 0; point_idx < n_points; point_idx++) {
+      auto closest_eid_ans = closest_eids_ans[point_idx];
+      auto closest_eid_res = closest_eids_res[point_idx];
+
+      if (closest_eid_res != closest_eid_ans) {
+//        printf("res %u vs ans %u\n", closest_eid_res, closest_eid_ans);
+
+        auto not_hit = std::numeric_limits<index_t>::max();
+        auto p = ctx.get_planar_graph(im)->points[point_idx];
+        auto scaled_p = query_map->get_point(point_idx);
+        bool diff = false;
+        std::string ep_ans = "miss";
+        std::string ep_res = "miss";
+        std::string scaled_ep_ans = "miss";
+        std::string scaled_ep_res = "miss";
+
+        if (closest_eid_ans != not_hit) {
+          ep_ans = base_map->EndpointsToString(closest_eid_ans, scaling);
+          scaled_ep_ans = base_map->ScaledEndpointsToString(closest_eid_ans);
+        }
+
+        if (closest_eid_res != not_hit) {
+          ep_res = base_map->EndpointsToString(closest_eid_res, scaling);
+          scaled_ep_res = base_map->ScaledEndpointsToString(closest_eid_res);
+        }
+
+        if (scaled_ep_res != scaled_ep_ans) {
+          diff = true;
+        }
+
+        if (diff && n_diff < 10) {
+          printf("point %lu (%.8lf, %.8lf) ans %u, res %u %s %s\n", point_idx,
+                 p.x, p.y, closest_eid_ans, closest_eid_res, ep_ans.c_str(),
+                 ep_res.c_str());
+          printf("scaled point %lu (%ld, %ld) ans %u, res %u %s %s\n",
+                 point_idx, scaled_p.x, scaled_p.y, closest_eid_ans,
+                 closest_eid_res, scaled_ep_ans.c_str(), scaled_ep_res.c_str());
+        }
+
+        if (diff) {
+          n_diff++;
         }
       }
     }
     if (n_diff != 0) {
-      LOG(ERROR) << "Map: " << im
-                 << " Total points: " << point_in_polygon.size()
-                 << " n diff: " << n_diff << " Error rate: "
-                 << (double) n_diff / point_in_polygon.size() * 100 << " %";
+      LOG(ERROR) << "Map: " << im << " Total points: " << n_points
+                 << " n diff: " << n_diff
+                 << " Error rate: " << (double) n_diff / n_points * 100 << " %";
     } else {
       LOG(INFO) << "Map: " << im << " passed check";
     }
-#if 0
-    LOG(INFO) << "Checking intersections";
-
-    thrust::host_vector<xsect_t> xsect(overlay.get_xsect_edges(im));
-    thrust::host_vector<xsect_t> xsect_rt(overlay.get_xsect_edges(im));
-    auto comparator = [=](const xsect_t& x1, const xsect_t& x2) {
-      if (x1.x != x2.x) {
-        return x1.x < x2.x;
-      }
-      //      if (x1.y != x2.y) {
-      return x1.y < x2.y;
-      //      }
-      //      if (x1.eid[0] != x2.eid[0]) {
-      //        return x1.eid[0] < x2.eid[0];
-      //      }
-      //      return x1.eid[1] < x2.eid[1];
-    };
-
-    std::sort(xsect.begin(), xsect.end(), comparator);
-    std::sort(xsect_rt.begin(), xsect_rt.end(), comparator);
-
-    CHECK_EQ(xsect.size(), xsect_rt.size());
-    for (size_t xsect_idx = 0; xsect_idx < xsect.size(); xsect_idx++) {
-      auto& xsect_ans = xsect[xsect_idx];
-      auto& xsect_res = xsect_rt[xsect_idx];
-
-      //      if (xsect_ans.eid[0] != xsect_res.eid[0] ||
-      //          xsect_ans.eid[1] != xsect_res.eid[1]) {
-      //        n_diff++;
-      //      }
-
-      if (xsect_ans.x != xsect_res.x || xsect_ans.y != xsect_res.y) {
-        n_diff++;
-      }
-      if (xsect_ans.mid_point_polygon_id != xsect_res.mid_point_polygon_id) {
-        LOG(INFO) << xsect_ans.mid_point_polygon_id << " vs "
-                  << xsect_res.mid_point_polygon_id << " diff: "
-                  << xsect_ans.mid_point_polygon_id -
-                         xsect_res.mid_point_polygon_id;
-
-        n_diff++;
-      }
-    }
-
-    if (n_diff != 0) {
-      LOG(FATAL) << "Map: " << im << " Total xsects: " << xsect.size()
-                 << " n diff: " << n_diff;
-    } else {
-      LOG(INFO) << "Map: " << im << " passed check";
-    }
-#endif
   }
 }
 
@@ -211,7 +152,7 @@ void RunOverlay(const OverlayConfig& config) {
     RTMapOverlay<context_t> overlay(ctx, config);
 
     timer_next("Init");
-    overlay.Init(config.exec_root);
+    overlay.Init();
 
     FOR2 {
       auto prefix = "Map " + std::to_string(im) + ": ";
@@ -228,7 +169,7 @@ void RunOverlay(const OverlayConfig& config) {
 
       timer_next(prefix + "Locate vertices in other map");
       overlay.LocateVerticesInOtherMap(im);
-    };
+    }
 
     //    timer_next("Dump Intersection");
     //    overlay.DumpIntersection();
@@ -248,9 +189,6 @@ void RunOverlay(const OverlayConfig& config) {
       timer_next("Write to file");
       overlay.WriteResult(config.output_path.c_str());
     }
-
-    //    timer_next("Debug Print");
-    //    DebugPrint(ctx);
   } else if (config.mode == "grid") {
     MapOverlay<context_t> overlay(ctx, config.grid_size, config.xsect_factor);
 

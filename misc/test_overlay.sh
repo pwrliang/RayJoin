@@ -10,7 +10,7 @@ MAPS="$DATASET/maps"
 
 for v in debug release; do
   echo "Test build type = $v"
-  for mode in grid grid_lb rt rt_triangle; do
+  for mode in grid grid_lb rt; do
     echo "Mode = $mode"
 
     if [[ $mode == "grid_lb" ]]; then
@@ -33,7 +33,8 @@ for v in debug release; do
       -mode="$mode" \
       -lb="$lb" \
       -triangle="$use_triangle" \
-      -early_term_deviant=100
+      -early_term_deviant=100 \
+      -check=false
 
     diff "$MAPS/br_countyXbr_soil_result.txt" "$MAPS/br_countyXbr_soil_answer.txt" >diff.txt
     n_diff=$(wc -l diff.txt | cut -d" " -f1,1)

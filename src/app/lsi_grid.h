@@ -57,7 +57,7 @@ DEV_INLINE void intersect_one_cell(
       }
 #endif
 #endif
-      tcb::rational<COEFFICIENT_T> xsect_x, xsect_y;
+      tcb::rational<__int128> xsect_x, xsect_y;
       if (intersect_test(e1, e1_p1, e1_p2, e2, e2_p1, e2_p2, xsect_x,
                          xsect_y)) {
         auto xsect_cell_x = dev::calculate_cell(gsize, scaling, xsect_x);
@@ -111,7 +111,7 @@ DEV_INLINE void intersect_one_cell_lb(
         const auto& e2 = map2.get_edge(eid2);
         const auto& e2_p1 = map2.get_point(e2.p1_idx);
         const auto& e2_p2 = map2.get_point(e2.p2_idx);
-        tcb::rational<COEFFICIENT_T> xsect_x, xsect_y;
+        tcb::rational<__int128> xsect_x, xsect_y;
 
         if (intersect_test(e1, e1_p1, e1_p2, e2, e2_p1, e2_p2, xsect_x,
                            xsect_y)) {
@@ -149,6 +149,7 @@ class LSIGrid : public LSI<CONTEXT_T> {
   LSIGrid(CONTEXT_T& ctx, std::shared_ptr<grid_t> grid)
       : LSI<CONTEXT_T>(ctx), grid_(std::move(grid)), load_balancing_(false) {}
 
+  // fixme: respect query map id
   ArrayView<xsect_t> Query(int query_map_id) override {
     auto& ctx = this->get_context();
     auto& scaling = ctx.get_scaling();

@@ -6,6 +6,7 @@
 #define PRIMITIVE_HEIGHT (0.01)
 #define EXTERIOR_FACE_ID (0)
 #define FOR2 for (int im = 0; im < 2; im++)
+
 namespace rayjoin {
 using index_t = uint32_t;
 using polygon_id_t = int;
