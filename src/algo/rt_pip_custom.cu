@@ -71,9 +71,6 @@ extern "C" __global__ void __intersection__pip_custom() {
 
   // current point is above the current edge
   if (diff_y > 0) {
-#ifndef NDEBUG
-    params.above_edge_count[point_idx]++;
-#endif
     return;
   }
 
@@ -112,6 +109,7 @@ extern "C" __global__ void __intersection__pip_custom() {
 
 #ifndef NDEBUG
   params.closer_count[point_idx]++;
+  params.last_update_count[point_idx] = params.hit_count[point_idx];
 #endif
 }
 

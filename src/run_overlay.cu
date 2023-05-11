@@ -87,7 +87,8 @@ void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
       auto closest_eid_res = closest_eids_res[point_idx];
 
       if (closest_eid_res != closest_eid_ans) {
-//        printf("res %u vs ans %u\n", closest_eid_res, closest_eid_ans);
+        //        printf("res %u vs ans %u\n", closest_eid_res,
+        //        closest_eid_ans);
 
         auto not_hit = std::numeric_limits<index_t>::max();
         auto p = ctx.get_planar_graph(im)->points[point_idx];
@@ -169,6 +170,13 @@ void RunOverlay(const OverlayConfig& config) {
 
       timer_next(prefix + "Locate vertices in other map");
       overlay.LocateVerticesInOtherMap(im);
+
+      if (!config.profiling.empty()) {
+        auto log_path =
+            config.profiling + "/pip_query_map_" + std::to_string(im) + ".csv";
+        LOG(INFO) << "Dumping PIP profiling results to " << log_path;
+        overlay.DumpStatistics(log_path.c_str());
+      }
     }
 
     //    timer_next("Dump Intersection");
@@ -189,6 +197,7 @@ void RunOverlay(const OverlayConfig& config) {
       timer_next("Write to file");
       overlay.WriteResult(config.output_path.c_str());
     }
+
   } else if (config.mode == "grid") {
     MapOverlay<context_t> overlay(ctx, config.grid_size, config.xsect_factor);
 

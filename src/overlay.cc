@@ -37,6 +37,7 @@ int main(int argc, char* argv[]) {
   config.use_triangle = FLAGS_triangle;
   config.early_term_deviant = FLAGS_early_term_deviant;
   config.fau = FLAGS_fau;
+  config.profiling = FLAGS_profile;
 
   rayjoin::RunOverlay(config);
 

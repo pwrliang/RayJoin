@@ -1,6 +1,9 @@
 
 #ifndef APP_PIP_RT_H
 #define APP_PIP_RT_H
+#include <thrust/host_vector.h>
+
+#include <fstream>
 #include <utility>
 
 #include "app/rt_query_config.h"
@@ -57,12 +60,12 @@ class PIPRT : public PIP<CONTEXT_T> {
 #ifndef NDEBUG
     hit_count_.resize(points_num, 0);
     closer_count_.resize(points_num, 0);
-    above_edge_count_.resize(points_num, 0);
+    last_update_count_.resize(points_num, 0);
     fail_update_count_.resize(points_num, 0);
 
     params.hit_count = ArrayView<uint32_t>(hit_count_).data();
     params.closer_count = ArrayView<uint32_t>(closer_count_).data();
-    params.above_edge_count = ArrayView<uint32_t>(above_edge_count_).data();
+    params.last_update_count = ArrayView<uint32_t>(last_update_count_).data();
     params.fail_update_count = ArrayView<uint32_t>(fail_update_count_).data();
 #endif
     rt_engine_->CopyLaunchParams(stream, params);
@@ -71,13 +74,37 @@ class PIPRT : public PIP<CONTEXT_T> {
     stream.Sync();
   }
 
+  void DumpStatistics(const char* path) {
+#ifndef NDEBUG
+    thrust::host_vector<uint32_t> hit_count = hit_count_;
+    thrust::host_vector<uint32_t> closer_count = closer_count_;
+    thrust::host_vector<uint32_t> last_update_count = last_update_count_;
+    thrust::host_vector<uint32_t> fail_update_count = fail_update_count_;
+
+    std::ofstream ofs(path);
+
+    ofs << "point idx,hit count,closer count,last update count,fail update "
+           "count\n";
+
+    for (size_t point_idx = 0; point_idx < hit_count.size(); point_idx++) {
+      ofs << point_idx << "," << hit_count[point_idx] << ","
+          << closer_count[point_idx] << "," << last_update_count[point_idx]
+          << "," << fail_update_count[point_idx] << "\n";
+    }
+
+    ofs.close();
+#else
+    LOG(FATAL) << "DumpStatistics for PIP only works in debug mode";
+#endif
+  }
+
  protected:
   std::shared_ptr<RTEngine> rt_engine_;
   RTQueryConfig query_config_;
 #ifndef NDEBUG
   thrust::device_vector<uint32_t> hit_count_;
   thrust::device_vector<uint32_t> closer_count_;
-  thrust::device_vector<uint32_t> above_edge_count_;
+  thrust::device_vector<uint32_t> last_update_count_;
   thrust::device_vector<uint32_t> fail_update_count_;
 #endif
 };

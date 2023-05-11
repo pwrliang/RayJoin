@@ -18,6 +18,7 @@ struct OverlayConfig {
   std::string mode;
   bool fau;
   bool check;
+  std::string profiling;
   bool lb;
   bool use_triangle;
 };

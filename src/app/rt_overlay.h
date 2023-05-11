@@ -55,12 +55,6 @@ class RTMapOverlay {
       auto points_num = ctx_.get_map(im)->get_points_num();
       required_space += SIZEOF_ELEM(point_in_polygon_[im]) * points_num;
       required_space += SIZEOF_ELEM(xsect_edges_sorted_[im]);
-#ifndef NDEBUG
-      hit_count_[im].resize(points_num, 0);
-      closer_count_[im].resize(points_num, 0);
-      above_edge_count_[im].resize(points_num, 0);
-      fail_update_count_[im].resize(points_num, 0);
-#endif
     }
     LOG(INFO) << "Required Space: " << required_space / 1024 / 1024 << " MB";
 
@@ -345,68 +339,7 @@ class RTMapOverlay {
     stream.Sync();
   }
 
-  void RTStatistics(int src_map_id) {
-#ifndef NDEBUG
-    pinned_vector<uint32_t> hit_count = hit_count_[src_map_id];
-    pinned_vector<uint32_t> closer_count = closer_count_[src_map_id];
-    pinned_vector<uint32_t> above_edge_count = above_edge_count_[src_map_id];
-    pinned_vector<uint32_t> fail_update_count = fail_update_count_[src_map_id];
-
-    uint32_t max_hit_count = 0;
-    uint32_t max_closer_count = 0;
-    uint32_t max_above_edge_count = 0;
-    uint32_t max_fail_update_count = 0;
-    size_t total_hit_count = 0;
-    size_t total_closer_count = 0;
-    size_t total_above_edge_count = 0;
-    size_t total_fail_update_count = 0;
-    index_t pid_max_hit_count = 0;
-    index_t pid_max_closer_count = 0;
-    index_t pid_max_above_edge_count = 0;
-    index_t pid_max_fail_update_count = 0;
-
-    for (size_t point_idx = 0; point_idx < hit_count.size(); point_idx++) {
-      if (hit_count[point_idx] > max_hit_count) {
-        max_hit_count = hit_count[point_idx];
-        pid_max_hit_count = point_idx;
-      }
-      if (closer_count[point_idx] > max_closer_count) {
-        max_closer_count = closer_count[point_idx];
-        pid_max_closer_count = point_idx;
-      }
-      if (above_edge_count[point_idx] > max_above_edge_count) {
-        max_above_edge_count = above_edge_count[point_idx];
-        pid_max_above_edge_count = point_idx;
-      }
-      if (fail_update_count[point_idx] > max_fail_update_count) {
-        max_fail_update_count = fail_update_count[point_idx];
-        pid_max_fail_update_count = point_idx;
-      }
-
-      total_hit_count += hit_count[point_idx];
-      total_closer_count += closer_count[point_idx];
-      total_above_edge_count += above_edge_count[point_idx];
-      total_fail_update_count += fail_update_count[point_idx];
-    }
-
-    LOG(INFO) << "--------- MAP: " << src_map_id << " ---------";
-
-    LOG(INFO) << "Max hit count: " << max_hit_count
-              << " pid: " << pid_max_hit_count
-              << " Avg hit count: " << total_hit_count / hit_count.size();
-    LOG(INFO) << "Max closer count: " << max_closer_count
-              << " pid: " << pid_max_closer_count
-              << " Avg closer count: " << total_closer_count / hit_count.size();
-    LOG(INFO) << "Max Above edge count: " << max_above_edge_count
-              << " pid: " << pid_max_above_edge_count
-              << " Avg Above edge count: "
-              << total_above_edge_count / hit_count.size();
-    LOG(INFO) << "Max fail update count: " << max_fail_update_count
-              << " pid: " << pid_max_fail_update_count
-              << " Avg fail update count: "
-              << total_fail_update_count / hit_count.size();
-#endif
-  }
+  void DumpStatistics(const char* path) { pip_.DumpStatistics(path); }
 
   void ComputeOutputPolygons() {
     using point_t = typename CONTEXT_T::map_t::point_t;
@@ -620,15 +553,6 @@ class RTMapOverlay {
   // RT
   thrust::device_vector<OptixAabb> aabbs_;
   thrust::device_vector<float3> triangle_points_;
-
-  // Only for benchmark
-
-#ifndef NDEBUG
-  thrust::device_vector<uint32_t> hit_count_[2];
-  thrust::device_vector<uint32_t> closer_count_[2];
-  thrust::device_vector<uint32_t> above_edge_count_[2];
-  thrust::device_vector<uint32_t> fail_update_count_[2];
-#endif
 };
 
 }  // namespace rayjoin

@@ -68,7 +68,7 @@ struct LaunchParamsPIP {
 #ifndef NDEBUG
   uint32_t* hit_count;
   uint32_t* closer_count;
-  uint32_t* above_edge_count;
+  uint32_t* last_update_count;
   uint32_t* fail_update_count;
 #endif
 };

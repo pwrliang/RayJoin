@@ -68,9 +68,6 @@ extern "C" __global__ void __anyhit__pip() {
 #endif
   // current point is above the current edge
   if (diff_y > 0) {
-#ifndef NDEBUG
-    params.above_edge_count[point_idx]++;
-#endif
     optixIgnoreIntersection();
     return;
   }
@@ -111,6 +108,7 @@ extern "C" __global__ void __anyhit__pip() {
 
 #ifndef NDEBUG
   params.closer_count[point_idx]++;
+  params.last_update_count[point_idx] = params.hit_count[point_idx];
 #endif
   optixIgnoreIntersection();
 }
