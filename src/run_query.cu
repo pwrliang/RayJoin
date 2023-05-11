@@ -153,7 +153,7 @@ void RunLSIQuery(const QueryConfig& config) {
     lsi = new LSIGrid<context_t>(ctx, grid);
     dynamic_cast<LSIGrid<context_t>*>(lsi)->set_load_balancing(config.lb);
   } else if (config.mode == "lbvh") {
-    lsi = new LSILBVH<context_t>(ctx, config.profiling);
+    lsi = new LSILBVH<context_t>(ctx, !config.profiling.empty());
   } else if (config.mode == "rt") {
     auto rt_engine = std::make_shared<RTEngine>();
     RTConfig rt_config = get_default_rt_config(config.exec_root);
@@ -182,7 +182,7 @@ void RunLSIQuery(const QueryConfig& config) {
   if (config.mode == "grid") {
     auto grid = dynamic_cast<LSIGrid<context_t>*>(lsi)->get_grid();
 
-    grid->AddMapsToGrid(ctx, config.profiling);
+    grid->AddMapsToGrid(ctx, !config.profiling.empty());
   } else if (config.mode == "rt") {
     dynamic_cast<LSIRT<context_t>*>(lsi)->BuildIndex(query_map_id);
   }
@@ -248,7 +248,7 @@ void RunPIPQuery(const QueryConfig& config) {
   if (config.mode == "grid") {
     auto grid = dynamic_cast<PIPGrid<context_t>*>(pip)->get_grid();
 
-    grid->AddMapToGrid(ctx, 0, config.profiling);
+    grid->AddMapToGrid(ctx, 0, !config.profiling.empty());
   } else if (config.mode == "rt") {
     // FIXME
     //    dynamic_cast<PIPRT<context_t>*>(pip)->BuildIndex(0);

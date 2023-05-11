@@ -21,7 +21,7 @@ struct QueryConfig {
   bool lb;
   bool use_triangle;
   bool print_histo;
-  bool profiling;
+  std::string profiling;
   double epsilon;
   bool fau;
   float early_term_deviant;
