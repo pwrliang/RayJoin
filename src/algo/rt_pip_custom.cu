@@ -53,6 +53,7 @@ extern "C" __global__ void __intersection__pip_custom() {
 
   auto xsect_y = (double) (-e.a * x_src_p - e.c) / e.b;
   auto diff_y = y_src_p - xsect_y;
+  auto t = scaling.UnscaleY(xsect_y) - scaling.UnscaleY(y_src_p);
 
   if (diff_y == 0) {
     diff_y = (query_map_id == 0 ? -e.a : e.a);
@@ -70,8 +71,6 @@ extern "C" __global__ void __intersection__pip_custom() {
   if (diff_y > 0) {
     return;
   }
-
-  auto t = scaling.UnscaleY(xsect_y) - scaling.UnscaleY(y_src_p);
 
   if (xsect_y > best_y) {
 #ifndef NDEBUG
@@ -98,9 +97,9 @@ extern "C" __global__ void __intersection__pip_custom() {
   pack64(&best_y, best_y_storage.x, best_y_storage.y);
   optixSetPayload_1(best_y_storage.x);
   optixSetPayload_2(best_y_storage.y);
-
-  optixReportIntersection(t, 0);  // must report intersection to stop searching
   optixSetPayload_3(eid);
+  optixReportIntersection(
+      t, 0);  // must report intersection to narrow down searching
 
 #ifndef NDEBUG
   params.closer_count[point_idx]++;

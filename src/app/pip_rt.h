@@ -83,7 +83,7 @@ class PIPRT : public PIP<CONTEXT_T> {
 
     std::ofstream ofs(path);
 
-    ofs << "point idx,hit count,closer count,last update count,fail update "
+    ofs << "point_idx,hit_count,closer_count,last_update_count,fail_update_"
            "count\n";
 
     for (size_t point_idx = 0; point_idx < hit_count.size(); point_idx++) {
