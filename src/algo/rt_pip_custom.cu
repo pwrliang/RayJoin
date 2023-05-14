@@ -15,14 +15,11 @@ enum { SURFACE_RAY_TYPE = 0, RAY_TYPE_COUNT };
 
 extern "C" __constant__ rayjoin::LaunchParamsPIP params;
 
-extern "C" __global__ void __anyhit__pip_custom() { optixTerminateRay(); }
-
 extern "C" __global__ void __intersection__pip_custom() {
   using coefficient_t = rayjoin::coefficient_t;
   float3 ray_orig = optixGetWorldRayOrigin();
   auto point_idx = optixGetPayload_0();
   using internal_coord_t = typename rayjoin::LaunchParamsPIP::internal_coord_t;
-  auto init_best_y = std::numeric_limits<internal_coord_t>::max();
   double best_y;
   uint2 best_y_storage{optixGetPayload_1(), optixGetPayload_2()};
   auto eid = optixGetPrimitiveIndex();
@@ -74,13 +71,9 @@ extern "C" __global__ void __intersection__pip_custom() {
     return;
   }
 
+  auto t = scaling.UnscaleY(xsect_y) - scaling.UnscaleY(y_src_p);
+
   if (xsect_y > best_y) {
-    auto deviant = scaling.UnscaleY(xsect_y) - scaling.UnscaleY(best_y);
-    // continue search only if current primitive is not deviant too much
-    if (best_y != init_best_y && deviant > params.early_term_deviant) {
-      // FIXME(liang): early termination
-      //      optixReportIntersection(0, 0);  // terminate ray
-    }
 #ifndef NDEBUG
     params.fail_update_count[point_idx]++;
 #endif
@@ -105,6 +98,8 @@ extern "C" __global__ void __intersection__pip_custom() {
   pack64(&best_y, best_y_storage.x, best_y_storage.y);
   optixSetPayload_1(best_y_storage.x);
   optixSetPayload_2(best_y_storage.y);
+
+  optixReportIntersection(t, 0);  // must report intersection to stop searching
   optixSetPayload_3(eid);
 
 #ifndef NDEBUG
@@ -143,12 +138,7 @@ extern "C" __global__ void __raygen__pip_custom() {
     assert(ray_origin.y <= y);
 
     ray_origin.z = 0;
-
-    //    if (fx == x) {
-
     ray_origin.x = fx;
-
-    //    ray_origin.x = next_float_from_double(ray_origin.x, -1, 1);
 
     optixTrace(params.traversable, ray_origin, ray_dir,
                tmin,  // tmin
@@ -162,34 +152,5 @@ extern "C" __global__ void __raygen__pip_custom() {
                point_idx, best_y_storage.x, best_y_storage.y, best_e_eid);
 
     params.closest_eids[point_idx] = best_e_eid;
-    //    } else {
-    //      ray_origin.x = next_float_from_double(fx, -1, 1);
-    //
-    //      optixTrace(params.traversable, ray_origin, ray_dir,
-    //                 tmin,  // tmin
-    //                 tmax,  // tmax
-    //                 0,     // rayTime
-    //                 OptixVisibilityMask(255),
-    //                 OPTIX_RAY_FLAG_NONE,  // OPTIX_RAY_FLAG_NONE,
-    //                 SURFACE_RAY_TYPE,     // SBT offset
-    //                 RAY_TYPE_COUNT,       // SBT stride
-    //                 SURFACE_RAY_TYPE,     // missSBTIndex
-    //                 point_idx, best_y_storage.x, best_y_storage.y,
-    //                 best_e_eid_storage.x, best_e_eid_storage.y);
-    //
-    //      ray_origin.x = next_float_from_double(fx, 1, 1);
-    //
-    //      optixTrace(params.traversable, ray_origin, ray_dir,
-    //                 tmin,  // tmin
-    //                 tmax,  // tmax
-    //                 0,     // rayTime
-    //                 OptixVisibilityMask(255),
-    //                 OPTIX_RAY_FLAG_NONE,  // OPTIX_RAY_FLAG_NONE,
-    //                 SURFACE_RAY_TYPE,     // SBT offset
-    //                 RAY_TYPE_COUNT,       // SBT stride
-    //                 SURFACE_RAY_TYPE,     // missSBTIndex
-    //                 point_idx, best_y_storage.x, best_y_storage.y,
-    //                 best_e_eid_storage.x, best_e_eid_storage.y);
-    //    }
   }
 }

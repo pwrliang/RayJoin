@@ -179,11 +179,8 @@ void RunOverlay(const OverlayConfig& config) {
       }
     }
 
-    //    timer_next("Dump Intersection");
-    //    overlay.DumpIntersection();
-    //
-    //    timer_next("Print statistics");
-    //    FOR2 { overlay.RTStatistics(im); };
+    timer_next("Dump Intersection");
+    overlay.DumpIntersection();
 
     timer_next("Computer output polygons");
     overlay.ComputeOutputPolygons();

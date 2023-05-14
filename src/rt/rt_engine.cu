@@ -64,7 +64,6 @@ RTConfig get_default_rt_config(const std::string& exec_root) {
   mod_pip_custom.set_function_suffix("pip_custom");
   mod_pip_custom.set_launch_params_name("params");
   mod_pip_custom.EnableIsIntersection();
-  mod_pip_custom.EnableAnyHit();
   mod_pip_custom.set_n_payload(4);
 
   if (access(mod_pip_custom.get_program_name().c_str(), R_OK) != 0) {
@@ -386,8 +385,8 @@ OptixTraversableHandle RTEngine::buildAccel(Stream& stream,
   OptixBuildInput build_input = {};
   CUdeviceptr d_aabb = THRUST_TO_CUPTR(aabbs.data());
   // Setup AABB build input. Don't disable AH.
-  uint32_t build_input_flags[1] = {OPTIX_GEOMETRY_FLAG_NONE |
-                                   OPTIX_GEOMETRY_FLAG_DISABLE_ANYHIT};
+  // OPTIX_GEOMETRY_FLAG_DISABLE_ANYHIT
+  uint32_t build_input_flags[1] = {OPTIX_GEOMETRY_FLAG_NONE};
   uint32_t num_prims = aabbs.size();
 
   CHECK_EQ(reinterpret_cast<uint64_t>(aabbs.data()) %
