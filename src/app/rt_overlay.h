@@ -7,6 +7,7 @@
 #include "app/overlay_config.h"
 #include "app/pip_rt.h"
 #include "grid/uniform_grid.h"
+#include "rt/primitive.h"
 #include "rt/rt_engine.h"
 #include "util/bitset.h"
 #include "util/cta_scheduler.h"
@@ -80,95 +81,15 @@ class RTMapOverlay {
     auto& stream = ctx_.get_stream();
     const auto& scaling = ctx_.get_scaling();
     auto d_map = ctx_.get_map(map_id)->DeviceObject();
-    auto ne = d_map.get_edges_num();
-    auto rounding_iter = config_.rounding_iter;
 
     if (config_.use_triangle) {
-      auto bb = ctx_.get_bounding_box();
-
-      triangle_points_.resize(d_map.get_edges_num() * 3);
-
-      ArrayView<float3> d_triangle_points(triangle_points_);
-
-      ForEach(stream, ne, [=] __device__(uint32_t eid) mutable {
-        const auto& e = d_map.get_edge(eid);
-        auto p1_idx = e.p1_idx;
-        auto p2_idx = e.p2_idx;
-        auto p1 = d_map.get_point(p1_idx);
-        auto p2 = d_map.get_point(p2_idx);
-        float x1, x2, y1, y2;
-
-        if (e.b == 0) {
-          assert(p1.x == p2.x);
-          if (p1.y > p2.y) {
-            SWAP(p1, p2);
-          }
-          x1 = x2 = scaling.UnscaleX(p1.x);
-
-          y1 =
-              next_float_from_double(scaling.UnscaleY(p1.y), -1, rounding_iter);
-          y2 = next_float_from_double(scaling.UnscaleY(p2.y), 1, rounding_iter);
-        } else {
-          assert(p1.x != p2.x);
-          if (p1.x > p2.x) {
-            SWAP(p1, p2);
-          }
-
-          // use double is much faster than rational
-          // this does not need to be accurate
-          // use double is much faster than rational
-          // this does not need to be accurate
-          double a = (double) -e.a / e.b;
-          double b = (double) -e.c / e.b;
-
-          x1 =
-              next_float_from_double(scaling.UnscaleX(p1.x), -1, rounding_iter);
-          y1 = scaling.UnscaleY(a * scaling.ScaleX(x1) + b);
-
-          x2 = next_float_from_double(scaling.UnscaleX(p2.x), 1, rounding_iter);
-          y2 = scaling.UnscaleY(a * scaling.ScaleX(x2) + b);
-        }
-
-        d_triangle_points[eid * 3] = {x1, y1, PRIMITIVE_HEIGHT};
-        d_triangle_points[eid * 3 + 1] = {x2, y2, PRIMITIVE_HEIGHT};
-        d_triangle_points[eid * 3 + 2] = {(x1 + x2) / 2, (y1 + y2) / 2,
-                                          PRIMITIVE_HEIGHT};
-
-        if (eid == 0) {
-          printf("double eid: %u %.6lf %.6lf %.6lf %.6lf\n", eid,
-                 scaling.UnscaleX(p1.x), scaling.UnscaleY(p1.y),
-                 scaling.UnscaleX(p2.x), scaling.UnscaleY(p2.y));
-
-          printf("float eid: %u %.6f %.6f %.6f %.6f\n", eid, x1, y1, x2, y2);
-        }
-      });
-      traverse_handles_[map_id] =
-          rt_engine_->BuildAccelTriangles(stream, d_triangle_points);
+      FillPrimitivesTriangle(stream, d_map, scaling, triangle_points_);
+      traverse_handles_[map_id] = rt_engine_->BuildAccelTriangles(
+          stream, ArrayView<float3>(triangle_points_));
     } else {
-      aabbs_.resize(ne);
-
-      ArrayView<OptixAabb> d_aabbs(aabbs_);
-
-      ForEach(stream, ne, [=] __device__(size_t eid) mutable {
-        const auto& e = d_map.get_edge(eid);
-        auto p1_idx = e.p1_idx;
-        auto p2_idx = e.p2_idx;
-        const auto& p1 = d_map.get_point(p1_idx);
-        const auto& p2 = d_map.get_point(p2_idx);
-        auto x1 = scaling.UnscaleX(p1.x);
-        auto y1 = scaling.UnscaleY(p1.y);
-        auto x2 = scaling.UnscaleX(p2.x);
-        auto y2 = scaling.UnscaleY(p2.y);
-        auto& aabb = d_aabbs[eid];
-
-        aabb.minX = next_float_from_double(min(x1, x2), -1, rounding_iter);
-        aabb.maxX = next_float_from_double(max(x1, x2), 1, rounding_iter);
-        aabb.minY = next_float_from_double(min(y1, y2), -1, rounding_iter);
-        aabb.maxY = next_float_from_double(max(y1, y2), 1, rounding_iter);
-        aabb.minZ = -PRIMITIVE_HEIGHT / 2;
-        aabb.maxZ = PRIMITIVE_HEIGHT / 2;
-      });
-      traverse_handles_[map_id] = rt_engine_->BuildAccelCustom(stream, d_aabbs);
+      FillPrimitives(stream, d_map, scaling, aabbs_);
+      traverse_handles_[map_id] =
+          rt_engine_->BuildAccelCustom(stream, ArrayView<OptixAabb>(aabbs_));
     }
 
     stream.Sync();

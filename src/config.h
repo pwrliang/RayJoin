@@ -2,6 +2,7 @@
 #define RAYJOIN_CONFIG_H
 #define DONTKNOW (-1)
 #define SCALING_BOUNDING_BOX_MARGIN (1)
+#define ROUNDING_ITER (2)
 #define RAY_TMAX (1e10)
 #define PRIMITIVE_HEIGHT (0.01)
 #define EXTERIOR_FACE_ID (0)
