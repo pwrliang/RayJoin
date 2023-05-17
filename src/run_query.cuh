@@ -16,6 +16,7 @@ struct QueryConfig {
   float gen_t;  // edge len
   int gen_n;
   int random_seed;
+  bool reorder;
   std::string mode;
   bool check;
   bool lb;

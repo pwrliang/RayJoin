@@ -24,6 +24,7 @@ DECLARE_int32(repeat);
 DECLARE_string(serialize);
 
 DECLARE_bool(dynamic);
+DECLARE_bool(reorder);
 // Queries
 DECLARE_string(query);
 DECLARE_string(sample);

@@ -224,6 +224,7 @@ void RunLSIQuery(const QueryConfig& config) {
     query_config.use_triangle = config.use_triangle;
     query_config.fau = config.fau;
     query_config.rounding_iter = config.rounding_iter;
+    query_config.reorder = config.reorder;
 
     lsi_rt->set_query_config(query_config);
     lsi_rt->BuildIndex(query_map_id);
@@ -256,6 +257,7 @@ void RunLSIQuery(const QueryConfig& config) {
 void RunPIPQuery(const QueryConfig& config) {
   using context_t = Context<coord_t, coefficient_t>;
   using internal_coord_t = typename context_t::internal_coord_t;
+  using point_t = typename context_t::map_t::point_t;
 
   timer_start();
   timer_next("Read map");
@@ -267,8 +269,9 @@ void RunPIPQuery(const QueryConfig& config) {
   Stream& stream = ctx.get_stream();
 
   timer_next("Generate Workloads");
-  thrust::device_vector<typename context_t::map_t::point_t> query_points =
+  thrust::device_vector<point_t> query_points =
       rayjoin::GeneratePIPQueries(config, ctx);
+  ArrayView<typename context_t::map_t::point_t> d_query_points(query_points);
 
   timer_next("Create App");
   if (config.mode == "grid") {
@@ -331,13 +334,25 @@ void RunPIPQuery(const QueryConfig& config) {
     pip_config.use_triangle = config.use_triangle;
     pip_config.fau = config.fau;
     pip_config.handle_ = rt_engine->BuildAccelCustom(stream, d_aabbs);
+    pip_config.reorder = config.reorder;
 
     pip_rt->set_query_config(pip_config);
+
+    if (config.reorder) {
+      timer_next("Reorder");
+      thrust::sort(thrust::cuda::par.on(stream.cuda_stream()),
+                   query_points.begin(), query_points.end(),
+                   [] __device__(const point_t& p1, const point_t& p2) {
+                     if (p1.x != p2.x) {
+                       return p1.x < p2.x;
+                     }
+                     return p1.y < p2.y;
+                   });
+    }
   }
   stream.Sync();
 
   timer_next("Warmup");
-  ArrayView<typename context_t::map_t::point_t> d_query_points(query_points);
 
   for (int i = 0; i < config.warmup; i++) {
     pip->Query(stream, 0, query_points);

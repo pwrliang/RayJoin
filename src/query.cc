@@ -37,6 +37,7 @@ int main(int argc, char* argv[]) {
   config.sample = FLAGS_sample;
   config.sample_rate = FLAGS_sample_rate;
   config.random_seed = FLAGS_seed;
+  config.reorder = FLAGS_reorder;
   config.gen_t = FLAGS_gen_t;
   config.gen_n = FLAGS_gen_n;
   config.print_histo = FLAGS_histo;

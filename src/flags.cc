@@ -16,6 +16,7 @@ DEFINE_int32(warmup, 5, "");
 DEFINE_int32(repeat, 5, "");
 DEFINE_string(serialize, "", "");
 DEFINE_bool(dynamic, false, "Dynamic query");
+DEFINE_bool(reorder, false, "Reorder query to improve ray coherence");
 // Queries
 DEFINE_string(sample, "",
               "Whether to sample edges or map. Sampling map keeps every chain, "
