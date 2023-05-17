@@ -10,6 +10,7 @@
 #include "app/lsi.h"
 #include "app/rt_query_config.h"
 #include "rt/rt_engine.h"
+#include "util/helpers.h"
 
 namespace rayjoin {
 template <typename CONTEXT_T>
@@ -21,9 +22,10 @@ class LSIRT : public LSI<CONTEXT_T> {
   using xsect_t = typename lsi::xsect_t;
 
  public:
-  explicit LSIRT(CONTEXT_T& ctx, const std::shared_ptr<RTEngine>& rt_engine,
-                 RTQueryConfig config)
-      : LSI<CONTEXT_T>(ctx), rt_engine_(rt_engine), config_(config) {}
+  explicit LSIRT(CONTEXT_T& ctx, const std::shared_ptr<RTEngine>& rt_engine)
+      : LSI<CONTEXT_T>(ctx), rt_engine_(rt_engine) {}
+
+  void set_query_config(RTQueryConfig config) { config_ = config; }
 
   void Init(size_t max_n_xsects) override { lsi::Init(max_n_xsects); }
 
@@ -34,7 +36,8 @@ class LSIRT : public LSI<CONTEXT_T> {
     int base_map_id = 1 - query_map_id;
     auto d_map = ctx.get_map(base_map_id)->DeviceObject();
     auto ne = d_map.get_edges_num();
-    auto epsilon = config_.epsilon;
+    auto epsilon = 0.0001;  // FIXME
+    auto rounding_iter = config_.rounding_iter;
 
     if (config_.use_triangle) {
       auto bb = ctx.get_bounding_box();
@@ -114,10 +117,10 @@ class LSIRT : public LSI<CONTEXT_T> {
         auto y2 = scaling.UnscaleY(p2.y);
         auto& aabb = d_aabbs[eid];
 
-        aabb.minX = min(x1, x2) - epsilon;
-        aabb.maxX = max(x1, x2) + epsilon;
-        aabb.minY = min(y1, y2) - epsilon;
-        aabb.maxY = max(y1, y2) + epsilon;
+        aabb.minX = next_float_from_double(min(x1, x2), -1, rounding_iter);
+        aabb.maxX = next_float_from_double(max(x1, x2), 1, rounding_iter);
+        aabb.minY = next_float_from_double(min(y1, y2), -1, rounding_iter);
+        aabb.maxY = next_float_from_double(max(y1, y2), 1, rounding_iter);
         aabb.minZ = -PRIMITIVE_HEIGHT / 2;
         aabb.maxZ = PRIMITIVE_HEIGHT / 2;
       });
@@ -149,13 +152,14 @@ class LSIRT : public LSI<CONTEXT_T> {
     auto module_id = config_.use_triangle
                          ? ModuleIdentifier::MODULE_ID_LSI
                          : ModuleIdentifier::MODULE_ID_LSI_CUSTOM;
+    params.query_map_id = query_map_id;
     params.scaling = scaling;
-    params.query_edges = d_query_map.get_edges();
-    params.query_points = d_query_map.get_points().data();
     params.base_edges = d_base_map.get_edges().data();
     params.base_points = d_base_map.get_points().data();
-
+    params.query_edges = d_query_map.get_edges();
+    params.query_points = d_query_map.get_points().data();
     params.traversable = handles_[query_map_id];
+    params.rounding_iter = config_.rounding_iter;
     params.xsects = xsects.DeviceObject();
 
     xsects.Clear(stream);

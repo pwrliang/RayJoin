@@ -55,7 +55,6 @@ class PIPRT : public PIP<CONTEXT_T> {
     params.base_map_points = d_base_map.get_points().data();
     params.scaling = scaling;
     params.traversable = query_config_.handle_;
-    params.early_term_deviant = query_config_.early_term_deviant;
     params.closest_eids = thrust::raw_pointer_cast(this->closest_eids_.data());
 #ifndef NDEBUG
     hit_count_.resize(points_num, 0);
@@ -97,6 +96,8 @@ class PIPRT : public PIP<CONTEXT_T> {
     LOG(FATAL) << "DumpStatistics for PIP only works in debug mode";
 #endif
   }
+
+  std::shared_ptr<RTEngine> get_rt_engine() { return rt_engine_; }
 
  protected:
   std::shared_ptr<RTEngine> rt_engine_;

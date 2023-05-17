@@ -4,10 +4,9 @@
 namespace rayjoin {
 
 struct RTQueryConfig {
-  bool use_triangle;
+  bool use_triangle = false;
   bool fau = true;
-  float early_term_deviant = 1;
-  float epsilon = 0.0001;
+  int rounding_iter = 2;
   OptixTraversableHandle handle_;
 };
 }  // namespace rayjoin

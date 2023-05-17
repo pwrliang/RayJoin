@@ -533,8 +533,6 @@ class RTMapOverlay {
 
     pip_config.use_triangle = config_.use_triangle;
     pip_config.fau = config_.fau;
-    pip_config.epsilon = config_.epsilon;
-    pip_config.early_term_deviant = config_.early_term_deviant;
     pip_config.handle_ = traverse_handles_[map_id];
     return pip_config;
   }

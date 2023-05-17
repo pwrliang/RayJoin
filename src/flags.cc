@@ -10,10 +10,6 @@ DEFINE_bool(box, false, "");
 DEFINE_bool(check, true, "Compare RT result with CUDA");
 DEFINE_bool(lb, true, "Load balancing");
 DEFINE_bool(triangle, false, "Use triangle for RT");
-DEFINE_double(
-    early_term_deviant, 1,
-    "Stop searching when the delta of hit distance is greater the threshold");
-DEFINE_double(epsilon, 0.00001, "");
 DEFINE_int32(rounding_iter, 2, "Rounding iterations with nextafter");
 DEFINE_bool(fau, false, "Free after use");
 DEFINE_int32(warmup, 5, "");

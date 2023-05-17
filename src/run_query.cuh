@@ -22,9 +22,8 @@ struct QueryConfig {
   bool use_triangle;
   bool print_histo;
   std::string profiling;
-  double epsilon;
   bool fau;
-  float early_term_deviant;
+  int rounding_iter;
 };
 
 void RunLSIQuery(const QueryConfig& config);

@@ -7,6 +7,7 @@
 #include "app/pip_rt.h"
 #include "map/planar_graph.h"
 #include "run_query.cuh"
+#include "util/helpers.h"
 #include "util/timer.h"
 
 namespace rayjoin {
@@ -14,39 +15,78 @@ namespace rayjoin {
 template <typename CONTEXT_T>
 void CheckPIPResult(
     CONTEXT_T& ctx, QueryConfig config,
-    thrust::device_vector<typename CONTEXT_T::map_t::point_t>& points,
-    thrust::device_vector<polygon_id_t>& polygon_ids) {
+    const thrust::device_vector<typename CONTEXT_T::map_t::point_t>& points,
+    const thrust::device_vector<index_t>& eids) {
+  auto& stream = ctx.get_stream();
   auto grid = std::make_shared<UniformGrid>(config.grid_size);
-  int im = 0;
-  grid->AddMapToGrid(ctx, im, config.profiling);
+  int base_map_id = 0;
+  grid->AddMapToGrid(ctx, base_map_id, !config.profiling.empty());
   PIPGrid<CONTEXT_T> pip_grid(ctx, grid);
 
   LOG(INFO) << "Checking point in polygon";
+  pip_grid.Query(stream, base_map_id, points);
+  stream.Sync();
 
-  pinned_vector<polygon_id_t> point_in_polygon = pip_grid.Query(im, points);
-  pinned_vector<polygon_id_t> point_in_polygon_rt = polygon_ids;
+  pinned_vector<typename CONTEXT_T::map_t::point_t> h_points = points;
+  pinned_vector<index_t> closest_eids_ans = pip_grid.get_closest_eids();
+  pinned_vector<index_t> closest_eids_res = eids;
   size_t n_diff = 0;
+  size_t n_points = h_points.size();
 
-  CHECK_EQ(point_in_polygon.size(), point_in_polygon_rt.size());
+  CHECK_EQ(closest_eids_res.size(), closest_eids_ans.size());
 
-  for (size_t point_idx = 0; point_idx < point_in_polygon.size(); point_idx++) {
-    if (point_in_polygon[point_idx] != point_in_polygon_rt[point_idx]) {
-      n_diff++;
-      if (n_diff < 10) {
-        auto p = ctx.get_planar_graph(im)->points[point_idx];
+  auto base_map = ctx.get_map(base_map_id);
+  auto scaling = ctx.get_scaling();
 
-        printf("Diff! Map: %d point: %zu, (%lf, %lf), ans: %d, res: %d\n", im,
-               point_idx, (double) p.x, (double) p.y,
-               point_in_polygon[point_idx], point_in_polygon_rt[point_idx]);
+  for (size_t point_idx = 0; point_idx < n_points; point_idx++) {
+    auto closest_eid_ans = closest_eids_ans[point_idx];
+    auto closest_eid_res = closest_eids_res[point_idx];
+    // different eid does not mean wrong answer because there are two edges
+    // having same coordinates but different eid
+    if (closest_eid_res != closest_eid_ans) {
+      auto not_hit = std::numeric_limits<index_t>::max();
+      auto p = ctx.get_planar_graph(base_map_id)->points[point_idx];
+      auto scaled_p = h_points[point_idx];
+      bool diff = false;
+      std::string ep_ans = "miss";
+      std::string ep_res = "miss";
+      std::string scaled_ep_ans = "miss";
+      std::string scaled_ep_res = "miss";
+
+      if (closest_eid_ans != not_hit) {
+        ep_ans = base_map->EndpointsToString(closest_eid_ans, scaling);
+        scaled_ep_ans = base_map->ScaledEndpointsToString(closest_eid_ans);
+      }
+
+      if (closest_eid_res != not_hit) {
+        ep_res = base_map->EndpointsToString(closest_eid_res, scaling);
+        scaled_ep_res = base_map->ScaledEndpointsToString(closest_eid_res);
+      }
+
+      if (scaled_ep_res != scaled_ep_ans) {
+        diff = true;
+      }
+
+      if (diff && n_diff < 10) {
+        printf("point %lu (%.8lf, %.8lf) ans %u, res %u %s %s\n", point_idx,
+               p.x, p.y, closest_eid_ans, closest_eid_res, ep_ans.c_str(),
+               ep_res.c_str());
+        printf("scaled point %lu (%ld, %ld) ans %u, res %u %s %s\n", point_idx,
+               scaled_p.x, scaled_p.y, closest_eid_ans, closest_eid_res,
+               scaled_ep_ans.c_str(), scaled_ep_res.c_str());
+      }
+
+      if (diff) {
+        n_diff++;
       }
     }
   }
   if (n_diff != 0) {
-    LOG(ERROR) << "Map: " << im << " Total points: " << point_in_polygon.size()
-               << " n diff: " << n_diff << " Error rate: "
-               << (double) n_diff / point_in_polygon.size() * 100 << " %";
+    LOG(ERROR) << "Map: " << base_map_id << " Total points: " << n_points
+               << " n diff: " << n_diff
+               << " Error rate: " << (double) n_diff / n_points * 100 << " %";
   } else {
-    LOG(INFO) << "Map: " << im << " passed check";
+    LOG(INFO) << "Map: " << base_map_id << " passed check";
   }
 }
 
@@ -125,6 +165,7 @@ void RunLSIQuery(const QueryConfig& config) {
   timer_start();
   timer_next("Read map");
   auto base_map = load_from<coord_t>(config.map_path, config.serialize_prefix);
+  int base_map_id = 0, query_map_id = 1;
 
   if (config.sample == "edges") {
     LOG(INFO) << "Sampling edges from map, sample rate: " << config.sample_rate
@@ -157,34 +198,35 @@ void RunLSIQuery(const QueryConfig& config) {
   } else if (config.mode == "rt") {
     auto rt_engine = std::make_shared<RTEngine>();
     RTConfig rt_config = get_default_rt_config(config.exec_root);
-    RTQueryConfig query_config;
-
-    query_config.use_triangle = config.use_triangle;
-    query_config.fau = config.fau;
-    query_config.epsilon = config.epsilon;
-    query_config.early_term_deviant = config.early_term_deviant;
 
     rt_engine->Init(rt_config);
-    lsi = new LSIRT<context_t>(ctx, rt_engine, query_config);
+    lsi = new LSIRT<context_t>(ctx, rt_engine);
   } else {
     LOG(FATAL) << "Invalid index type: " << config.mode;
   }
 
   timer_next("Init");
   size_t queue_cap =
-      (ctx.get_map(0)->get_edges_num() + config.gen_n) * config.xsect_factor;
+      (ctx.get_map(base_map_id)->get_edges_num() + config.gen_n) *
+      config.xsect_factor;
   LOG(INFO) << "Queue capacity: " << queue_cap;
   lsi->Init(queue_cap);
 
-  int query_map_id = 1;
-
   timer_next("Build Index");
   if (config.mode == "grid") {
-    auto grid = dynamic_cast<LSIGrid<context_t>*>(lsi)->get_grid();
+    auto lsi_grid = dynamic_cast<LSIGrid<context_t>*>(lsi)->get_grid();
 
-    grid->AddMapsToGrid(ctx, !config.profiling.empty());
+    lsi_grid->AddMapsToGrid(ctx, !config.profiling.empty());
   } else if (config.mode == "rt") {
-    dynamic_cast<LSIRT<context_t>*>(lsi)->BuildIndex(query_map_id);
+    auto lsi_rt = dynamic_cast<LSIRT<context_t>*>(lsi);
+    RTQueryConfig query_config;
+
+    query_config.use_triangle = config.use_triangle;
+    query_config.fau = config.fau;
+    query_config.rounding_iter = config.rounding_iter;
+
+    lsi_rt->set_query_config(query_config);
+    lsi_rt->BuildIndex(query_map_id);
   }
 
   timer_next("Warmup");
@@ -196,6 +238,7 @@ void RunLSIQuery(const QueryConfig& config) {
   ArrayView<typename LSI<context_t>::xsect_t> d_xsects;
 
   for (int i = 0; i < config.repeat; i++) {
+    LOG(INFO) << "Iter: " << i;
     d_xsects = lsi->Query(query_map_id);
   }
 
@@ -250,17 +293,46 @@ void RunPIPQuery(const QueryConfig& config) {
 
     grid->AddMapToGrid(ctx, 0, !config.profiling.empty());
   } else if (config.mode == "rt") {
-    // FIXME
-    //    dynamic_cast<PIPRT<context_t>*>(pip)->BuildIndex(0);
-    //
-    //    RTQueryConfig pip_config;
-    //
-    //    pip_config.use_triangle = config.use_triangle;
-    //    pip_config.fau = config.fau;
-    //    pip_config.epsilon = config.epsilon;
-    //    pip_config.early_term_deviant = config.early_term_deviant;
-    //
-    //    pip->set_query_config(pip_config);
+    auto pip_rt = dynamic_cast<PIPRT<context_t>*>(pip);
+    auto rt_engine = pip_rt->get_rt_engine();
+    thrust::device_vector<OptixAabb> aabbs;
+    Stream stream;
+    auto scaling = ctx.get_scaling();
+    auto d_map = ctx.get_map(0)->DeviceObject();
+    auto ne = d_map.get_edges_num();
+    int rounding_iter = 2;
+
+    aabbs.resize(ne);
+
+    ArrayView<OptixAabb> d_aabbs(aabbs);
+
+    ForEach(stream, ne, [=] __device__(size_t eid) mutable {
+      const auto& e = d_map.get_edge(eid);
+      auto p1_idx = e.p1_idx;
+      auto p2_idx = e.p2_idx;
+      const auto& p1 = d_map.get_point(p1_idx);
+      const auto& p2 = d_map.get_point(p2_idx);
+      auto x1 = scaling.UnscaleX(p1.x);
+      auto y1 = scaling.UnscaleY(p1.y);
+      auto x2 = scaling.UnscaleX(p2.x);
+      auto y2 = scaling.UnscaleY(p2.y);
+      auto& aabb = d_aabbs[eid];
+
+      aabb.minX = next_float_from_double(min(x1, x2), -1, rounding_iter);
+      aabb.maxX = next_float_from_double(max(x1, x2), 1, rounding_iter);
+      aabb.minY = next_float_from_double(min(y1, y2), -1, rounding_iter);
+      aabb.maxY = next_float_from_double(max(y1, y2), 1, rounding_iter);
+      aabb.minZ = -PRIMITIVE_HEIGHT / 2;
+      aabb.maxZ = PRIMITIVE_HEIGHT / 2;
+    });
+
+    RTQueryConfig pip_config;
+
+    pip_config.use_triangle = config.use_triangle;
+    pip_config.fau = config.fau;
+    pip_config.handle_ = rt_engine->BuildAccelCustom(stream, d_aabbs);
+
+    pip_rt->set_query_config(pip_config);
   }
 
   timer_next("Warmup");
@@ -272,16 +344,16 @@ void RunPIPQuery(const QueryConfig& config) {
 
   timer_next("Query", config.repeat);
   // FIXME:
-  //  for (int i = 0; i < config.repeat; i++) {
-  //    auto& polygon_ids = pip->Query(ctx.get_stream(), 0, query_points);
-  //
-  //    if (i == config.repeat - 1) {
-  //      if (config.check && config.mode == "rt") {
-  //        timer_next("Check");
-  //        CheckPIPResult(ctx, config, query_points, polygon_ids);
-  //      }
-  //    }
-  //  }
+  for (int i = 0; i < config.repeat; i++) {
+    pip->Query(ctx.get_stream(), 0, query_points);
+
+    if (i == config.repeat - 1) {
+      if (config.check && config.mode == "rt") {
+        timer_next("Check");
+        CheckPIPResult(ctx, config, query_points, pip->get_closest_eids());
+      }
+    }
+  }
 
   timer_next("Cleanup");
 

@@ -42,9 +42,8 @@ int main(int argc, char* argv[]) {
   config.print_histo = FLAGS_histo;
   config.dynamic_query = FLAGS_dynamic;
   config.profiling = FLAGS_profile;
-  config.epsilon = FLAGS_epsilon;
-  config.early_term_deviant = FLAGS_early_term_deviant;
   config.fau = FLAGS_fau;
+  config.rounding_iter = FLAGS_rounding_iter;
 
   if (FLAGS_query == "lsi") {
     rayjoin::RunLSIQuery(config);

@@ -85,11 +85,9 @@ void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
     for (size_t point_idx = 0; point_idx < n_points; point_idx++) {
       auto closest_eid_ans = closest_eids_ans[point_idx];
       auto closest_eid_res = closest_eids_res[point_idx];
-
+      // different eid does not mean wrong answer because there are two edges
+      // having same coordinates but different eid
       if (closest_eid_res != closest_eid_ans) {
-        //        printf("res %u vs ans %u\n", closest_eid_res,
-        //        closest_eid_ans);
-
         auto not_hit = std::numeric_limits<index_t>::max();
         auto p = ctx.get_planar_graph(im)->points[point_idx];
         auto scaled_p = query_map->get_point(point_idx);
