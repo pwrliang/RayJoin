@@ -264,6 +264,7 @@ void RunPIPQuery(const QueryConfig& config) {
   timer_next("Create Context");
   context_t ctx(base_map);
   PIP<context_t>* pip;
+  Stream& stream = ctx.get_stream();
 
   timer_next("Generate Workloads");
   thrust::device_vector<typename context_t::map_t::point_t> query_points =
@@ -296,7 +297,6 @@ void RunPIPQuery(const QueryConfig& config) {
     auto pip_rt = dynamic_cast<PIPRT<context_t>*>(pip);
     auto rt_engine = pip_rt->get_rt_engine();
     thrust::device_vector<OptixAabb> aabbs;
-    Stream stream;
     auto scaling = ctx.get_scaling();
     auto d_map = ctx.get_map(0)->DeviceObject();
     auto ne = d_map.get_edges_num();
@@ -334,20 +334,22 @@ void RunPIPQuery(const QueryConfig& config) {
 
     pip_rt->set_query_config(pip_config);
   }
+  stream.Sync();
 
   timer_next("Warmup");
   ArrayView<typename context_t::map_t::point_t> d_query_points(query_points);
 
   for (int i = 0; i < config.warmup; i++) {
-    pip->Query(ctx.get_stream(), 0, query_points);
+    pip->Query(stream, 0, query_points);
   }
+  stream.Sync();
 
   timer_next("Query", config.repeat);
-  // FIXME:
   for (int i = 0; i < config.repeat; i++) {
-    pip->Query(ctx.get_stream(), 0, query_points);
+    pip->Query(stream, 0, query_points);
 
     if (i == config.repeat - 1) {
+      stream.Sync();
       if (config.check && config.mode == "rt") {
         timer_next("Check");
         CheckPIPResult(ctx, config, query_points, pip->get_closest_eids());

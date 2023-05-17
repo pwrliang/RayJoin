@@ -172,24 +172,6 @@ class LSIRT : public LSI<CONTEXT_T> {
 
     size_t n_xsects = xsects.size(stream);
 
-    LOG(INFO) << "Before uniq: " << n_xsects;
-
-    thrust::sort(thrust::cuda::par.on(stream.cuda_stream()), xsects.data(),
-                 xsects.data() + n_xsects,
-                 [] __device__(const xsect_t& a, const xsect_t& b) {
-                   if (a.eid[0] != b.eid[0]) {
-                     return a.eid[0] < b.eid[0];
-                   }
-                   return a.eid[1] < b.eid[1];
-                 });
-    auto end =
-        thrust::unique(thrust::cuda::par.on(stream.cuda_stream()),
-                       xsects.data(), xsects.data() + n_xsects,
-                       [] __device__(const xsect_t& a, const xsect_t& b) {
-                         return a.eid[0] == b.eid[0] && a.eid[1] == b.eid[1];
-                       });
-    n_xsects = end - xsects.data();
-
     ForEach(
         stream, n_xsects,
         [=] __device__(size_t idx, ArrayView<xsect_t> xsects) mutable {
