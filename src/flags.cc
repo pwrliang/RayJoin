@@ -4,7 +4,7 @@ DEFINE_string(poly1, "", "path of the first group polygons");
 DEFINE_string(poly2, "", "path of the second group polygons");
 DEFINE_string(output, "", "output path of overlay result");
 DEFINE_int32(grid_size, 2048, "Uniform grid size");
-DEFINE_double(xsect_factor, 0.1, "For preallocate intersection space");
+DEFINE_double(xsect_factor, 0.2, "For preallocate intersection space");
 DEFINE_string(mode, "", "grid,rt,lbvh");
 DEFINE_bool(box, false, "");
 DEFINE_bool(check, true, "Compare RT result with CUDA");
