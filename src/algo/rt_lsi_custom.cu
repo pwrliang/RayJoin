@@ -19,25 +19,33 @@ extern "C" __global__ void __intersection__lsi() {
   using xsect_t = typename rayjoin::LaunchParamsLSI::xsect_t;
   using edge_t = typename rayjoin::LaunchParamsLSI::edge_t;
   using point_t = typename rayjoin::LaunchParamsLSI::point_t;
-  auto base_eid = optixGetPrimitiveIndex();
+  auto prim_idx = optixGetPrimitiveIndex();
   auto query_eid = optixGetPayload_0();
+  auto sketch_size = SKETCH_SIZE;
   auto query_map_id = params.query_map_id;
-  const auto& base_e = params.base_edges[base_eid];
+  const auto& base_edges = params.base_edges;
   const auto& query_e = params.query_edges[query_eid];
-
-  const auto& base_e_p1 = params.base_points[base_e.p1_idx];
-  const auto& base_e_p2 = params.base_points[base_e.p2_idx];
   const auto& query_e_p1 = params.query_points[query_e.p1_idx];
   const auto& query_e_p2 = params.query_points[query_e.p2_idx];
 
-  if (rayjoin::dev::intersect_test<edge_t, edge_t, point_t,
-                                   rayjoin::coefficient_t>(
-          base_e, base_e_p1, base_e_p2, query_e, query_e_p1, query_e_p2)) {
-    xsect_t xsect;
+  auto begin_eid = std::min((size_t) prim_idx * sketch_size, base_edges.size());
+  auto end_eid =
+      std::min((size_t) (prim_idx + 1) * sketch_size, base_edges.size());
 
-    xsect.eid[query_map_id] = query_eid;
-    xsect.eid[1 - query_map_id] = base_eid;
-    params.xsects.Append(xsect);
+  for (auto base_eid = begin_eid; base_eid < end_eid; base_eid++) {
+    const auto& base_e = base_edges[base_eid];
+    const auto& base_e_p1 = params.base_points[base_e.p1_idx];
+    const auto& base_e_p2 = params.base_points[base_e.p2_idx];
+
+    if (rayjoin::dev::intersect_test<edge_t, edge_t, point_t,
+                                     rayjoin::coefficient_t>(
+            base_e, base_e_p1, base_e_p2, query_e, query_e_p1, query_e_p2)) {
+      xsect_t xsect;
+
+      xsect.eid[query_map_id] = query_eid;
+      xsect.eid[1 - query_map_id] = base_eid;
+      params.xsects.Append(xsect);
+    }
   }
 }
 

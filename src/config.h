@@ -6,6 +6,7 @@
 #define RAY_TMAX (1e10)
 #define PRIMITIVE_HEIGHT (0.01)
 #define EXTERIOR_FACE_ID (0)
+#define SKETCH_SIZE (1)
 #define FOR2 for (int im = 0; im < 2; im++)
 
 namespace rayjoin {

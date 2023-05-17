@@ -154,7 +154,7 @@ class LSIRT : public LSI<CONTEXT_T> {
                          : ModuleIdentifier::MODULE_ID_LSI_CUSTOM;
     params.query_map_id = query_map_id;
     params.scaling = scaling;
-    params.base_edges = d_base_map.get_edges().data();
+    params.base_edges = d_base_map.get_edges();
     params.base_points = d_base_map.get_points().data();
     params.query_edges = d_query_map.get_edges();
     params.query_points = d_query_map.get_points().data();

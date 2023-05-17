@@ -23,7 +23,7 @@ struct LaunchParamsLSI {
   using xsect_t = dev::Intersection<internal_coord_t>;
 
   char query_map_id;
-  edge_t* base_edges;
+  ArrayView<edge_t> base_edges;
   point_t* base_points;
 
   ArrayView<edge_t> query_edges;  // ray gen map
@@ -51,7 +51,7 @@ struct LaunchParamsPIP {
   // current map no
   int query_map_id;
   ArrayView<point_t> query_points;
-  edge_t* base_map_edges;
+  ArrayView<edge_t> base_map_edges;
   point_t* base_map_points;
   Scaling<coord_t, internal_coord_t, detail::internal_coord<coord_t>::shift>
       scaling;

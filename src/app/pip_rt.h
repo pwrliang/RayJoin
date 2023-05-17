@@ -51,7 +51,7 @@ class PIPRT : public PIP<CONTEXT_T> {
 
     params.query_map_id = 1 - base_map_id;
     params.query_points = d_query_points;
-    params.base_map_edges = d_base_map.get_edges().data();
+    params.base_map_edges = d_base_map.get_edges();
     params.base_map_points = d_base_map.get_points().data();
     params.scaling = scaling;
     params.traversable = query_config_.handle_;

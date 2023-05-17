@@ -87,7 +87,8 @@ class RTMapOverlay {
       traverse_handles_[map_id] = rt_engine_->BuildAccelTriangles(
           stream, ArrayView<float3>(triangle_points_));
     } else {
-      FillPrimitives(stream, d_map, scaling, aabbs_);
+      //      FillPrimitives(stream, d_map, scaling, aabbs_);
+      FillPrimitivesSketch(stream, d_map, scaling, aabbs_);
       traverse_handles_[map_id] =
           rt_engine_->BuildAccelCustom(stream, ArrayView<OptixAabb>(aabbs_));
     }
@@ -118,7 +119,7 @@ class RTMapOverlay {
 
     params.query_map_id = query_map_id;
     params.scaling = scaling;
-    params.base_edges = d_base_map.get_edges().data();
+    params.base_edges = d_base_map.get_edges();
     params.base_points = d_base_map.get_points().data();
     params.query_edges = d_query_map.get_edges();
     params.query_points = d_query_map.get_points().data();
