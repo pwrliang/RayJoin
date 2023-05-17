@@ -177,8 +177,10 @@ void RunOverlay(const OverlayConfig& config) {
       }
     }
 
+#ifndef NDEBUG
     timer_next("Dump Intersection");
     overlay.DumpIntersection();
+#endif
 
     timer_next("Computer output polygons");
     overlay.ComputeOutputPolygons();
