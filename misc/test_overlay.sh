@@ -33,7 +33,6 @@ for v in debug release; do
       -mode="$mode" \
       -lb="$lb" \
       -triangle="$use_triangle" \
-      -early_term_deviant=100 \
       -check=false
 
     diff "$MAPS/br_countyXbr_soil_result.txt" "$MAPS/br_countyXbr_soil_answer.txt" >diff.txt
