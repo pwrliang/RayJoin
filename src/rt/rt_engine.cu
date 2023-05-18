@@ -21,18 +21,6 @@ namespace rayjoin {
 RTConfig get_default_rt_config(const std::string& exec_root) {
   RTConfig config;
 
-  Module mod_lsi(ModuleIdentifier::MODULE_ID_LSI);
-
-  mod_lsi.set_program_name(exec_root + "/ptx/rt_lsi.ptx");
-  mod_lsi.set_function_suffix("lsi");
-  mod_lsi.set_launch_params_name("params");
-  mod_lsi.EnableAnyHit();
-  mod_lsi.set_n_payload(1);
-  if (access(mod_lsi.get_program_name().c_str(), R_OK) != 0) {
-    LOG(FATAL) << "Cannot open " << mod_lsi.get_program_name();
-  }
-  config.AddModule(mod_lsi);
-
   Module mod_lsi_custom(ModuleIdentifier::MODULE_ID_LSI_CUSTOM);
 
   mod_lsi_custom.set_program_name(exec_root + "/ptx/rt_lsi_custom.ptx");
@@ -44,19 +32,6 @@ RTConfig get_default_rt_config(const std::string& exec_root) {
     LOG(FATAL) << "Cannot open " << mod_lsi_custom.get_program_name();
   }
   config.AddModule(mod_lsi_custom);
-
-  Module mod_pip(ModuleIdentifier::MODULE_ID_PIP);
-
-  mod_pip.set_program_name(exec_root + "/ptx/rt_pip.ptx");
-  mod_pip.set_function_suffix("pip");
-  mod_pip.set_launch_params_name("params");
-  mod_pip.EnableAnyHit();
-  mod_pip.set_n_payload(4);
-
-  if (access(mod_pip.get_program_name().c_str(), R_OK) != 0) {
-    LOG(FATAL) << "Cannot open " << mod_pip.get_program_name();
-  }
-  config.AddModule(mod_pip);
 
   Module mod_pip_custom(ModuleIdentifier::MODULE_ID_PIP_CUSTOM);
 
