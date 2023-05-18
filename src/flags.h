@@ -16,7 +16,6 @@ DECLARE_string(mode);
 DECLARE_bool(box);
 DECLARE_bool(check);
 DECLARE_bool(lb);
-DECLARE_bool(triangle);
 DECLARE_int32(rounding_iter);
 DECLARE_bool(fau);
 DECLARE_int32(warmup);
@@ -25,6 +24,8 @@ DECLARE_string(serialize);
 
 DECLARE_bool(dynamic);
 DECLARE_bool(reorder);
+DECLARE_int32(win);
+DECLARE_double(enlarge);
 // Queries
 DECLARE_string(query);
 DECLARE_string(sample);

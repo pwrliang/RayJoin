@@ -38,9 +38,7 @@ class PIPRT : public PIP<CONTEXT_T> {
     auto& scaling = ctx.get_scaling();
     auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
     auto points_num = d_query_points.size();
-    auto module_id = query_config_.use_triangle
-                         ? ModuleIdentifier::MODULE_ID_PIP
-                         : ModuleIdentifier::MODULE_ID_PIP_CUSTOM;
+    auto module_id = ModuleIdentifier::MODULE_ID_PIP_CUSTOM;
 
     this->closest_eids_.resize(points_num);
 
@@ -48,11 +46,11 @@ class PIPRT : public PIP<CONTEXT_T> {
                  DONTKNOW);
 
     LaunchParamsPIP params;
-
+    params.base_map_edges = d_base_map.get_edges().data();
+    params.base_map_points = d_base_map.get_points().data();
+    params.eid_range = query_config_.eid_range;
     params.query_map_id = 1 - base_map_id;
     params.query_points = d_query_points;
-    params.base_map_edges = d_base_map.get_edges();
-    params.base_map_points = d_base_map.get_points().data();
     params.scaling = scaling;
     params.traversable = query_config_.handle_;
     params.closest_eids = thrust::raw_pointer_cast(this->closest_eids_.data());

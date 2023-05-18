@@ -9,7 +9,6 @@ DEFINE_string(mode, "", "grid,rt,lbvh");
 DEFINE_bool(box, false, "");
 DEFINE_bool(check, true, "Compare RT result with CUDA");
 DEFINE_bool(lb, true, "Load balancing");
-DEFINE_bool(triangle, false, "Use triangle for RT");
 DEFINE_int32(rounding_iter, 2, "Rounding iterations with nextafter");
 DEFINE_bool(fau, false, "Free after use");
 DEFINE_int32(warmup, 5, "");
@@ -17,6 +16,8 @@ DEFINE_int32(repeat, 5, "");
 DEFINE_string(serialize, "", "");
 DEFINE_bool(dynamic, false, "Dynamic query");
 DEFINE_bool(reorder, false, "Reorder query to improve ray coherence");
+DEFINE_int32(win, 8, "Window size for AABB compression");
+DEFINE_double(enlarge, 2, "Threshold for AABB merge");
 // Queries
 DEFINE_string(sample, "",
               "Whether to sample edges or map. Sampling map keeps every chain, "

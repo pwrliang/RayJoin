@@ -20,19 +20,16 @@ extern "C" __global__ void __intersection__pip_custom() {
   using internal_coord_t = typename rayjoin::LaunchParamsPIP::internal_coord_t;
   float3 ray_orig = optixGetWorldRayOrigin();
   auto point_idx = optixGetPayload_0();
-  auto sketch_size = SKETCH_SIZE;
   double best_y;
   uint2 best_y_storage{optixGetPayload_1(), optixGetPayload_2()};
   auto prim_idx = optixGetPrimitiveIndex();
-  const auto& base_edges = params.base_map_edges;
   auto query_map_id = params.query_map_id;
   const auto& scaling = params.scaling;
   const auto& src_p = params.query_points[point_idx];
   auto x_src_p = src_p.x;
   auto y_src_p = src_p.y;
-  auto begin_eid = std::min((size_t) prim_idx * sketch_size, base_edges.size());
-  auto end_eid =
-      std::min((size_t) (prim_idx + 1) * sketch_size, base_edges.size());
+  auto begin_eid = params.eid_range[prim_idx].first;
+  auto end_eid = params.eid_range[prim_idx].second;
 
   unpack64(best_y_storage.x, best_y_storage.y, &best_y);
 

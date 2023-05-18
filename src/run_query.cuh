@@ -20,11 +20,12 @@ struct QueryConfig {
   std::string mode;
   bool check;
   bool lb;
-  bool use_triangle;
   bool print_histo;
   std::string profiling;
   bool fau;
   int rounding_iter;
+  int win;
+  float enlarge;
 };
 
 void RunLSIQuery(const QueryConfig& config);

@@ -6,6 +6,7 @@
 #include "app/pip_grid.h"
 #include "app/pip_rt.h"
 #include "map/planar_graph.h"
+#include "rt/primitive.h"
 #include "run_query.cuh"
 #include "util/helpers.h"
 #include "util/timer.h"
@@ -221,9 +222,10 @@ void RunLSIQuery(const QueryConfig& config) {
     auto lsi_rt = dynamic_cast<LSIRT<context_t>*>(lsi);
     RTQueryConfig query_config;
 
-    query_config.use_triangle = config.use_triangle;
     query_config.fau = config.fau;
     query_config.rounding_iter = config.rounding_iter;
+    query_config.win_size = config.win;
+    query_config.enlarge = config.enlarge;
     query_config.reorder = config.reorder;
 
     lsi_rt->set_query_config(query_config);
@@ -272,6 +274,7 @@ void RunPIPQuery(const QueryConfig& config) {
   thrust::device_vector<point_t> query_points =
       rayjoin::GeneratePIPQueries(config, ctx);
   ArrayView<typename context_t::map_t::point_t> d_query_points(query_points);
+  thrust::device_vector<thrust::pair<size_t, size_t>> eid_range;
 
   timer_next("Create App");
   if (config.mode == "grid") {
@@ -303,36 +306,16 @@ void RunPIPQuery(const QueryConfig& config) {
     auto scaling = ctx.get_scaling();
     auto d_map = ctx.get_map(0)->DeviceObject();
     auto ne = d_map.get_edges_num();
-    int rounding_iter = 2;
 
-    aabbs.resize(ne);
+    FillPrimitivesGroup(stream, d_map, scaling, config.win, config.enlarge,
+                        aabbs, eid_range);
 
     ArrayView<OptixAabb> d_aabbs(aabbs);
 
-    ForEach(stream, ne, [=] __device__(size_t eid) mutable {
-      const auto& e = d_map.get_edge(eid);
-      auto p1_idx = e.p1_idx;
-      auto p2_idx = e.p2_idx;
-      const auto& p1 = d_map.get_point(p1_idx);
-      const auto& p2 = d_map.get_point(p2_idx);
-      auto x1 = scaling.UnscaleX(p1.x);
-      auto y1 = scaling.UnscaleY(p1.y);
-      auto x2 = scaling.UnscaleX(p2.x);
-      auto y2 = scaling.UnscaleY(p2.y);
-      auto& aabb = d_aabbs[eid];
-
-      aabb.minX = next_float_from_double(min(x1, x2), -1, rounding_iter);
-      aabb.maxX = next_float_from_double(max(x1, x2), 1, rounding_iter);
-      aabb.minY = next_float_from_double(min(y1, y2), -1, rounding_iter);
-      aabb.maxY = next_float_from_double(max(y1, y2), 1, rounding_iter);
-      aabb.minZ = -PRIMITIVE_HEIGHT / 2;
-      aabb.maxZ = PRIMITIVE_HEIGHT / 2;
-    });
-
     RTQueryConfig pip_config;
 
-    pip_config.use_triangle = config.use_triangle;
     pip_config.fau = config.fau;
+    pip_config.eid_range = thrust::raw_pointer_cast(eid_range.data());
     pip_config.handle_ = rt_engine->BuildAccelCustom(stream, d_aabbs);
     pip_config.reorder = config.reorder;
 

@@ -96,7 +96,7 @@ function lsi_varying_query_size() {
     map="${MAPS[i]}"
 
     for ne in ${query_sizes[*]}; do
-      for mode in rt rt_triangle grid_lb; do
+      for mode in rt grid_lb; do
         out_prefix="${out_dir}/lsi_${map}_${mode}_${ne}"
 
         if [[ $mode == "grid_lb" ]]; then
@@ -105,20 +105,12 @@ function lsi_varying_query_size() {
         else
           lb=false
         fi
-
-        if [[ $mode == "rt_triangle" ]]; then
-          mode="rt"
-          triangle=true
-        else
-          triangle=false
-        fi
         log_file="${out_prefix}.log"
 
         cmd="$exec -poly1 ${DATASET_ROOT}/${map} \
                    -serialize=${SERIALIZE_PREFIX} \
                    -grid_size=$DEFAULT_GRID_SIZE \
                    -mode=$mode \
-                   -triangle=$triangle \
                    -lb=$lb \
                    -v=1 \
                    -query=lsi \
@@ -165,22 +157,14 @@ function pip_varying_query_size() {
     map="${MAPS[i]}"
 
     for ne in ${query_sizes[*]}; do
-      for mode in rt rt_triangle grid; do
+      for mode in rt grid; do
         out_prefix="${out_dir}/pip_${map}_${mode}_${ne}"
-
-        if [[ $mode == "rt_triangle" ]]; then
-          mode="rt"
-          triangle=true
-        else
-          triangle=false
-        fi
         log_file="${out_prefix}.log"
 
         cmd="$exec -poly1 ${DATASET_ROOT}/${map} \
                    -serialize=${SERIALIZE_PREFIX} \
                    -grid_size=$DEFAULT_GRID_SIZE \
                    -mode=$mode \
-                   -triangle=$triangle \
                    -v=1 \
                    -query=pip \
                    -seed=1 \

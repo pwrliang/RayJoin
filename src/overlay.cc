@@ -33,9 +33,10 @@ int main(int argc, char* argv[]) {
   config.exec_root = exec_path.substr(0, exec_path.find_last_of("/"));
   config.check = FLAGS_check;
   config.lb = FLAGS_lb;
-  config.use_triangle = FLAGS_triangle;
   config.fau = FLAGS_fau;
   config.profiling = FLAGS_profile;
+  config.win = FLAGS_win;
+  config.enlarge = FLAGS_enlarge;
 
   rayjoin::RunOverlay(config);
 

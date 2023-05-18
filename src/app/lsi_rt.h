@@ -35,107 +35,18 @@ class LSIRT : public LSI<CONTEXT_T> {
     const auto& scaling = ctx.get_scaling();
     int base_map_id = 1 - query_map_id;
     auto d_map = ctx.get_map(base_map_id)->DeviceObject();
-    auto ne = d_map.get_edges_num();
-    auto epsilon = 0.0001;  // FIXME
-    auto rounding_iter = config_.rounding_iter;
+    auto win_size = config_.win_size;
+    auto area_enlarge = config_.enlarge;
+    FillPrimitivesGroup(stream, d_map, scaling, win_size, area_enlarge, aabbs_,
+                        eid_range_);
 
-    if (config_.use_triangle) {
-      auto bb = ctx.get_bounding_box();
-      auto mid_x = (bb.min_x + bb.max_x) / 2.0;
-      auto mid_y = (bb.min_y + bb.max_y) / 2.0;
-      auto delta_x = scaling.ScaleX(mid_x + epsilon) - scaling.ScaleX(mid_x);
-      auto delta_y = scaling.ScaleY(mid_y + epsilon) - scaling.ScaleY(mid_y);
-
-      triangle_points_.resize(d_map.get_edges_num() * 3);
-
-      ArrayView<float3> d_triangle_points(triangle_points_);
-
-      ForEach(stream, ne, [=] __device__(uint32_t eid) mutable {
-        const auto& e = d_map.get_edge(eid);
-        auto p1_idx = e.p1_idx;
-        auto p2_idx = e.p2_idx;
-        auto p1 = d_map.get_point(p1_idx);
-        auto p2 = d_map.get_point(p2_idx);
-        auto x1 = scaling.UnscaleX(p1.x);
-        auto y1 = scaling.UnscaleY(p1.y);
-        auto x2 = scaling.UnscaleX(p2.x);
-        auto y2 = scaling.UnscaleY(p2.y);
-
-        if (e.b == 0) {
-          assert(p1.x == p2.x);
-          if (p1.y > p2.y) {
-            SWAP(p1, p2);
-          }
-
-          x1 = x2 = scaling.UnscaleX(p1.x);
-          y1 = scaling.UnscaleY(p1.y - delta_y);
-          y2 = scaling.UnscaleY(p2.y + delta_y);
-        } else {
-          assert(p1.x != p2.x);
-          if (p1.x > p2.x) {
-            SWAP(p1, p2);
-          }
-
-          // use double is much faster than rational
-          // this does not need to be accurate
-          double a = -e.a / e.b;
-          double b = -e.c / e.b;
-
-          auto new_x1 = p1.x - delta_x;
-          auto new_y1 = a * new_x1 + b;
-
-          auto new_x2 = p2.x + delta_x;
-          auto new_y2 = a * new_x2 + b;
-
-          x1 = scaling.UnscaleX(new_x1);
-          y1 = scaling.UnscaleY(new_y1);
-          x2 = scaling.UnscaleX(new_x2);
-          y2 = scaling.UnscaleY(new_y2);
-        }
-
-        d_triangle_points[eid * 3] = {(float) x1, (float) y1, 0};
-        d_triangle_points[eid * 3 + 1] = {(float) x2, (float) y2, 0};
-        d_triangle_points[eid * 3 + 2] = {
-            (float) (x1 + x2) / 2, (float) (y1 + y2) / 2, PRIMITIVE_HEIGHT};
-      });
-      handles_[query_map_id] =
-          rt_engine_->BuildAccelTriangles(stream, d_triangle_points);
-    } else {
-      aabbs_.resize(ne);
-
-      ArrayView<OptixAabb> d_aabbs(aabbs_);
-
-      ForEach(stream, ne, [=] __device__(size_t eid) mutable {
-        const auto& e = d_map.get_edge(eid);
-        auto p1_idx = e.p1_idx;
-        auto p2_idx = e.p2_idx;
-        const auto& p1 = d_map.get_point(p1_idx);
-        const auto& p2 = d_map.get_point(p2_idx);
-        auto x1 = scaling.UnscaleX(p1.x);
-        auto y1 = scaling.UnscaleY(p1.y);
-        auto x2 = scaling.UnscaleX(p2.x);
-        auto y2 = scaling.UnscaleY(p2.y);
-        auto& aabb = d_aabbs[eid];
-
-        aabb.minX = next_float_from_double(min(x1, x2), -1, rounding_iter);
-        aabb.maxX = next_float_from_double(max(x1, x2), 1, rounding_iter);
-        aabb.minY = next_float_from_double(min(y1, y2), -1, rounding_iter);
-        aabb.maxY = next_float_from_double(max(y1, y2), 1, rounding_iter);
-        aabb.minZ = -PRIMITIVE_HEIGHT / 2;
-        aabb.maxZ = PRIMITIVE_HEIGHT / 2;
-      });
-      handles_[query_map_id] = rt_engine_->BuildAccelCustom(stream, d_aabbs);
-    }
+    handles_[query_map_id] =
+        rt_engine_->BuildAccelCustom(stream, ArrayView<OptixAabb>(aabbs_));
 
     stream.Sync();
     if (config_.fau) {
-      if (config_.use_triangle) {
-        triangle_points_.resize(0);
-        triangle_points_.shrink_to_fit();
-      } else {
-        aabbs_.resize(0);
-        aabbs_.shrink_to_fit();
-      }
+      aabbs_.resize(0);
+      aabbs_.shrink_to_fit();
     }
   }
 
@@ -149,13 +60,12 @@ class LSIRT : public LSI<CONTEXT_T> {
     auto& xsects = this->xsect_edges_;
 
     LaunchParamsLSI params;
-    auto module_id = config_.use_triangle
-                         ? ModuleIdentifier::MODULE_ID_LSI
-                         : ModuleIdentifier::MODULE_ID_LSI_CUSTOM;
+    auto module_id = ModuleIdentifier::MODULE_ID_LSI_CUSTOM;
     params.query_map_id = query_map_id;
     params.scaling = scaling;
-    params.base_edges = d_base_map.get_edges();
+    params.base_edges = d_base_map.get_edges().data();
     params.base_points = d_base_map.get_points().data();
+    params.eid_range = thrust::raw_pointer_cast(eid_range_.data());
     params.query_edges = d_query_map.get_edges();
     params.query_points = d_query_map.get_points().data();
     params.traversable = handles_[query_map_id];
@@ -233,7 +143,7 @@ class LSIRT : public LSI<CONTEXT_T> {
   RTQueryConfig config_;
   std::map<int, OptixTraversableHandle> handles_;
   thrust::device_vector<OptixAabb> aabbs_;
-  thrust::device_vector<float3> triangle_points_;
+  thrust::device_vector<thrust::pair<size_t, size_t>> eid_range_;
 };
 }  // namespace rayjoin
 

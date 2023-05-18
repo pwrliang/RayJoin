@@ -11,8 +11,6 @@ set(OPTIX_PROGRAM_TARGET "--ptx")
 set(ENABLED_ARCHS "86")
 
 set(SHADERS
-        algo/rt_pip.cu
-        algo/rt_lsi.cu
         algo/rt_lsi_custom.cu
         algo/rt_pip_custom.cu
         )

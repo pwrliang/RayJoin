@@ -33,7 +33,6 @@ int main(int argc, char* argv[]) {
   config.exec_root = exec_path.substr(0, exec_path.find_last_of('/'));
   config.check = FLAGS_check;
   config.lb = FLAGS_lb;
-  config.use_triangle = FLAGS_triangle;
   config.sample = FLAGS_sample;
   config.sample_rate = FLAGS_sample_rate;
   config.random_seed = FLAGS_seed;
@@ -45,6 +44,8 @@ int main(int argc, char* argv[]) {
   config.profiling = FLAGS_profile;
   config.fau = FLAGS_fau;
   config.rounding_iter = FLAGS_rounding_iter;
+  config.win = FLAGS_win;
+  config.enlarge = FLAGS_enlarge;
 
   if (FLAGS_query == "lsi") {
     rayjoin::RunLSIQuery(config);

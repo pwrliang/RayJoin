@@ -85,7 +85,6 @@ evalute RayJoin with the following commands.
 ```shell
 ./query_exec -poly1 dataset.cdb \
     -mode=grid/rt \
-    -triangle=true/false \ # whether to use triangle as primitives
     -gen_n=100000 \ # number of line segments
     -gen_t=0.1 \ # max length of line segments
     -xsect_factor=0.5 \ # reserve queue space to store LSI results
@@ -98,7 +97,6 @@ evalute RayJoin with the following commands.
 ```shell
 ./query_exec -poly1 dataset.cdb \
     -mode=grid/rt \
-    -triangle=true/false \ # whether to use triangle as primitives
     -gen_n=1000000 \ # number of points
     -warmup=5 \ # warmup rounds
     -repeat=5 \ # number of rounds to evaluate. Average time is reported
@@ -112,11 +110,10 @@ evalute RayJoin with the following commands.
     -serialize=/dev/shm \ # Serialize CDB to binary format, which saves loading time.
     -mode=grid/rt \
     -grid_size=20000 \
-    -triangle=true/false \
     -epsilon=0.00001 \ # the paramter of Reservative Representation
     -early_term_deviant=1 \ # the paramter of Early Termination
     -check=true \ # Check Error Rate
-    -fau \ # Free AABBs/Triangles after builing the BVH, which allows loading big datasets at the overhead of free memory 
+    -fau \ # Free AABBs after builing the BVH, which allows loading big datasets at the overhead of free memory 
     -xsect_factor=0.5
 
 ```

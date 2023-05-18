@@ -68,8 +68,10 @@ class RTMapOverlay {
       auto ne = map->get_edges_num();
 
       point_in_polygon_[im].resize(points_num);
+      eid_range_[im].reserve(ne);
       max_ne = std::max(max_ne, ne);
     }
+    aabbs_.reserve(max_ne);
 
     rt_engine_->Init(rt_config);
     pip_.Init(max_ne);
@@ -82,26 +84,17 @@ class RTMapOverlay {
     const auto& scaling = ctx_.get_scaling();
     auto d_map = ctx_.get_map(map_id)->DeviceObject();
 
-    if (config_.use_triangle) {
-      FillPrimitivesTriangle(stream, d_map, scaling, triangle_points_);
-      traverse_handles_[map_id] = rt_engine_->BuildAccelTriangles(
-          stream, ArrayView<float3>(triangle_points_));
-    } else {
-      //      FillPrimitives(stream, d_map, scaling, aabbs_);
-      FillPrimitivesSketch(stream, d_map, scaling, aabbs_);
-      traverse_handles_[map_id] =
-          rt_engine_->BuildAccelCustom(stream, ArrayView<OptixAabb>(aabbs_));
-    }
+    auto win_size = config_.win;
+    auto area_enlarge = config_.enlarge;
+    FillPrimitivesGroup(stream, d_map, scaling, win_size, area_enlarge, aabbs_,
+                        eid_range_[map_id]);
+    traverse_handles_[map_id] =
+        rt_engine_->BuildAccelCustom(stream, ArrayView<OptixAabb>(aabbs_));
 
     stream.Sync();
     if (config_.fau) {
-      if (config_.use_triangle) {
-        triangle_points_.resize(0);
-        triangle_points_.shrink_to_fit();
-      } else {
-        aabbs_.resize(0);
-        aabbs_.shrink_to_fit();
-      }
+      aabbs_.resize(0);
+      aabbs_.shrink_to_fit();
     }
   }
 
@@ -112,15 +105,14 @@ class RTMapOverlay {
     int base_map_id = 1 - query_map_id;
     auto d_base_map = ctx_.get_map(base_map_id)->DeviceObject(),
          d_query_map = ctx_.get_map(query_map_id)->DeviceObject();
-    auto module_id = config_.use_triangle
-                         ? ModuleIdentifier::MODULE_ID_LSI
-                         : ModuleIdentifier::MODULE_ID_LSI_CUSTOM;
+    auto module_id = ModuleIdentifier::MODULE_ID_LSI_CUSTOM;
     LaunchParamsLSI params;
 
-    params.query_map_id = query_map_id;
     params.scaling = scaling;
-    params.base_edges = d_base_map.get_edges();
+    params.base_edges = d_base_map.get_edges().data();
     params.base_points = d_base_map.get_points().data();
+    params.eid_range = thrust::raw_pointer_cast(eid_range_[base_map_id].data());
+    params.query_map_id = query_map_id;
     params.query_edges = d_query_map.get_edges();
     params.query_points = d_query_map.get_points().data();
     params.traversable = traverse_handles_[base_map_id];
@@ -450,11 +442,11 @@ class RTMapOverlay {
   }
 
  private:
-  RTQueryConfig get_rt_query_config(int map_id) const {
+  RTQueryConfig get_rt_query_config(int map_id) {
     RTQueryConfig pip_config;
 
-    pip_config.use_triangle = config_.use_triangle;
     pip_config.fau = config_.fau;
+    pip_config.eid_range = thrust::raw_pointer_cast(eid_range_[map_id].data());
     pip_config.handle_ = traverse_handles_[map_id];
     return pip_config;
   }
@@ -472,7 +464,7 @@ class RTMapOverlay {
   OptixTraversableHandle traverse_handles_[2];
   // RT
   thrust::device_vector<OptixAabb> aabbs_;
-  thrust::device_vector<float3> triangle_points_;
+  thrust::device_vector<thrust::pair<size_t, size_t>> eid_range_[2];
 };
 
 }  // namespace rayjoin

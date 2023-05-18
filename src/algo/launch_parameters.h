@@ -22,10 +22,11 @@ struct LaunchParamsLSI {
   using point_t = typename map_t::point_t;
   using xsect_t = dev::Intersection<internal_coord_t>;
 
-  char query_map_id;
-  ArrayView<edge_t> base_edges;
+  edge_t* base_edges;
   point_t* base_points;
+  thrust::pair<size_t, size_t>* eid_range;
 
+  int query_map_id;
   ArrayView<edge_t> query_edges;  // ray gen map
   point_t* query_points;
 
@@ -48,11 +49,12 @@ struct LaunchParamsPIP {
   using edge_t = typename map_t::edge_t;
   using point_t = typename map_t::point_t;
 
-  // current map no
+  edge_t* base_map_edges;
+  point_t* base_map_points;
+  thrust::pair<size_t, size_t>* eid_range;
+
   int query_map_id;
   ArrayView<point_t> query_points;
-  ArrayView<edge_t> base_map_edges;
-  point_t* base_map_points;
   Scaling<coord_t, internal_coord_t, detail::internal_coord<coord_t>::shift>
       scaling;
   // Used for BVH Traversable

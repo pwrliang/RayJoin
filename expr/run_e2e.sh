@@ -39,7 +39,6 @@ function varying_conserve_rep() {
                          -serialize=${SERIALIZE_PREFIX} \
                          -grid_size=20000 \
                          -mode=rt \
-                         -triangle=false \
                          -v=1 \
                          -epsilon=$cr \
                          -check=true \
@@ -87,7 +86,6 @@ function varying_early_term() {
                        -serialize=${SERIALIZE_PREFIX} \
                        -grid_size=20000 \
                        -mode=rt \
-                       -triangle=false \
                        -v=1 \
                        -early_term_deviant=$dev \
                        -fau \
@@ -122,7 +120,7 @@ function run_overlay() {
     map1=${MAPS1[$i]}
     map2=${MAPS2[$i]}
 
-    for mode in grid rt rt_triangle; do
+    for mode in grid rt; do
       out_prefix="${out_dir}/overlay_${map1}_${map2}_${mode}"
       log_file="${out_prefix}.log"
 
@@ -133,19 +131,11 @@ function run_overlay() {
         lb=false
       fi
 
-      if [[ $mode == "rt_triangle" ]]; then
-        mode="rt"
-        triangle=true
-      else
-        triangle=false
-      fi
-
       cmd="$exec -poly1 ${DATASET_ROOT}/${map1} \
                        -poly2 ${DATASET_ROOT}/${map2} \
                        -serialize=${SERIALIZE_PREFIX} \
                        -grid_size=20000 \
                        -mode=$mode \
-                       -triangle=$triangle \
                        -lb=$lb \
                        -v=1 \
                        -fau \
