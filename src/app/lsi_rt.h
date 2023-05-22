@@ -8,7 +8,7 @@
 
 #include "algo/lsi.h"
 #include "app/lsi.h"
-#include "app/rt_query_config.h"
+#include "app/query_config.h"
 #include "rt/rt_engine.h"
 #include "util/helpers.h"
 
@@ -25,30 +25,7 @@ class LSIRT : public LSI<CONTEXT_T> {
   explicit LSIRT(CONTEXT_T& ctx, const std::shared_ptr<RTEngine>& rt_engine)
       : LSI<CONTEXT_T>(ctx), rt_engine_(rt_engine) {}
 
-  void set_query_config(RTQueryConfig config) { config_ = config; }
-
   void Init(size_t max_n_xsects) override { lsi::Init(max_n_xsects); }
-
-  void BuildIndex(int query_map_id) override {
-    auto& ctx = this->ctx_;
-    auto& stream = ctx.get_stream();
-    const auto& scaling = ctx.get_scaling();
-    int base_map_id = 1 - query_map_id;
-    auto d_map = ctx.get_map(base_map_id)->DeviceObject();
-    auto win_size = config_.win_size;
-    auto area_enlarge = config_.enlarge;
-    FillPrimitivesGroup(stream, d_map, scaling, win_size, area_enlarge, aabbs_,
-                        eid_range_);
-
-    handles_[query_map_id] =
-        rt_engine_->BuildAccelCustom(stream, ArrayView<OptixAabb>(aabbs_));
-
-    stream.Sync();
-    if (config_.fau) {
-      aabbs_.resize(0);
-      aabbs_.shrink_to_fit();
-    }
-  }
 
   ArrayView<xsect_t> Query(int query_map_id) override {
     auto& ctx = this->ctx_;
@@ -65,10 +42,10 @@ class LSIRT : public LSI<CONTEXT_T> {
     params.scaling = scaling;
     params.base_edges = d_base_map.get_edges().data();
     params.base_points = d_base_map.get_points().data();
-    params.eid_range = thrust::raw_pointer_cast(eid_range_.data());
+    params.eid_range = thrust::raw_pointer_cast(config_.eid_range->data());
     params.query_edges = d_query_map.get_edges();
     params.query_points = d_query_map.get_points().data();
-    params.traversable = handles_[query_map_id];
+    params.traversable = config_.handle;
     params.rounding_iter = config_.rounding_iter;
     params.xsects = xsects.DeviceObject();
 
@@ -138,12 +115,19 @@ class LSIRT : public LSI<CONTEXT_T> {
                               this->xsect_edges_.size(stream));
   }
 
+  const QueryConfigRT& get_config() const { return config_; }
+
+  void set_config(QueryConfigRT config) { config_ = std::move(config); }
+
+  void set_rt_engine(std::shared_ptr<RTEngine> rt_engine) {
+    rt_engine_ = std::move(rt_engine);
+  }
+
+  std::shared_ptr<RTEngine> get_rt_engine() { return rt_engine_; }
+
  private:
   std::shared_ptr<RTEngine> rt_engine_;
-  RTQueryConfig config_;
-  std::map<int, OptixTraversableHandle> handles_;
-  thrust::device_vector<OptixAabb> aabbs_;
-  thrust::device_vector<thrust::pair<size_t, size_t>> eid_range_;
+  QueryConfigRT config_;
 };
 }  // namespace rayjoin
 

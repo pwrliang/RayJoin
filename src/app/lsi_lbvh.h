@@ -1,9 +1,14 @@
 #ifndef APP_LSI_LBVH_H
 #define APP_LSI_LBVH_H
 
+#include <memory>
+
 #include "algo/lsi.h"
 #include "app/lsi.h"
+#include "app/query_config.h"
 #include "lbvh.cuh"
+#include "tree/primtive.h"
+#include "util/helpers.h"
 
 namespace rayjoin {
 template <typename CONTEXT_T>
@@ -15,89 +20,9 @@ class LSILBVH : public LSI<CONTEXT_T> {
   using xsect_t = typename lsi::xsect_t;
 
  public:
-  struct segment {
-    float2 p1, p2;
-  };
+  explicit LSILBVH(CONTEXT_T& ctx) : LSI<CONTEXT_T>(ctx) {}
 
-  struct aabb_getter {
-    __device__ lbvh::aabb<float> operator()(const segment& f) const noexcept {
-      lbvh::aabb<float> box;
-      auto min_x = min(f.p1.x, f.p2.x);
-      auto max_x = max(f.p1.x, f.p2.x);
-      auto min_y = min(f.p1.y, f.p2.y);
-      auto max_y = max(f.p1.y, f.p2.y);
-
-      box.lower = make_float4(min_x, min_y, 0, 0);
-      box.upper = make_float4(max_x, max_y, 0, 0);
-      return box;
-    }
-  };
-
-  explicit LSILBVH(CONTEXT_T& ctx, bool profiling)
-      : LSI<CONTEXT_T>(ctx), profiling_(profiling) {}
-
-  void Init(size_t max_n_xsects) override {
-    lsi::Init(max_n_xsects);
-
-    auto& ctx = this->ctx_;
-    auto scaling = ctx.get_scaling();
-    auto bb = ctx.get_bounding_box();
-    auto mid_x = (bb.min_x + bb.max_x) / 2.0;
-    auto& stream = ctx.get_stream();
-    pinned_vector<segment> primitives;
-    int base_map_id = 0;
-
-    auto map = ctx.get_map(base_map_id);
-    auto d_map = map->DeviceObject();
-
-    primitives.resize(map->get_edges_num());
-
-    CHECK_GT(primitives.size(), 1)
-        << "At least two primitives are required to use LBVH";
-
-    ForEach(
-        stream, map->get_edges_num(),
-        [=] __device__(size_t eid, ArrayView<segment> edges) {
-          const auto& e = d_map.get_edge(eid);
-          auto p1 = d_map.get_point(e.p1_idx);
-          auto p2 = d_map.get_point(e.p2_idx);
-          if (p1.x > p2.x) {
-            SWAP(p1, p2);
-          }
-          auto x1 = scaling.UnscaleX(p1.x);
-          auto y1 = scaling.UnscaleY(p1.y);
-          auto x2 = scaling.UnscaleX(p2.x);
-          auto y2 = scaling.UnscaleY(p2.y);
-
-          //            if (e.b != 0) {
-          //              assert(p1.x < p2.x);
-          //              // use double is much faster than rational
-          //              // this does not need to be accurate
-          //              double a = -e.a / e.b;
-          //              double b = -e.c / e.b;
-          //
-          //              auto new_x1 = p1.x - margin;
-          //              auto new_y1 = a * new_x1 + b;
-          //
-          //              auto new_x2 = p2.x + margin;
-          //              auto new_y2 = a * new_x2 + b;
-          //
-          //              x1 = scaling.UnscaleX(new_x1);
-          //              y1 = scaling.UnscaleY(new_y1);
-          //              x2 = scaling.UnscaleX(new_x2);
-          //              y2 = scaling.UnscaleY(new_y2);
-          //            }
-
-          edges[eid].p1 = {(float) x1, (float) y1};
-          edges[eid].p2 = {(float) x2, (float) y2};
-        },
-        ArrayView<segment>(primitives));
-    stream.Sync();
-    // copy primitives to the GPU
-    bvh_.assign(primitives);
-  }
-
-  void BuildIndex(int query_map_id) override { bvh_.construct(profiling_); }
+  void Init(size_t max_n_xsects) override { lsi::Init(max_n_xsects); }
 
   ArrayView<xsect_t> Query(int query_map_id) override {
     auto& ctx = this->ctx_;
@@ -106,7 +31,7 @@ class LSILBVH : public LSI<CONTEXT_T> {
     auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
     auto scaling = ctx.get_scaling();
     auto& stream = ctx.get_stream();
-    const auto bvh_dev = bvh_.get_device_repr();
+    const auto bvh_dev = config_.lbvh->get_device_repr();
     auto d_xsects = this->xsect_edges_.DeviceObject();
 
     this->xsect_edges_.Clear(stream);
@@ -172,10 +97,11 @@ class LSILBVH : public LSI<CONTEXT_T> {
                               this->xsect_edges_.size(stream));
   }
 
+  void set_config(const QueryConfigLBVH& config) { config_ = config; }
+
  private:
-  bool profiling_;
   SharedValue<uint64_t> visited_nodes_;
-  lbvh::bvh<float, segment, aabb_getter> bvh_;
+  QueryConfigLBVH config_;
 };
 }  // namespace rayjoin
 

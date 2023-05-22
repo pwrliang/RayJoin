@@ -15,7 +15,6 @@ DEFINE_int32(warmup, 5, "");
 DEFINE_int32(repeat, 5, "");
 DEFINE_string(serialize, "", "");
 DEFINE_bool(dynamic, false, "Dynamic query");
-DEFINE_bool(reorder, false, "Reorder query to improve ray coherence");
 DEFINE_int32(win, 8, "Window size for AABB compression");
 DEFINE_double(enlarge, 2, "Threshold for AABB merge");
 // Queries

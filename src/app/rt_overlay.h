@@ -442,8 +442,8 @@ class RTMapOverlay {
   }
 
  private:
-  RTQueryConfig get_rt_query_config(int map_id) {
-    RTQueryConfig pip_config;
+  QueryConfigRT get_rt_query_config(int map_id) {
+    QueryConfigRT pip_config;
 
     pip_config.fau = config_.fau;
     pip_config.eid_range = thrust::raw_pointer_cast(eid_range_[map_id].data());

@@ -6,7 +6,7 @@
 #include <fstream>
 #include <utility>
 
-#include "app/rt_query_config.h"
+#include "app/query_config.h"
 #include "map/map.h"
 #include "rt/rt_engine.h"
 #include "util/queue.h"
@@ -28,7 +28,7 @@ class PIPRT : public PIP<CONTEXT_T> {
 
   virtual ~PIPRT() = default;
 
-  void set_query_config(const RTQueryConfig& query_config) {
+  void set_query_config(const QueryConfigRT& query_config) {
     query_config_ = query_config;
   }
 
@@ -48,11 +48,12 @@ class PIPRT : public PIP<CONTEXT_T> {
     LaunchParamsPIP params;
     params.base_map_edges = d_base_map.get_edges().data();
     params.base_map_points = d_base_map.get_points().data();
-    params.eid_range = query_config_.eid_range;
+    params.eid_range =
+        thrust::raw_pointer_cast(query_config_.eid_range->data());
     params.query_map_id = 1 - base_map_id;
     params.query_points = d_query_points;
     params.scaling = scaling;
-    params.traversable = query_config_.handle_;
+    params.traversable = query_config_.handle;
     params.closest_eids = thrust::raw_pointer_cast(this->closest_eids_.data());
 #ifndef NDEBUG
     hit_count_.resize(points_num, 0);
@@ -99,7 +100,7 @@ class PIPRT : public PIP<CONTEXT_T> {
 
  protected:
   std::shared_ptr<RTEngine> rt_engine_;
-  RTQueryConfig query_config_;
+  QueryConfigRT query_config_;
 #ifndef NDEBUG
   thrust::device_vector<uint32_t> hit_count_;
   thrust::device_vector<uint32_t> closer_count_;

@@ -23,7 +23,6 @@ DECLARE_int32(repeat);
 DECLARE_string(serialize);
 
 DECLARE_bool(dynamic);
-DECLARE_bool(reorder);
 DECLARE_int32(win);
 DECLARE_double(enlarge);
 // Queries

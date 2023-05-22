@@ -1,13 +1,17 @@
+#include <memory>
 #include <random>
 
 #include "app/lsi_grid.h"
 #include "app/lsi_lbvh.h"
 #include "app/lsi_rt.h"
 #include "app/pip_grid.h"
+#include "app/pip_lbvh.h"
 #include "app/pip_rt.h"
 #include "map/planar_graph.h"
 #include "rt/primitive.h"
 #include "run_query.cuh"
+#include "tree/primtive.h"
+#include "util/array_view.h"
 #include "util/helpers.h"
 #include "util/timer.h"
 
@@ -182,11 +186,12 @@ void RunLSIQuery(const QueryConfig& config) {
 
   timer_next("Create Context");
   context_t ctx(base_map);
+  Stream& stream = ctx.get_stream();
   LSI<context_t>* lsi;
 
   timer_next("Generate Workloads");
   auto query_map = GenerateLSIQueries(config, ctx);
-  ctx.set_query_map(query_map);
+  ctx.set_map(query_map_id, query_map);
 
   timer_next("Create App");
   if (config.mode == "grid") {
@@ -195,7 +200,7 @@ void RunLSIQuery(const QueryConfig& config) {
     lsi = new LSIGrid<context_t>(ctx, grid);
     dynamic_cast<LSIGrid<context_t>*>(lsi)->set_load_balancing(config.lb);
   } else if (config.mode == "lbvh") {
-    lsi = new LSILBVH<context_t>(ctx, !config.profiling.empty());
+    lsi = new LSILBVH<context_t>(ctx);
   } else if (config.mode == "rt") {
     auto rt_engine = std::make_shared<RTEngine>();
     RTConfig rt_config = get_default_rt_config(config.exec_root);
@@ -207,8 +212,11 @@ void RunLSIQuery(const QueryConfig& config) {
   }
 
   timer_next("Init");
+  auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
+  auto d_query_map = ctx.get_map(query_map_id)->DeviceObject();
+  const auto& scaling = ctx.get_scaling();
   size_t queue_cap =
-      (ctx.get_map(base_map_id)->get_edges_num() + config.gen_n) *
+      (d_base_map.get_edges_num() + d_query_map.get_edges_num()) *
       config.xsect_factor;
   LOG(INFO) << "Queue capacity: " << queue_cap;
   lsi->Init(queue_cap);
@@ -220,16 +228,38 @@ void RunLSIQuery(const QueryConfig& config) {
     lsi_grid->AddMapsToGrid(ctx, !config.profiling.empty());
   } else if (config.mode == "rt") {
     auto lsi_rt = dynamic_cast<LSIRT<context_t>*>(lsi);
-    RTQueryConfig query_config;
+    thrust::device_vector<OptixAabb> aabbs;
+    auto eid_range =
+        std::make_shared<thrust::device_vector<thrust::pair<size_t, size_t>>>();
+    QueryConfigRT query_config;
+    auto rt_engine = lsi_rt->get_rt_engine();
+    auto win_size = config.win;
+    auto area_enlarge = config.enlarge;
+
+    FillPrimitivesGroup(stream, d_base_map, scaling, win_size, area_enlarge,
+                        aabbs, *eid_range);
 
     query_config.fau = config.fau;
     query_config.rounding_iter = config.rounding_iter;
-    query_config.win_size = config.win;
-    query_config.enlarge = config.enlarge;
-    query_config.reorder = config.reorder;
+    query_config.handle =
+        rt_engine->BuildAccelCustom(stream, ArrayView<OptixAabb>(aabbs));
+    query_config.eid_range = eid_range;
 
-    lsi_rt->set_query_config(query_config);
-    lsi_rt->BuildIndex(query_map_id);
+    lsi_rt->set_config(query_config);
+  } else if (config.mode == "lbvh") {
+    auto lsi_lbvh = dynamic_cast<LSILBVH<context_t>*>(lsi);
+    QueryConfigLBVH query_config;
+    pinned_vector<segment> primitives;
+    auto bvh = std::make_shared<lbvh::bvh<float, segment, aabb_getter>>();
+
+    FillPrimitivesLBVH(stream, d_base_map, scaling, primitives);
+    stream.Sync();
+    bvh->assign(primitives);
+    bvh->construct(!config.profiling.empty());
+
+    query_config.lbvh = bvh;
+    query_config.profiling = !config.profiling.empty();
+    lsi_lbvh->set_config(query_config);
   }
 
   timer_next("Warmup");
@@ -264,6 +294,19 @@ void RunPIPQuery(const QueryConfig& config) {
   timer_start();
   timer_next("Read map");
   auto base_map = load_from<coord_t>(config.map_path, config.serialize_prefix);
+  int base_map_id = 0, query_map_id = 1;
+
+  if (config.sample == "edges") {
+    LOG(INFO) << "Sampling edges from map, sample rate: " << config.sample_rate
+              << ", seed: " << config.random_seed;
+    base_map =
+        sample_edges_from(base_map, config.sample_rate, config.random_seed);
+  } else if (config.sample == "map") {
+    LOG(INFO) << "Sampling map, sample rate: " << config.sample_rate
+              << ", seed: " << config.random_seed;
+    base_map =
+        sample_map_from(base_map, config.sample_rate, config.random_seed);
+  }
 
   timer_next("Create Context");
   context_t ctx(base_map);
@@ -274,7 +317,6 @@ void RunPIPQuery(const QueryConfig& config) {
   thrust::device_vector<point_t> query_points =
       rayjoin::GeneratePIPQueries(config, ctx);
   ArrayView<typename context_t::map_t::point_t> d_query_points(query_points);
-  thrust::device_vector<thrust::pair<size_t, size_t>> eid_range;
 
   timer_next("Create App");
   if (config.mode == "grid") {
@@ -287,11 +329,16 @@ void RunPIPQuery(const QueryConfig& config) {
 
     rt_engine->Init(rt_config);
     pip = new PIPRT<context_t>(ctx, rt_engine);
+  } else if (config.mode == "lbvh") {
+    pip = new PIPLBVH<context_t>(ctx);
   } else {
     LOG(FATAL) << "Invalid index type: " << config.mode;
   }
 
   timer_next("Init");
+  auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
+  auto d_query_map = ctx.get_map(query_map_id)->DeviceObject();
+  const auto& scaling = ctx.get_scaling();
   pip->Init(query_points.size());
 
   timer_next("Build Index");
@@ -303,35 +350,36 @@ void RunPIPQuery(const QueryConfig& config) {
     auto pip_rt = dynamic_cast<PIPRT<context_t>*>(pip);
     auto rt_engine = pip_rt->get_rt_engine();
     thrust::device_vector<OptixAabb> aabbs;
-    auto scaling = ctx.get_scaling();
-    auto d_map = ctx.get_map(0)->DeviceObject();
-    auto ne = d_map.get_edges_num();
+    auto eid_range =
+        std::make_shared<thrust::device_vector<thrust::pair<size_t, size_t>>>();
+    auto ne = d_base_map.get_edges_num();
 
-    FillPrimitivesGroup(stream, d_map, scaling, config.win, config.enlarge,
-                        aabbs, eid_range);
+    FillPrimitivesGroup(stream, d_base_map, scaling, config.win, config.enlarge,
+                        aabbs, *eid_range);
 
     ArrayView<OptixAabb> d_aabbs(aabbs);
 
-    RTQueryConfig pip_config;
+    QueryConfigRT pip_config;
 
     pip_config.fau = config.fau;
-    pip_config.eid_range = thrust::raw_pointer_cast(eid_range.data());
-    pip_config.handle_ = rt_engine->BuildAccelCustom(stream, d_aabbs);
-    pip_config.reorder = config.reorder;
+    pip_config.eid_range = eid_range;
+    pip_config.handle = rt_engine->BuildAccelCustom(stream, d_aabbs);
 
     pip_rt->set_query_config(pip_config);
+  } else if (config.mode == "lbvh") {
+    auto pip_lbvh = dynamic_cast<PIPLBVH<context_t>*>(pip);
+    QueryConfigLBVH query_config;
+    pinned_vector<segment> primitives;
+    auto bvh = std::make_shared<lbvh::bvh<float, segment, aabb_getter>>();
 
-    if (config.reorder) {
-      timer_next("Reorder");
-      thrust::sort(thrust::cuda::par.on(stream.cuda_stream()),
-                   query_points.begin(), query_points.end(),
-                   [] __device__(const point_t& p1, const point_t& p2) {
-                     if (p1.x != p2.x) {
-                       return p1.x < p2.x;
-                     }
-                     return p1.y < p2.y;
-                   });
-    }
+    FillPrimitivesLBVH(stream, d_base_map, scaling, primitives);
+    stream.Sync();
+    bvh->assign(primitives);
+    bvh->construct(!config.profiling.empty());
+
+    query_config.lbvh = bvh;
+    query_config.profiling = !config.profiling.empty();
+    pip_lbvh->set_config(query_config);
   }
   stream.Sync();
 
@@ -348,7 +396,7 @@ void RunPIPQuery(const QueryConfig& config) {
 
     if (i == config.repeat - 1) {
       stream.Sync();
-      if (config.check && config.mode == "rt") {
+      if (config.check && config.mode != "grid") {
         timer_next("Check");
         CheckPIPResult(ctx, config, query_points, pip->get_closest_eids());
       }

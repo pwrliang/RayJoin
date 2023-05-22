@@ -87,6 +87,8 @@ class Context {
 
   void set_query_map(std::shared_ptr<map_t> query_map) { maps_[1] = query_map; }
 
+  void set_map(int mapno, std::shared_ptr<map_t> map) { maps_[mapno] = map; }
+
   std::shared_ptr<map_t> get_map(int mapno) { return maps_[mapno]; }
 
   std::shared_ptr<const map_t> get_map(int mapno) const {

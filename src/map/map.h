@@ -49,6 +49,7 @@ template <typename COORD_T, typename COEFFICIENT_T>
 class Map {
  public:
   using coord_t = COORD_T;
+  using coefficient_t = COEFFICIENT_T;
   using point_t = typename cuda_vec<coord_t>::type_2d;
   using edge_t = dev::Edge<COEFFICIENT_T>;
 
@@ -97,6 +98,7 @@ template <typename COORD_T, typename COEFFICIENT_T>
 class Map {
  public:
   using coord_t = COORD_T;
+  using coefficient_t = COEFFICIENT_T;
   using point_t = typename cuda_vec<coord_t>::type_2d;
   using bounding_box_t = BoundingBox<COORD_T>;
   using edge_t = dev::Edge<COEFFICIENT_T>;
