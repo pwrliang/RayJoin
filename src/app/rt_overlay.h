@@ -68,7 +68,9 @@ class RTMapOverlay {
       auto ne = map->get_edges_num();
 
       point_in_polygon_[im].resize(points_num);
-      eid_range_[im].reserve(ne);
+      eid_range_[im] = std::make_shared<
+          thrust::device_vector<thrust::pair<size_t, size_t>>>();
+      eid_range_[im]->reserve(ne);
       max_ne = std::max(max_ne, ne);
     }
     aabbs_.reserve(max_ne);
@@ -87,7 +89,7 @@ class RTMapOverlay {
     auto win_size = config_.win;
     auto area_enlarge = config_.enlarge;
     FillPrimitivesGroup(stream, d_map, scaling, win_size, area_enlarge, aabbs_,
-                        eid_range_[map_id]);
+                        *eid_range_[map_id]);
     traverse_handles_[map_id] =
         rt_engine_->BuildAccelCustom(stream, ArrayView<OptixAabb>(aabbs_));
 
@@ -111,7 +113,7 @@ class RTMapOverlay {
     params.scaling = scaling;
     params.base_edges = d_base_map.get_edges().data();
     params.base_points = d_base_map.get_points().data();
-    params.eid_range = thrust::raw_pointer_cast(eid_range_[base_map_id].data());
+    params.eid_range = thrust::raw_pointer_cast(eid_range_[base_map_id]->data());
     params.query_map_id = query_map_id;
     params.query_edges = d_query_map.get_edges();
     params.query_points = d_query_map.get_points().data();
@@ -446,8 +448,8 @@ class RTMapOverlay {
     QueryConfigRT pip_config;
 
     pip_config.fau = config_.fau;
-    pip_config.eid_range = thrust::raw_pointer_cast(eid_range_[map_id].data());
-    pip_config.handle_ = traverse_handles_[map_id];
+    pip_config.eid_range = eid_range_[map_id];
+    pip_config.handle = traverse_handles_[map_id];
     return pip_config;
   }
 
@@ -464,7 +466,8 @@ class RTMapOverlay {
   OptixTraversableHandle traverse_handles_[2];
   // RT
   thrust::device_vector<OptixAabb> aabbs_;
-  thrust::device_vector<thrust::pair<size_t, size_t>> eid_range_[2];
+  std::shared_ptr<thrust::device_vector<thrust::pair<size_t, size_t>>>
+      eid_range_[2];
 };
 
 }  // namespace rayjoin
