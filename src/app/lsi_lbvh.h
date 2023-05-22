@@ -24,17 +24,16 @@ class LSILBVH : public LSI<CONTEXT_T> {
 
   void Init(size_t max_n_xsects) override { lsi::Init(max_n_xsects); }
 
-  ArrayView<xsect_t> Query(int query_map_id) override {
+  void Query(Stream& stream, int query_map_id) override {
     auto& ctx = this->ctx_;
     int base_map_id = 1 - query_map_id;
     auto d_query_map = ctx.get_map(query_map_id)->DeviceObject();
     auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
     auto scaling = ctx.get_scaling();
-    auto& stream = ctx.get_stream();
     const auto bvh_dev = config_.lbvh->get_device_repr();
-    auto d_xsects = this->xsect_edges_.DeviceObject();
+    auto d_xsect_queue = this->xsect_queue_.DeviceObject();
 
-    this->xsect_edges_.Clear(stream);
+    this->xsect_queue_.Clear(stream);
 #ifndef NDEBUG
     this->prof_counter_.set(0, stream);
     visited_nodes_.set(0, stream);
@@ -76,7 +75,7 @@ class LSILBVH : public LSI<CONTEXT_T> {
                       xsect.y = xsect_y;
                       xsect.eid[0] = eid1;
                       xsect.eid[1] = eid2;
-                      d_xsects.AppendWarp(xsect);
+                      d_xsect_queue.AppendWarp(xsect);
                     }
                   });
               auto traversed_aabbs = pair.first;
@@ -93,8 +92,8 @@ class LSILBVH : public LSI<CONTEXT_T> {
     LOG(INFO) << "Total tests: " << this->prof_counter_.get(stream);
     LOG(INFO) << "Visited nodes: " << visited_nodes_.get(stream);
 #endif
-    return ArrayView<xsect_t>(this->xsect_edges_.data(),
-                              this->xsect_edges_.size(stream));
+    this->xsects_ = ArrayView<xsect_t>(this->xsect_edges_.data(),
+                                       this->xsect_edges_.size(stream));
   }
 
   void set_config(const QueryConfigLBVH& config) { config_ = config; }

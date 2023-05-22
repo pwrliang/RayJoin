@@ -39,8 +39,10 @@ class MapOverlay {
   void AddMapsToGrid() { grid_->AddMapsToGrid(ctx_); }
 
   void IntersectEdge(bool lb = false) {
+    auto& stream = ctx_.get_stream();
     lsi_.set_load_balancing(lb);
-    xsect_edges_ = lsi_.Query(0);
+    lsi_.Query(stream, 0);
+    xsect_edges_ = lsi_.get_xsects();
     LOG(INFO) << "Xsects: " << xsect_edges_.size();
   }
 

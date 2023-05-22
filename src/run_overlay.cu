@@ -26,7 +26,7 @@ void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
   //  cuda_grid.ComputeOutputPolygons();
   {
     auto n_xsects_ans = cuda_grid.get_xsect_edges().size();
-    auto n_xsects_res = overlay.get_xsect_edges_queue().size();
+    auto n_xsects_res = overlay.get_xsect_edges().size();
     int n_diff = abs((int) (n_xsects_ans - n_xsects_res));
 
     if (n_diff != 0) {
@@ -59,7 +59,7 @@ void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
 
       write_to(ArrayView<xsect_t>(cuda_grid.get_xsect_edges()),
                "/tmp/xsects.ans");
-      write_to(overlay.get_xsect_edges_queue(), "/tmp/xsects.res");
+      write_to(overlay.get_xsect_edges(), "/tmp/xsects.res");
     } else {
       LOG(INFO) << "LSI passed check";
     }
@@ -176,11 +176,6 @@ void RunOverlay(const OverlayConfig& config) {
         overlay.DumpStatistics(log_path.c_str());
       }
     }
-
-#ifndef NDEBUG
-    timer_next("Dump Intersection");
-    overlay.DumpIntersection();
-#endif
 
     timer_next("Computer output polygons");
     overlay.ComputeOutputPolygons();

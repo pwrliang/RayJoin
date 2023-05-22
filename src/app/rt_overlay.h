@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <random>
 
+#include "app/lsi_rt.h"
 #include "app/output_chain.h"
 #include "app/overlay_config.h"
 #include "app/pip_rt.h"
@@ -30,6 +31,7 @@ class RTMapOverlay {
       : ctx_(ctx),
         config_(config),
         rt_engine_(std::make_shared<RTEngine>()),
+        lsi_(ctx, rt_engine_),
         pip_(ctx, rt_engine_) {
     size_t total_n_edges = 0;
 
@@ -47,21 +49,10 @@ class RTMapOverlay {
 
   void Init() {
     auto& stream = ctx_.get_stream();
-    size_t required_space = 0;
     auto exec_root = ctx_.get_exec_root();
     RTConfig rt_config = get_default_rt_config(exec_root);
-
-    required_space += SIZEOF_ELEM(xsect_edges_) * max_n_xsects_ * 3;
-    FOR2 {
-      auto points_num = ctx_.get_map(im)->get_points_num();
-      required_space += SIZEOF_ELEM(point_in_polygon_[im]) * points_num;
-      required_space += SIZEOF_ELEM(xsect_edges_sorted_[im]);
-    }
-    LOG(INFO) << "Required Space: " << required_space / 1024 / 1024 << " MB";
-
-    xsect_edges_.Init(max_n_xsects_ * 3);
-
     size_t max_ne = 0;
+
     FOR2 {
       auto map = ctx_.get_map(im);
       auto points_num = map->get_points_num();
@@ -76,6 +67,7 @@ class RTMapOverlay {
     aabbs_.reserve(max_ne);
 
     rt_engine_->Init(rt_config);
+    lsi_.Init(max_n_xsects_ * 3);
     pip_.Init(max_ne);
 
     stream.Sync();
@@ -101,129 +93,16 @@ class RTMapOverlay {
   }
 
   void IntersectEdge() {
+    int base_map_id = 0, query_map_id = 1 - base_map_id;
     auto& stream = ctx_.get_stream();
-    auto& scaling = ctx_.get_scaling();
-    int query_map_id = 1;
-    int base_map_id = 1 - query_map_id;
-    auto d_base_map = ctx_.get_map(base_map_id)->DeviceObject(),
-         d_query_map = ctx_.get_map(query_map_id)->DeviceObject();
-    auto module_id = ModuleIdentifier::MODULE_ID_LSI_CUSTOM;
-    LaunchParamsLSI params;
+    auto config = get_rt_query_config(base_map_id);
 
-    params.scaling = scaling;
-    params.base_edges = d_base_map.get_edges().data();
-    params.base_points = d_base_map.get_points().data();
-    params.eid_range = thrust::raw_pointer_cast(eid_range_[base_map_id]->data());
-    params.query_map_id = query_map_id;
-    params.query_edges = d_query_map.get_edges();
-    params.query_points = d_query_map.get_points().data();
-    params.traversable = traverse_handles_[base_map_id];
-    params.rounding_iter = config_.rounding_iter;
-    params.xsects = xsect_edges_.DeviceObject();
-
-    xsect_edges_.Clear(stream);
-
-    rt_engine_->CopyLaunchParams(stream, params);
-
-    rt_engine_->Render(stream, module_id,
-                       dim3{(unsigned int) d_query_map.get_edges_num(), 1, 1});
-
+    lsi_.set_config(config);
+    lsi_.Query(stream, query_map_id);
+    xsect_edges_ = lsi_.get_xsects();
     stream.Sync();
 
-    size_t n_xsects = xsect_edges_.size(stream);
-    ArrayView<xsect_t> d_xsects(xsect_edges_.data(), n_xsects);
-
-    ForEach(stream, n_xsects, [=] __device__(size_t idx) mutable {
-      auto& xsect = d_xsects[idx];
-      const auto& query_e = d_query_map.get_edge(xsect.eid[query_map_id]);
-      const auto& query_e_p1 = d_query_map.get_point(query_e.p1_idx);
-      const auto& query_e_p2 = d_query_map.get_point(query_e.p2_idx);
-
-      const auto& base_e = d_base_map.get_edge(xsect.eid[base_map_id]);
-      const auto& base_e_p1 = d_base_map.get_point(base_e.p1_idx);
-      const auto& base_e_p2 = d_base_map.get_point(base_e.p2_idx);
-
-      auto denom = (coefficient_t) query_e.a * base_e.b -
-                   (coefficient_t) base_e.a * query_e.b;
-      auto numx = (coefficient_t) base_e.c * query_e.b -
-                  (coefficient_t) query_e.c * base_e.b;
-      auto numy = (coefficient_t) base_e.a * query_e.c -
-                  (coefficient_t) query_e.a * base_e.c;
-
-      tcb::rational<__int128> xsect_x(numx, denom);
-      tcb::rational<__int128> xsect_y(numy, denom);
-
-      auto t = MIN4(query_e_p1.x, query_e_p2.x, base_e_p1.x, base_e_p2.x);
-      if (xsect_x < t) {
-        xsect_x = t;
-      }
-
-      t = MAX4(query_e_p1.x, query_e_p2.x, base_e_p1.x, base_e_p2.x);
-      if (xsect_x > t) {
-        xsect_x = t;
-      }
-
-      t = MIN4(query_e_p1.y, query_e_p2.y, base_e_p1.y, base_e_p2.y);
-      if (xsect_y < t) {
-        xsect_y = t;
-      }
-      t = MAX4(query_e_p1.y, query_e_p2.y, base_e_p1.y, base_e_p2.y);
-      if (xsect_y > t) {
-        xsect_y = t;
-      }
-
-      xsect.x = xsect_x;
-      xsect.y = xsect_y;
-    });
-
-    stream.Sync();
-
-    LOG(INFO) << "RT Xsects: " << n_xsects;
-  }
-
-  void DumpIntersection() {
-    auto& stream = ctx_.get_stream();
-    auto scaling = ctx_.get_scaling();
-    pinned_vector<xsect_t> xsects;
-
-    xsects.resize(xsect_edges_.size());
-
-    thrust::copy(thrust::cuda::par.on(stream.cuda_stream()),
-                 xsect_edges_.data(), xsect_edges_.data() + xsect_edges_.size(),
-                 xsects.begin());
-    stream.Sync();
-
-    auto sort = [](pinned_vector<xsect_t>& xsects) {
-      thrust::sort(xsects.begin(), xsects.end(),
-                   [](const xsect_t& a, const xsect_t& b) {
-                     if (a.eid[0] != b.eid[0]) {
-                       return a.eid[0] < b.eid[0];
-                     }
-                     return a.eid[1] < b.eid[1];
-                   });
-    };
-
-    sort(xsects);
-
-    auto out_to_file = [scaling](const char* file,
-                                 pinned_vector<xsect_t>& xsects,
-                                 bool coord = false) {
-      std::ofstream ofs(file);
-      for (auto& xsect : xsects) {
-        if (coord) {
-          ofs << xsect.eid[0] << " " << xsect.eid[1] << std::fixed
-              << std::setprecision(8) << " (" << scaling.UnscaleX(xsect.x)
-              << ", " << scaling.UnscaleY(xsect.y)
-              << ")"
-                 "\n";
-        } else {
-          ofs << xsect.eid[0] << " " << xsect.eid[1] << "\n";
-        }
-      }
-      ofs.close();
-    };
-    out_to_file("/tmp/xsect_rt.txt", xsects);
-    out_to_file("/tmp/xsect_rt_coord.txt", xsects, true);
+    LOG(INFO) << "RT Xsects: " << xsect_edges_.size();
   }
 
   void LocateVerticesInOtherMap(int query_map_id) {
@@ -260,7 +139,7 @@ class RTMapOverlay {
   void ComputeOutputPolygons() {
     using point_t = typename CONTEXT_T::map_t::point_t;
     auto& stream = ctx_.get_stream();
-    size_t n_xsects = xsect_edges_.size(stream);
+    size_t n_xsects = xsect_edges_.size();
     const auto& scaling = ctx_.get_scaling();
 
     FOR2 {
@@ -418,18 +297,6 @@ class RTMapOverlay {
     WriteOutputChain(ctx_, xsect_edges_sorted_, point_in_polygon_, path);
   }
 
-  void PrintMemoryUsage() {
-    size_t bytes = 0;
-
-    bytes += COUNT_CONTAINER_BYTES(xsect_edges_);
-    FOR2 {
-      bytes += COUNT_CONTAINER_BYTES(xsect_edges_sorted_[im]);
-      bytes += COUNT_CONTAINER_BYTES(point_in_polygon_[im]);
-    }
-
-    LOG(INFO) << "Occupied Memory: " << bytes / 1024 / 1024 << " MB";
-  }
-
   const thrust::device_vector<xsect_t>& get_xsect_edges(int im) const {
     return xsect_edges_sorted_[im];
   }
@@ -438,18 +305,15 @@ class RTMapOverlay {
     return pip_.get_closest_eids();
   }
 
-  ArrayView<xsect_t> get_xsect_edges_queue() {
-    auto& stream = ctx_.get_stream();
-    return ArrayView<xsect_t>(xsect_edges_.data(), xsect_edges_.size(stream));
-  }
+  ArrayView<xsect_t> get_xsect_edges() { return xsect_edges_; }
 
  private:
-  QueryConfigRT get_rt_query_config(int map_id) {
+  QueryConfigRT get_rt_query_config(int base_map_id) {
     QueryConfigRT pip_config;
 
     pip_config.fau = config_.fau;
-    pip_config.eid_range = eid_range_[map_id];
-    pip_config.handle = traverse_handles_[map_id];
+    pip_config.eid_range = eid_range_[base_map_id];
+    pip_config.handle = traverse_handles_[base_map_id];
     return pip_config;
   }
 
@@ -457,9 +321,10 @@ class RTMapOverlay {
   OverlayConfig config_;
   std::shared_ptr<RTEngine> rt_engine_;
   // Algo
+  LSIRT<CONTEXT_T> lsi_;
   PIPRT<CONTEXT_T> pip_;
   uint32_t max_n_xsects_{};
-  Queue<xsect_t> xsect_edges_;
+  ArrayView<xsect_t> xsect_edges_;
   thrust::device_vector<xsect_t> xsect_edges_sorted_[2];
   // point->polygon id
   thrust::device_vector<polygon_id_t> point_in_polygon_[2];

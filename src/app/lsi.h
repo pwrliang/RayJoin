@@ -21,20 +21,21 @@ class LSI {
   virtual void Init(size_t max_n_xsects) {
     LOG(INFO) << "Queue size: " << max_n_xsects * sizeof(xsect_t) / 1024 / 1024
               << " MB";
-    xsect_edges_.Init(max_n_xsects);
+    xsect_queue_.Init(max_n_xsects);
   }
 
-  virtual void BuildIndex(int query_map_id) {}
-
-  virtual ArrayView<xsect_t> Query(int query_map_id) = 0;
+  virtual void Query(Stream& stream, int query_map_id) = 0;
 
   CONTEXT_T& get_context() { return ctx_; }
 
   const CONTEXT_T& get_context() const { return ctx_; }
 
+  ArrayView<xsect_t> get_xsects() { return xsects_; }
+
  protected:
   CONTEXT_T& ctx_;
-  Queue<xsect_t> xsect_edges_;
+  Queue<xsect_t> xsect_queue_;
+  ArrayView<xsect_t> xsects_;
   SharedValue<uint64_t> prof_counter_;
 };
 

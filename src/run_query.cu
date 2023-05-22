@@ -264,7 +264,7 @@ void RunLSIQuery(const QueryConfig& config) {
 
   timer_next("Warmup");
   for (int i = 0; i < config.warmup; i++) {
-    lsi->Query(query_map_id);
+    lsi->Query(stream, query_map_id);
   }
 
   timer_next("Query", config.repeat);
@@ -272,7 +272,7 @@ void RunLSIQuery(const QueryConfig& config) {
 
   for (int i = 0; i < config.repeat; i++) {
     LOG(INFO) << "Iter: " << i;
-    d_xsects = lsi->Query(query_map_id);
+    d_xsects = lsi->Query(stream, query_map_id);
   }
 
   LOG(INFO) << "Query: " << config.gen_n

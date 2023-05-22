@@ -27,14 +27,13 @@ class LSIRT : public LSI<CONTEXT_T> {
 
   void Init(size_t max_n_xsects) override { lsi::Init(max_n_xsects); }
 
-  ArrayView<xsect_t> Query(int query_map_id) override {
+  void Query(Stream& stream, int query_map_id) override {
     auto& ctx = this->ctx_;
     int base_map_id = 1 - query_map_id;
     auto d_query_map = ctx.get_map(query_map_id)->DeviceObject(),
          d_base_map = ctx.get_map(base_map_id)->DeviceObject();
     auto scaling = ctx.get_scaling();
-    auto& stream = ctx.get_stream();
-    auto& xsects = this->xsect_edges_;
+    auto& xsects_queue = this->xsect_queue_;
 
     LaunchParamsLSI params;
     auto module_id = ModuleIdentifier::MODULE_ID_LSI_CUSTOM;
@@ -47,9 +46,9 @@ class LSIRT : public LSI<CONTEXT_T> {
     params.query_points = d_query_map.get_points().data();
     params.traversable = config_.handle;
     params.rounding_iter = config_.rounding_iter;
-    params.xsects = xsects.DeviceObject();
+    params.xsects = xsects_queue.DeviceObject();
 
-    xsects.Clear(stream);
+    xsects_queue.Clear(stream);
 
     rt_engine_->CopyLaunchParams(stream, params);
 
@@ -57,7 +56,7 @@ class LSIRT : public LSI<CONTEXT_T> {
         stream, module_id,
         dim3{(unsigned int) ctx.get_map(query_map_id)->get_edges_num(), 1, 1});
 
-    size_t n_xsects = xsects.size(stream);
+    size_t n_xsects = xsects_queue.size(stream);
 
     ForEach(
         stream, n_xsects,
@@ -104,15 +103,15 @@ class LSIRT : public LSI<CONTEXT_T> {
           xsect.x = xsect_x;
           xsect.y = xsect_y;
         },
-        ArrayView<xsect_t>(xsects.data(), n_xsects));
+        ArrayView<xsect_t>(xsects_queue.data(), n_xsects));
 
     stream.Sync();
 
 #ifndef NDEBUG
     LOG(INFO) << "Total Tests: " << n_xsects;
 #endif
-    return ArrayView<xsect_t>(this->xsect_edges_.data(),
-                              this->xsect_edges_.size(stream));
+    this->xsects_ = ArrayView<xsect_t>(this->xsect_queue_.data(),
+                                       this->xsect_queue_.size(stream));
   }
 
   const QueryConfigRT& get_config() const { return config_; }

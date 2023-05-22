@@ -150,20 +150,17 @@ class LSIGrid : public LSI<CONTEXT_T> {
       : LSI<CONTEXT_T>(ctx), grid_(std::move(grid)), load_balancing_(false) {}
 
   // fixme: respect query map id
-  ArrayView<xsect_t> Query(int query_map_id) override {
+  void Query(Stream& stream, int query_map_id) override {
     auto& ctx = this->get_context();
     auto& scaling = ctx.get_scaling();
-    auto& stream = ctx.get_stream();
     auto gsize = grid_->get_grid_size();
-    auto d_xsects = this->xsect_edges_.DeviceObject();
+    auto d_xsect_queue = this->xsect_queue_.DeviceObject();
     auto d_grid = grid_->DeviceObject();
     auto d_base_map = ctx.get_map(0)->DeviceObject();
     auto d_query_map = ctx.get_map(1)->DeviceObject();
-
-    auto d_xsect_edges = this->xsect_edges_.DeviceObject();
     dim3 grid_dim, block_dim;
 
-    this->xsect_edges_.Clear(stream);
+    this->xsect_queue_.Clear(stream);
 
     if (load_balancing_) {
       size_t work_size = gsize * gsize;
@@ -174,7 +171,7 @@ class LSIGrid : public LSI<CONTEXT_T> {
 
         for (uint32_t i = TID_1D; i < work_size_rup; i += TOTAL_THREADS_1D) {
           intersect_one_cell_lb(i, d_grid, scaling, d_base_map, d_query_map,
-                                d_xsects);
+                                d_xsect_queue);
         }
       });
     } else {
@@ -188,13 +185,13 @@ class LSIGrid : public LSI<CONTEXT_T> {
         if (cell_x < gsize && cell_y < gsize) {
           dev::intersect_one_cell<coord_t, internal_coord_t>(
               cell_x, cell_y, d_grid, scaling, d_base_map, d_query_map,
-              d_xsects);
+              d_xsect_queue);
         }
       });
     }
 #ifndef NDEBUG
     SharedValue<uint64_t> total_ne1, total_ne2;
-    auto* d_total_ne1 = total_ne1.data(), *d_total_ne2 = total_ne2.data();
+    auto *d_total_ne1 = total_ne1.data(), *d_total_ne2 = total_ne2.data();
     auto* d_pro_counter = this->prof_counter_.data();
 
     total_ne1.set(0, stream);
@@ -210,11 +207,8 @@ class LSIGrid : public LSI<CONTEXT_T> {
         const auto& cell = d_grid.get_cell(cell_x, cell_y);
         auto ne1 = cell.ne[0], ne2 = cell.ne[1];
 
-
-        atomicAdd(reinterpret_cast<unsigned long long int*>(d_total_ne1),
-          ne1);
-        atomicAdd(reinterpret_cast<unsigned long long int*>(d_total_ne2),
-          ne2);
+        atomicAdd(reinterpret_cast<unsigned long long int*>(d_total_ne1), ne1);
+        atomicAdd(reinterpret_cast<unsigned long long int*>(d_total_ne2), ne2);
         atomicAdd(reinterpret_cast<unsigned long long int*>(d_pro_counter),
                   ne1 * ne2);
       }
@@ -222,11 +216,12 @@ class LSIGrid : public LSI<CONTEXT_T> {
     LOG(INFO) << "Total ne1: " << total_ne1.get(stream);
     LOG(INFO) << "Total ne2: " << total_ne2.get(stream);
     LOG(INFO) << "Total tests: " << this->prof_counter_.get(stream);
-    LOG(INFO) << "Ave #E per cell: " << (total_ne1.get(stream) +
-        total_ne2.get(stream)) / (gsize*gsize);
+    LOG(INFO) << "Ave #E per cell: "
+              << (total_ne1.get(stream) + total_ne2.get(stream)) /
+                     (gsize * gsize);
 #endif
-    return ArrayView<xsect_t>(this->xsect_edges_.data(),
-                              this->xsect_edges_.size(stream));
+    this->xsects_ = ArrayView<xsect_t>(this->xsect_queue_.data(),
+                                       this->xsect_queue_.size(stream));
   }
 
   void set_load_balancing(bool lb) { load_balancing_ = lb; }
