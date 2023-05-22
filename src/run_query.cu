@@ -272,8 +272,9 @@ void RunLSIQuery(const QueryConfig& config) {
 
   for (int i = 0; i < config.repeat; i++) {
     LOG(INFO) << "Iter: " << i;
-    d_xsects = lsi->Query(stream, query_map_id);
+    lsi->Query(stream, query_map_id);
   }
+  d_xsects = lsi->get_xsects();
 
   LOG(INFO) << "Query: " << config.gen_n
             << " Intersections: " << d_xsects.size()
