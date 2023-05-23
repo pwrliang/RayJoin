@@ -20,14 +20,14 @@
 namespace rayjoin {
 
 template <typename CONTEXT_T>
-class RTMapOverlay {
+class MapOverlayRT {
   using coord_t = typename CONTEXT_T::coord_t;
   using internal_coord_t = typename CONTEXT_T::internal_coord_t;
   using coefficient_t = typename CONTEXT_T::coefficient_t;
   using xsect_t = dev::Intersection<internal_coord_t>;
 
  public:
-  explicit RTMapOverlay(CONTEXT_T& ctx, const OverlayConfig& config)
+  explicit MapOverlayRT(CONTEXT_T& ctx, const OverlayConfig& config)
       : ctx_(ctx),
         config_(config),
         rt_engine_(std::make_shared<RTEngine>()),

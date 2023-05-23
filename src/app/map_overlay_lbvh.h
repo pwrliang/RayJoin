@@ -1,5 +1,5 @@
-#ifndef APP_OVERLAY_H
-#define APP_OVERLAY_H
+#ifndef APP_MAP_OVERLAY_GRID_H
+#define APP_MAP_OVERLAY_GRID_H
 #include "app/lsi_grid.h"
 #include "app/output_chain.h"
 #include "app/pip_grid.h"
@@ -8,14 +8,14 @@
 namespace rayjoin {
 
 template <typename CONTEXT_T>
-class MapOverlay {
+class MapOverlayGrid {
   using coord_t = typename CONTEXT_T::coord_t;
   using internal_coord_t = typename CONTEXT_T::internal_coord_t;
   using coefficient_t = typename CONTEXT_T::coefficient_t;
   using xsect_t = dev::Intersection<internal_coord_t>;
 
  public:
-  explicit MapOverlay(CONTEXT_T& ctx, unsigned int gsize, float xsect_factor)
+  explicit MapOverlayGrid(CONTEXT_T& ctx, unsigned int gsize, float xsect_factor)
       : ctx_(ctx),
         grid_(std::make_shared<UniformGrid>(gsize)),
         lsi_(ctx, grid_),
@@ -212,4 +212,4 @@ class MapOverlay {
 
 }  // namespace rayjoin
 
-#endif  // APP_OVERLAY_H
+#endif  // APP_MAP_OVERLAY_GRID_H
