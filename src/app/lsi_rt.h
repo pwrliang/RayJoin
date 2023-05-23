@@ -62,7 +62,8 @@ class LSIRT : public LSI<CONTEXT_T> {
         stream, n_xsects,
         [=] __device__(size_t idx, ArrayView<xsect_t> xsects) mutable {
           auto& xsect = xsects[idx];
-          auto base_eid = xsect.eid[0], query_eid = xsect.eid[1];
+          auto base_eid = xsect.eid[base_map_id],
+               query_eid = xsect.eid[query_map_id];
 
           const auto& base_e = d_base_map.get_edge(base_eid);
           const auto& base_e_p1 = d_base_map.get_point(base_e.p1_idx);
@@ -106,21 +107,14 @@ class LSIRT : public LSI<CONTEXT_T> {
         ArrayView<xsect_t>(xsects_queue.data(), n_xsects));
 
     stream.Sync();
-
 #ifndef NDEBUG
     LOG(INFO) << "Total Tests: " << n_xsects;
 #endif
-    this->xsects_ = ArrayView<xsect_t>(this->xsect_queue_.data(),
-                                       this->xsect_queue_.size(stream));
   }
 
   const QueryConfigRT& get_config() const { return config_; }
 
   void set_config(QueryConfigRT config) { config_ = std::move(config); }
-
-  void set_rt_engine(std::shared_ptr<RTEngine> rt_engine) {
-    rt_engine_ = std::move(rt_engine);
-  }
 
   std::shared_ptr<RTEngine> get_rt_engine() { return rt_engine_; }
 

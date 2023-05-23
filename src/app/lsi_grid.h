@@ -221,8 +221,7 @@ class LSIGrid : public LSI<CONTEXT_T> {
               << (total_ne1.get(stream) + total_ne2.get(stream)) /
                      (gsize * gsize);
 #endif
-    this->xsects_ = ArrayView<xsect_t>(this->xsect_queue_.data(),
-                                       this->xsect_queue_.size(stream));
+    stream.Sync();
   }
 
   void set_config(const QueryConfigGrid& config) { config_ = config; }

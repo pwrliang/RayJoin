@@ -92,8 +92,7 @@ class LSILBVH : public LSI<CONTEXT_T> {
     LOG(INFO) << "Total tests: " << this->prof_counter_.get(stream);
     LOG(INFO) << "Visited nodes: " << visited_nodes_.get(stream);
 #endif
-    this->xsects_ = ArrayView<xsect_t>(this->xsect_queue_.data(),
-                                       this->xsect_queue_.size(stream));
+    stream.Sync();
   }
 
   void set_config(const QueryConfigLBVH& config) { config_ = config; }

@@ -10,7 +10,7 @@
 namespace rayjoin {
 
 template <typename CONTEXT_T>
-class MapOverlayGrid : MapOverlay<CONTEXT_T> {
+class MapOverlayGrid : public MapOverlay<CONTEXT_T> {
   using coord_t = typename CONTEXT_T::coord_t;
   using internal_coord_t = typename CONTEXT_T::internal_coord_t;
   using coefficient_t = typename CONTEXT_T::coefficient_t;
@@ -19,7 +19,7 @@ class MapOverlayGrid : MapOverlay<CONTEXT_T> {
  public:
   explicit MapOverlayGrid(CONTEXT_T& ctx) : MapOverlay<CONTEXT_T>(ctx) {}
 
-  void set_query_config(const QueryConfigGrid& config) { config_ = config; }
+  void set_config(const QueryConfigGrid& config) { config_ = config; }
 
   void Init() override {
     auto& ctx = this->ctx_;
@@ -31,6 +31,7 @@ class MapOverlayGrid : MapOverlay<CONTEXT_T> {
     FOR2 {
       auto map = this->ctx_.get_map(im);
       auto points_num = map->get_points_num();
+      this->closest_eids_[im].resize(points_num, DONTKNOW);
       this->point_in_polygon_[im].resize(points_num, DONTKNOW);
       n_edges += map->get_edges_num();
     }
@@ -50,8 +51,6 @@ class MapOverlayGrid : MapOverlay<CONTEXT_T> {
 
     lsi->set_config(config_);
     lsi->Query(stream, query_map_id);
-    xsect_edges_ = lsi->get_xsects();
-    LOG(INFO) << "Xsects: " << xsect_edges_.size();
   }
 
   void LocateVerticesInOtherMap(int query_map_id) override {
@@ -66,9 +65,13 @@ class MapOverlayGrid : MapOverlay<CONTEXT_T> {
 
     auto& closest_eid = this->pip_->get_closest_eids();
 
+    thrust::copy(thrust::cuda::par.on(stream.cuda_stream()),
+                 closest_eid.begin(), closest_eid.end(),
+                 this->closest_eids_[query_map_id].begin());
+
     thrust::transform(thrust::cuda::par.on(stream.cuda_stream()),
                       closest_eid.begin(), closest_eid.end(),
-                      point_in_polygon_[query_map_id].begin(),
+                      this->point_in_polygon_[query_map_id].begin(),
                       [=] __device__(index_t eid) {
                         // point is not in polygon
                         if (eid == std::numeric_limits<index_t>::max()) {
@@ -84,7 +87,8 @@ class MapOverlayGrid : MapOverlay<CONTEXT_T> {
   void ComputeOutputPolygons() override {
     auto& ctx = this->ctx_;
     auto& stream = ctx.get_stream();
-    size_t n_xsects = xsect_edges_.size();
+    auto xsects = this->lsi_->get_xsects();
+    size_t n_xsects = xsects.size();
     const auto& scaling = ctx.get_scaling();
     auto d_grid = grid_->DeviceObject();
     thrust::device_vector<int64_t> unique_eids;
@@ -93,9 +97,8 @@ class MapOverlayGrid : MapOverlay<CONTEXT_T> {
       auto& xsect_edges_sorted = xsect_edges_sorted_[im];
       // Sort by eid1, eid2 respectively, so we can do binary search
       xsect_edges_sorted.resize(n_xsects);
-      thrust::copy(thrust::cuda::par.on(stream.cuda_stream()),
-                   xsect_edges_.data(), xsect_edges_.data() + n_xsects,
-                   xsect_edges_sorted.begin());
+      thrust::copy(thrust::cuda::par.on(stream.cuda_stream()), xsects.data(),
+                   xsects.data() + n_xsects, xsect_edges_sorted.begin());
       thrust::sort(
           thrust::cuda::par.on(stream.cuda_stream()),
           xsect_edges_sorted.begin(), xsect_edges_sorted.end(),
@@ -196,25 +199,15 @@ class MapOverlayGrid : MapOverlay<CONTEXT_T> {
   }
 
   void WriteResult(const char* path) override {
-    WriteOutputChain(this->ctx_, xsect_edges_sorted_, point_in_polygon_, path);
+    WriteOutputChain(this->ctx_, xsect_edges_sorted_, this->point_in_polygon_,
+                     path);
   }
-
-  const thrust::device_vector<xsect_t>& get_xsect_edges(int im) const {
-    return xsect_edges_sorted_[im];
-  }
-
-  const thrust::device_vector<index_t>& get_closet_eids() const {
-    return this->pip_->get_closest_eids();
-  }
-
-  ArrayView<xsect_t> get_xsect_edges() const { return xsect_edges_; }
 
  private:
   std::shared_ptr<UniformGrid> grid_;
   QueryConfigGrid config_;
-  ArrayView<xsect_t> xsect_edges_;
+
   thrust::device_vector<xsect_t> xsect_edges_sorted_[2];
-  thrust::device_vector<polygon_id_t> point_in_polygon_[2];
 };
 
 }  // namespace rayjoin

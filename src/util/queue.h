@@ -132,6 +132,12 @@ class Queue {
 
   const T* data() const { return thrust::raw_pointer_cast(data_.data()); }
 
+  void CopyTo(thrust::host_vector<T>& out) {
+    auto s = size();
+    out.resize(s);
+    out.assign(data_.begin(), data_.begin() + s);
+  }
+
   device_t DeviceObject() {
     return device_t(ArrayView<T>(data_), counter_.data());
   }

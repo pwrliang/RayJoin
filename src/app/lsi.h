@@ -30,12 +30,15 @@ class LSI {
 
   const CONTEXT_T& get_context() const { return ctx_; }
 
-  ArrayView<xsect_t> get_xsects() { return xsects_; }
+  ArrayView<xsect_t> get_xsects() {
+    return ArrayView<xsect_t>(xsect_queue_.data(), xsect_queue_.size());
+  }
+
+  void CopyTo(thrust::host_vector<xsect_t>& out) { xsect_queue_.CopyTo(out); }
 
  protected:
   CONTEXT_T& ctx_;
   Queue<xsect_t> xsect_queue_;
-  ArrayView<xsect_t> xsects_;
   SharedValue<uint64_t> prof_counter_;
 };
 

@@ -372,7 +372,7 @@ void RunPIPQuery(const QueryConfig& config) {
     pip_config.eid_range = eid_range;
     pip_config.handle = rt_engine->BuildAccelCustom(stream, d_aabbs);
 
-    pip_rt->set_query_config(pip_config);
+    pip_rt->set_config(pip_config);
   } else if (config.mode == "lbvh") {
     auto pip_lbvh = dynamic_cast<PIPLBVH<context_t>*>(pip);
     QueryConfigLBVH query_config;

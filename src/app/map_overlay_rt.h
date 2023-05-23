@@ -4,6 +4,7 @@
 #include <random>
 
 #include "app/lsi_rt.h"
+#include "app/map_overlay.h"
 #include "app/output_chain.h"
 #include "app/overlay_config.h"
 #include "app/pip_rt.h"
@@ -20,107 +21,112 @@
 namespace rayjoin {
 
 template <typename CONTEXT_T>
-class MapOverlayRT {
+class MapOverlayRT : public MapOverlay<CONTEXT_T> {
   using coord_t = typename CONTEXT_T::coord_t;
   using internal_coord_t = typename CONTEXT_T::internal_coord_t;
   using coefficient_t = typename CONTEXT_T::coefficient_t;
   using xsect_t = dev::Intersection<internal_coord_t>;
 
  public:
-  explicit MapOverlayRT(CONTEXT_T& ctx, const OverlayConfig& config)
-      : ctx_(ctx),
-        config_(config),
-        rt_engine_(std::make_shared<RTEngine>()),
-        lsi_(ctx, rt_engine_),
-        pip_(ctx, rt_engine_) {
-    size_t total_n_edges = 0;
-
-    FOR2 {
-      auto n_edges = ctx.get_map(im)->get_edges_num();
-
-      total_n_edges += n_edges;
-      max_n_xsects_ += n_edges * config_.xsect_factor;
-    }
-
-    LOG(INFO) << "Total edges: " << total_n_edges
-              << " Xsect Factor: " << config_.xsect_factor
-              << " Max xsects: " << max_n_xsects_;
+  explicit MapOverlayRT(CONTEXT_T& ctx) : MapOverlay<CONTEXT_T>(ctx) {
+    rt_engine_ = std::make_shared<RTEngine>();
+    this->lsi_ = std::make_shared<LSIRT<CONTEXT_T>>(ctx, rt_engine_);
+    this->pip_ = std::make_shared<PIPRT<CONTEXT_T>>(ctx, rt_engine_);
   }
 
-  void Init() {
-    auto& stream = ctx_.get_stream();
-    auto exec_root = ctx_.get_exec_root();
+  void set_config(const QueryConfigRT& config) { config_ = config; }
+
+  void Init() override {
+    auto& ctx = this->ctx_;
+    auto& stream = ctx.get_stream();
+    auto xsect_factor = config_.xsect_factor;
+    auto exec_root = ctx.get_exec_root();
     RTConfig rt_config = get_default_rt_config(exec_root);
     size_t max_ne = 0;
 
     FOR2 {
-      auto map = ctx_.get_map(im);
+      auto map = ctx.get_map(im);
       auto points_num = map->get_points_num();
       auto ne = map->get_edges_num();
 
-      point_in_polygon_[im].resize(points_num);
+      this->closest_eids_[im].resize(points_num, DONTKNOW);
+      this->point_in_polygon_[im].resize(points_num, DONTKNOW);
       eid_range_[im] = std::make_shared<
           thrust::device_vector<thrust::pair<size_t, size_t>>>();
       eid_range_[im]->reserve(ne);
       max_ne = std::max(max_ne, ne);
     }
     aabbs_.reserve(max_ne);
+    size_t n_edges = 0;
+    FOR2 { n_edges += ctx.get_map(im)->get_edges_num(); }
 
     rt_engine_->Init(rt_config);
-    lsi_.Init(max_n_xsects_ * 3);
-    pip_.Init(max_ne);
+    this->lsi_->Init(n_edges * xsect_factor);
+    this->pip_->Init(max_ne);
 
     stream.Sync();
   }
 
-  void BuildBVH(int map_id) {
-    auto& stream = ctx_.get_stream();
-    const auto& scaling = ctx_.get_scaling();
-    auto d_map = ctx_.get_map(map_id)->DeviceObject();
-
+  void BuildIndex() override {
+    auto& ctx = this->ctx_;
+    auto& stream = ctx.get_stream();
+    const auto& scaling = ctx.get_scaling();
     auto win_size = config_.win;
     auto area_enlarge = config_.enlarge;
-    FillPrimitivesGroup(stream, d_map, scaling, win_size, area_enlarge, aabbs_,
-                        *eid_range_[map_id]);
-    traverse_handles_[map_id] =
-        rt_engine_->BuildAccelCustom(stream, ArrayView<OptixAabb>(aabbs_));
 
-    stream.Sync();
-    if (config_.fau) {
-      aabbs_.resize(0);
-      aabbs_.shrink_to_fit();
-    }
+    FOR2 {
+      auto d_map = ctx.get_map(im)->DeviceObject();
+
+      FillPrimitivesGroup(stream, d_map, scaling, win_size, area_enlarge,
+                          aabbs_, *eid_range_[im]);
+      traverse_handles_[im] =
+          rt_engine_->BuildAccelCustom(stream, ArrayView<OptixAabb>(aabbs_));
+
+      stream.Sync();
+      if (config_.fau) {
+        aabbs_.resize(0);
+        aabbs_.shrink_to_fit();
+      }
+    };
   }
 
-  void IntersectEdge() {
-    int base_map_id = 0, query_map_id = 1 - base_map_id;
-    auto& stream = ctx_.get_stream();
-    auto config = get_rt_query_config(base_map_id);
+  void IntersectEdge(int query_map_id) override {
+    int base_map_id = 1 - query_map_id;
+    auto& stream = this->ctx_.get_stream();
+    auto lsi = std::dynamic_pointer_cast<LSIRT<CONTEXT_T>>(this->lsi_);
 
-    lsi_.set_config(config);
-    lsi_.Query(stream, query_map_id);
-    xsect_edges_ = lsi_.get_xsects();
+    config_.eid_range = eid_range_[base_map_id];
+    config_.handle = traverse_handles_[base_map_id];
+
+    lsi->set_config(config_);
+    lsi->Query(stream, query_map_id);
     stream.Sync();
-
-    LOG(INFO) << "RT Xsects: " << xsect_edges_.size();
   }
 
-  void LocateVerticesInOtherMap(int query_map_id) {
-    Stream& stream = ctx_.get_stream();
+  void LocateVerticesInOtherMap(int query_map_id) override {
+    auto& ctx = this->ctx_;
+    Stream& stream = ctx.get_stream();
+    auto pip = std::dynamic_pointer_cast<PIPRT<CONTEXT_T>>(this->pip_);
     auto base_map_id = 1 - query_map_id;
-    auto d_base_map = ctx_.get_map(base_map_id)->DeviceObject();
-    auto d_query_map = ctx_.get_map(query_map_id)->DeviceObject();
+    auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
+    auto d_query_map = ctx.get_map(query_map_id)->DeviceObject();
     auto d_points = d_query_map.get_points();
-    auto query_config = get_rt_query_config(base_map_id);
 
-    pip_.set_query_config(query_config);
-    pip_.Query(stream, query_map_id, d_points);
+    config_.eid_range = eid_range_[base_map_id];
+    config_.handle = traverse_handles_[base_map_id];
 
-    auto& closest_eid = pip_.get_closest_eids();
+    pip->set_config(config_);
+    pip->Query(stream, query_map_id, d_points);
+
+    auto& closest_eid = this->pip_->get_closest_eids();
+
+    thrust::copy(thrust::cuda::par.on(stream.cuda_stream()),
+                 closest_eid.begin(), closest_eid.end(),
+                 this->closest_eids_[query_map_id].begin());
 
     thrust::transform(thrust::cuda::par.on(stream.cuda_stream()),
                       closest_eid.begin(), closest_eid.end(),
-                      point_in_polygon_[query_map_id].begin(),
+                      this->point_in_polygon_[query_map_id].begin(),
                       [=] __device__(index_t eid) {
                         // point is not in polygon
                         if (eid == std::numeric_limits<index_t>::max()) {
@@ -134,13 +140,19 @@ class MapOverlayRT {
     stream.Sync();
   }
 
-  void DumpStatistics(const char* path) { pip_.DumpStatistics(path); }
+  void DumpStatistics(const char* path) {
+    std::dynamic_pointer_cast<PIPRT<CONTEXT_T>>(this->pip_)
+        ->DumpStatistics(path);
+  }
 
-  void ComputeOutputPolygons() {
+  void ComputeOutputPolygons() override {
     using point_t = typename CONTEXT_T::map_t::point_t;
-    auto& stream = ctx_.get_stream();
-    size_t n_xsects = xsect_edges_.size();
-    const auto& scaling = ctx_.get_scaling();
+    auto& ctx = this->ctx_;
+    auto& stream = ctx.get_stream();
+    auto pip = std::dynamic_pointer_cast<PIPRT<CONTEXT_T>>(this->pip_);
+    auto xsects = this->lsi_->get_xsects();
+    size_t n_xsects = xsects.size();
+    const auto& scaling = ctx.get_scaling();
 
     FOR2 {
       // TODO: Move them out out the loop
@@ -152,9 +164,8 @@ class MapOverlayRT {
       auto& xsect_edges_sorted = xsect_edges_sorted_[im];
       // Sort by eid1, eid2 respectively, so we can do binary search
       xsect_edges_sorted.resize(n_xsects);
-      thrust::copy(thrust::cuda::par.on(stream.cuda_stream()),
-                   xsect_edges_.data(), xsect_edges_.data() + n_xsects,
-                   xsect_edges_sorted.begin());
+      thrust::copy(thrust::cuda::par.on(stream.cuda_stream()), xsects.data(),
+                   xsects.data() + n_xsects, xsect_edges_sorted.begin());
       thrust::sort(
           thrust::cuda::par.on(stream.cuda_stream()),
           xsect_edges_sorted.begin(), xsect_edges_sorted.end(),
@@ -164,8 +175,8 @@ class MapOverlayRT {
 
       ArrayView<xsect_t> d_xsect_edges_sorted(xsect_edges_sorted);
       auto query_map_id = im, base_map_id = 1 - im;
-      auto d_query_map = ctx_.get_map(query_map_id)->DeviceObject();
-      auto d_base_map = ctx_.get_map(base_map_id)->DeviceObject();
+      auto d_query_map = ctx.get_map(query_map_id)->DeviceObject();
+      auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
 
       unique_eids.resize(n_xsects);
 
@@ -257,14 +268,15 @@ class MapOverlayRT {
 
       stream.Sync();
 
-      auto query_config = get_rt_query_config(base_map_id);
+      config_.eid_range = eid_range_[base_map_id];
+      config_.handle = traverse_handles_[base_map_id];
 
-      pip_.set_query_config(query_config);
-      pip_.Query(stream, query_map_id, d_mid_points);
+      pip->set_config(config_);
+      pip->Query(stream, query_map_id, d_mid_points);
 
       stream.Sync();
 
-      ArrayView<index_t> d_mid_point_closest_eid(pip_.get_closest_eids());
+      ArrayView<index_t> d_mid_point_closest_eid(pip->get_closest_eids());
 
       // fill in polygon id for mid-points
       ForEach(stream, d_unique_eids.size(), [=] __device__(size_t idx) mutable {
@@ -294,40 +306,16 @@ class MapOverlayRT {
   }
 
   void WriteResult(const char* path) {
-    WriteOutputChain(ctx_, xsect_edges_sorted_, point_in_polygon_, path);
+    WriteOutputChain(this->ctx_, xsect_edges_sorted_, this->point_in_polygon_,
+                     path);
   }
-
-  const thrust::device_vector<xsect_t>& get_xsect_edges(int im) const {
-    return xsect_edges_sorted_[im];
-  }
-
-  const thrust::device_vector<index_t>& get_closet_eids() const {
-    return pip_.get_closest_eids();
-  }
-
-  ArrayView<xsect_t> get_xsect_edges() { return xsect_edges_; }
 
  private:
-  QueryConfigRT get_rt_query_config(int base_map_id) {
-    QueryConfigRT pip_config;
-
-    pip_config.fau = config_.fau;
-    pip_config.eid_range = eid_range_[base_map_id];
-    pip_config.handle = traverse_handles_[base_map_id];
-    return pip_config;
-  }
-
-  CONTEXT_T& ctx_;
-  OverlayConfig config_;
   std::shared_ptr<RTEngine> rt_engine_;
+  QueryConfigRT config_;
   // Algo
-  LSIRT<CONTEXT_T> lsi_;
-  PIPRT<CONTEXT_T> pip_;
-  uint32_t max_n_xsects_{};
-  ArrayView<xsect_t> xsect_edges_;
   thrust::device_vector<xsect_t> xsect_edges_sorted_[2];
   // point->polygon id
-  thrust::device_vector<polygon_id_t> point_in_polygon_[2];
   OptixTraversableHandle traverse_handles_[2];
   // RT
   thrust::device_vector<OptixAabb> aabbs_;

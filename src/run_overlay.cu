@@ -14,7 +14,7 @@
 
 namespace rayjoin {
 template <typename CONTEXT_T, typename OVERLAY_IMPL_T>
-void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
+void CheckResult(CONTEXT_T& ctx, std::shared_ptr<OVERLAY_IMPL_T> overlay,
                  const OverlayConfig& config) {
   using xsect_t = dev::Intersection<typename CONTEXT_T::internal_coord_t>;
   using map_t = typename CONTEXT_T::map_t;
@@ -22,13 +22,13 @@ void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
 
   QueryConfigGrid query_config;
 
-  cuda_grid.set_query_config(query_config);
+  cuda_grid.set_config(query_config);
   cuda_grid.Init();
   cuda_grid.BuildIndex();
   cuda_grid.IntersectEdge(0);
   {
     auto n_xsects_ans = cuda_grid.get_xsect_edges().size();
-    auto n_xsects_res = overlay.get_xsect_edges().size();
+    auto n_xsects_res = overlay->get_xsect_edges().size();
     int n_diff = abs((int) (n_xsects_ans - n_xsects_res));
 
     if (n_diff != 0) {
@@ -37,31 +37,6 @@ void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
                  << " xsects (Result): " << n_xsects_res
                  << " Error rate: " << (double) n_diff / n_xsects_ans * 100
                  << " %";
-
-      auto write_to = [](ArrayView<xsect_t> xsects, const char* path) {
-        pinned_vector<xsect_t> h_xsects;
-        h_xsects.resize(xsects.size());
-        thrust::copy(thrust::device, xsects.data(),
-                     xsects.data() + xsects.size(), h_xsects.begin());
-
-        thrust::sort(h_xsects.begin(), h_xsects.end(),
-                     [](const xsect_t& x1, const xsect_t& x2) {
-                       return x1.eid[0] != x2.eid[0] ? x1.eid[0] < x2.eid[0]
-                                                     : (x1.eid[1] < x2.eid[1]);
-                     });
-
-        std::ofstream ofs(path);
-
-        for (auto& xsect : h_xsects) {
-          ofs << xsect.eid[0] << " " << xsect.eid[1] << "\n";
-        }
-
-        ofs.close();
-      };
-
-      write_to(ArrayView<xsect_t>(cuda_grid.get_xsect_edges()),
-               "/tmp/xsects.ans");
-      write_to(overlay.get_xsect_edges(), "/tmp/xsects.res");
     } else {
       LOG(INFO) << "LSI passed check";
     }
@@ -70,11 +45,11 @@ void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
   FOR2 {
     LOG(INFO) << "Checking point in polygon";
 
-    overlay.LocateVerticesInOtherMap(im);
+    overlay->LocateVerticesInOtherMap(im);
     cuda_grid.LocateVerticesInOtherMap(im);
 
-    pinned_vector<index_t> closest_eids_ans(cuda_grid.get_closet_eids());
-    pinned_vector<index_t> closest_eids_res(overlay.get_closet_eids());
+    auto closest_eids_ans = cuda_grid.get_closet_eids(im);
+    auto closest_eids_res = overlay->get_closet_eids(im);
     size_t n_diff = 0;
     size_t n_points = closest_eids_ans.size();
 
@@ -149,51 +124,24 @@ void RunOverlay(const OverlayConfig& config) {
   timer_next("Create Context");
   context_t ctx({g1, g2});
 
+  timer_next("Create App");
+  std::shared_ptr<MapOverlay<context_t>> overlay;
+
   if (config.mode == "rt") {
-    MapOverlayRT<context_t> overlay(ctx, config);
+    auto overlay_rt = std::make_shared<MapOverlayRT<context_t>>(ctx);
 
-    timer_next("Init");
-    overlay.Init();
+    QueryConfigRT query_config;
 
-    FOR2 {
-      auto prefix = "Map " + std::to_string(im) + ": ";
-      timer_next(prefix + "Build BVH");
+    query_config.profiling = !config.profiling.empty();
+    query_config.fau = config.fau;
+    query_config.xsect_factor = config.xsect_factor;
+    query_config.win = config.win;
+    query_config.enlarge = config.enlarge;
 
-      overlay.BuildBVH(im);
-    };
-
-    timer_next("Intersection edges");
-    overlay.IntersectEdge();
-
-    FOR2 {
-      auto prefix = "Map " + std::to_string(im) + ": ";
-
-      timer_next(prefix + "Locate vertices in other map");
-      overlay.LocateVerticesInOtherMap(im);
-
-      if (!config.profiling.empty()) {
-        auto log_path =
-            config.profiling + "/pip_query_map_" + std::to_string(im) + ".csv";
-        LOG(INFO) << "Dumping PIP profiling results to " << log_path;
-        overlay.DumpStatistics(log_path.c_str());
-      }
-    }
-
-    timer_next("Computer output polygons");
-    overlay.ComputeOutputPolygons();
-
-    if (config.check) {
-      timer_next("Check result");
-      CheckResult(ctx, overlay, config);
-    }
-
-    if (!config.output_path.empty()) {
-      timer_next("Write to file");
-      overlay.WriteResult(config.output_path.c_str());
-    }
-
+    overlay_rt->set_config(query_config);
+    overlay = overlay_rt;
   } else if (config.mode == "grid") {
-    MapOverlayGrid<context_t> overlay(ctx);
+    auto overlay_grid = std::make_shared<MapOverlayGrid<context_t>>(ctx);
 
     QueryConfigGrid query_config;
 
@@ -202,32 +150,39 @@ void RunOverlay(const OverlayConfig& config) {
     query_config.xsect_factor = config.xsect_factor;
     query_config.lb = config.lb;
 
-    overlay.set_query_config(query_config);
-
-    timer_next("Init");
-    overlay.Init();
-
-    timer_next("Build Index");
-    overlay.BuildIndex();
-
-    timer_next("Intersect edges");
-    overlay.IntersectEdge(0);
-
-    FOR2 {
-      timer_next("Map " + std::to_string(im) +
-                 ": Locate vertices in other map");
-      overlay.LocateVerticesInOtherMap(im);
-    }
-
-    timer_next("Computer output polygons");
-    overlay.ComputeOutputPolygons();
-
-    if (!config.output_path.empty()) {
-      timer_next("Write to file");
-      overlay.WriteResult(config.output_path.c_str());
-    }
+    overlay_grid->set_config(query_config);
+    overlay = overlay_grid;
   } else {
     LOG(FATAL) << "Illegal mode: " << config.mode;
+  }
+
+  timer_next("Init");
+  overlay->Init();
+
+  timer_next("Build Index");
+  overlay->BuildIndex();
+
+  timer_next("Intersection edges");
+  overlay->IntersectEdge(0);
+
+  FOR2 {
+    auto prefix = "Map " + std::to_string(im) + ": ";
+
+    timer_next(prefix + "Locate vertices in other map");
+    overlay->LocateVerticesInOtherMap(im);
+  }
+
+  timer_next("Computer output polygons");
+  overlay->ComputeOutputPolygons();
+
+  if (config.check) {
+    timer_next("Check result");
+    CheckResult(ctx, overlay, config);
+  }
+
+  if (!config.output_path.empty()) {
+    timer_next("Write to file");
+    overlay->WriteResult(config.output_path.c_str());
   }
   timer_end();
 }
