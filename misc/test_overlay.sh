@@ -10,7 +10,7 @@ MAPS="$DATASET/maps"
 
 for v in debug release; do
   echo "Test build type = $v"
-  for mode in grid grid_lb rt; do
+  for mode in grid grid_lb rt lbvh; do
     echo "Mode = $mode"
 
     if [[ $mode == "grid_lb" ]]; then

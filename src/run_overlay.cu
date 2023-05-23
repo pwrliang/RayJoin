@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "app/map_overlay_grid.h"
+#include "app/map_overlay_lbvh.h"
 #include "app/map_overlay_rt.h"
 #include "context.h"
 #include "glog/logging.h"
@@ -129,7 +130,6 @@ void RunOverlay(const OverlayConfig& config) {
 
   if (config.mode == "rt") {
     auto overlay_rt = std::make_shared<MapOverlayRT<context_t>>(ctx);
-
     QueryConfigRT query_config;
 
     query_config.profiling = !config.profiling.empty();
@@ -142,7 +142,6 @@ void RunOverlay(const OverlayConfig& config) {
     overlay = overlay_rt;
   } else if (config.mode == "grid") {
     auto overlay_grid = std::make_shared<MapOverlayGrid<context_t>>(ctx);
-
     QueryConfigGrid query_config;
 
     query_config.grid_size = config.grid_size;
@@ -152,6 +151,15 @@ void RunOverlay(const OverlayConfig& config) {
 
     overlay_grid->set_config(query_config);
     overlay = overlay_grid;
+  } else if(config.mode == "lbvh") {
+    auto overlay_lbvh = std::make_shared<MapOverlayLBVH<context_t>>(ctx);
+    QueryConfigLBVH query_config;
+
+    query_config.profiling = !config.profiling.empty();
+    query_config.xsect_factor = config.xsect_factor;
+
+    overlay_lbvh->set_config(query_config);
+    overlay = overlay_lbvh;
   } else {
     LOG(FATAL) << "Illegal mode: " << config.mode;
   }

@@ -73,8 +73,8 @@ class LSILBVH : public LSI<CONTEXT_T> {
                       dev::Intersection<internal_coord_t> xsect;
                       xsect.x = xsect_x;
                       xsect.y = xsect_y;
-                      xsect.eid[0] = eid1;
-                      xsect.eid[1] = eid2;
+                      xsect.eid[query_map_id] = eid1;
+                      xsect.eid[base_map_id] = eid2;
                       d_xsect_queue.AppendWarp(xsect);
                     }
                   });

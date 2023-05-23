@@ -1,82 +1,104 @@
 #ifndef APP_MAP_OVERLAY_LBVH_H
 #define APP_MAP_OVERLAY_LBVH_H
 #include "app/lsi_lbvh.h"
+#include "app/map_overlay.h"
 #include "app/output_chain.h"
 #include "app/pip_lbvh.h"
 
 namespace rayjoin {
 
 template <typename CONTEXT_T>
-class MapOverlayLBVH {
+class MapOverlayLBVH : public MapOverlay<CONTEXT_T> {
   using coord_t = typename CONTEXT_T::coord_t;
   using internal_coord_t = typename CONTEXT_T::internal_coord_t;
   using coefficient_t = typename CONTEXT_T::coefficient_t;
   using xsect_t = dev::Intersection<internal_coord_t>;
 
  public:
-  explicit MapOverlayLBVH(CONTEXT_T& ctx, float xsect_factor)
-      : ctx_(ctx), lsi_(ctx), pip_(ctx), xsect_factor_(xsect_factor) {}
+  explicit MapOverlayLBVH(CONTEXT_T& ctx) : MapOverlay<CONTEXT_T>(ctx) {
+    this->lsi_ = std::make_shared<LSILBVH<CONTEXT_T>>(ctx);
+    this->pip_ = std::make_shared<PIPLBVH<CONTEXT_T>>(ctx);
+  }
 
-  void Init() {
+  void set_config(const QueryConfigLBVH& config) { config_ = config; }
+
+  void Init() override {
     size_t n_edges = 0;
     size_t max_n_points = 0;
 
     FOR2 {
-      auto map = ctx_.get_map(im);
+      auto map = this->ctx_.get_map(im);
       auto points_num = map->get_points_num();
-      point_in_polygon_[im].resize(points_num, DONTKNOW);
+
+      this->closest_eids_[im].resize(points_num, DONTKNOW);
+      this->point_in_polygon_[im].resize(points_num, DONTKNOW);
       n_edges += map->get_edges_num();
+      max_n_points = std::max(max_n_points, points_num);
     }
-    lsi_.Init(xsect_factor_ * n_edges);
-    pip_.Init(max_n_points);  // allocate space
+    this->lsi_->Init(config_.xsect_factor * n_edges);
+    this->pip_->Init(max_n_points);  // allocate space
   }
 
-  void BuildBVH(int map_id) {
-    auto& stream = ctx_.get_stream();
-    const auto& scaling = ctx_.get_scaling();
-    auto d_map = ctx_.get_map(map_id)->DeviceObject();
+  void BuildIndex() override {
+    auto& ctx = this->ctx_;
+    auto& stream = ctx.get_stream();
+    const auto& scaling = ctx.get_scaling();
     thrust::device_vector<segment> primitives;
 
-    auto bvh = std::make_shared<lbvh::bvh<float, segment, aabb_getter>>();
-    FillPrimitivesLBVH(stream, d_map, scaling, primitives);
-    stream.Sync();
-    bvh->assign(primitives);
-    bvh->construct();
-    lbvhs_[map_id] = bvh;
+    FOR2 {
+      auto d_map = ctx.get_map(im)->DeviceObject();
+      auto bvh = std::make_shared<lbvh::bvh<float, segment, aabb_getter>>();
+
+      FillPrimitivesLBVH(stream, d_map, scaling, primitives);
+      stream.Sync();
+      bvh->assign(primitives);
+      bvh->construct();
+      lbvhs_[im] = bvh;
+    }
   }
 
-  void IntersectEdge() {
-    auto& stream = ctx_.get_stream();
-    int base_map_id = 0, query_map_id = 1 - base_map_id;
+  void IntersectEdge(int query_map_id) override {
+    auto& stream = this->ctx_.get_stream();
+    int base_map_id = 1 - query_map_id;
+    auto lsi = std::dynamic_pointer_cast<LSILBVH<CONTEXT_T>>(this->lsi_);
 
-    QueryConfigLBVH query_config = get_query_config(base_map_id);
-    lsi_.set_config(query_config);
-    lsi_.Query(stream, query_map_id);
-    xsect_edges_ = lsi_.get_xsects();
-    LOG(INFO) << "Xsects: " << xsect_edges_.size();
+    config_.lbvh = lbvhs_[base_map_id];
+
+
+    lsi->set_config(config_);
+    lsi->Query(stream, query_map_id);
+    stream.Sync();
   }
 
   void LocateVerticesInOtherMap(int query_map_id) {
-    auto& stream = ctx_.get_stream();
+    auto& ctx = this->ctx_;
+    auto& stream = ctx.get_stream();
+    auto pip = std::dynamic_pointer_cast<PIPLBVH<CONTEXT_T>>(this->pip_);
     int base_map_id = 1 - query_map_id;
-    auto d_base_map = ctx_.get_map(base_map_id)->DeviceObject();
-    auto d_query_map = ctx_.get_map(query_map_id)->DeviceObject();
+    auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
+    auto d_query_map = ctx.get_map(query_map_id)->DeviceObject();
     auto d_points = d_query_map.get_points();
-    auto config = get_query_config(base_map_id);
 
-    pip_.set_config(config);
-    pip_.Query(stream, base_map_id, d_points);
+    config_.lbvh = lbvhs_[base_map_id];
 
-    auto& closest_eid = pip_.get_closest_eids();
+    pip->set_config(config_);
+    pip->Query(stream, query_map_id, d_points);
+
+    auto& closest_eid = pip->get_closest_eids();
+
+    thrust::copy(thrust::cuda::par.on(stream.cuda_stream()),
+                 closest_eid.begin(), closest_eid.end(),
+                 this->closest_eids_[query_map_id].begin());
 
     thrust::transform(thrust::cuda::par.on(stream.cuda_stream()),
                       closest_eid.begin(), closest_eid.end(),
-                      point_in_polygon_[query_map_id].begin(),
+                      this->point_in_polygon_[query_map_id].begin(),
                       [=] __device__(index_t eid) {
                         // point is not in polygon
                         if (eid == std::numeric_limits<index_t>::max()) {
                           return EXTERIOR_FACE_ID;
                         }
+
                         const auto& e = d_base_map.get_edge(eid);
 
                         return d_base_map.get_face_id(e);
@@ -84,11 +106,14 @@ class MapOverlayLBVH {
     stream.Sync();
   }
 
-  void ComputeOutputPolygons() {
+  void ComputeOutputPolygons() override {
     using point_t = typename CONTEXT_T::map_t::point_t;
-    auto& stream = ctx_.get_stream();
-    size_t n_xsects = xsect_edges_.size();
-    const auto& scaling = ctx_.get_scaling();
+    auto& ctx = this->ctx_;
+    auto& stream = ctx.get_stream();
+    auto pip = std::dynamic_pointer_cast<PIPLBVH<CONTEXT_T>>(this->pip_);
+    auto xsects = this->lsi_->get_xsects();
+    size_t n_xsects = xsects.size();
+    const auto& scaling = ctx.get_scaling();
 
     FOR2 {
       // TODO: Move them out out the loop
@@ -100,9 +125,8 @@ class MapOverlayLBVH {
       auto& xsect_edges_sorted = xsect_edges_sorted_[im];
       // Sort by eid1, eid2 respectively, so we can do binary search
       xsect_edges_sorted.resize(n_xsects);
-      thrust::copy(thrust::cuda::par.on(stream.cuda_stream()),
-                   xsect_edges_.data(), xsect_edges_.data() + n_xsects,
-                   xsect_edges_sorted.begin());
+      thrust::copy(thrust::cuda::par.on(stream.cuda_stream()), xsects.data(),
+                   xsects.data() + n_xsects, xsect_edges_sorted.begin());
       thrust::sort(
           thrust::cuda::par.on(stream.cuda_stream()),
           xsect_edges_sorted.begin(), xsect_edges_sorted.end(),
@@ -112,8 +136,8 @@ class MapOverlayLBVH {
 
       ArrayView<xsect_t> d_xsect_edges_sorted(xsect_edges_sorted);
       auto query_map_id = im, base_map_id = 1 - im;
-      auto d_query_map = ctx_.get_map(query_map_id)->DeviceObject();
-      auto d_base_map = ctx_.get_map(base_map_id)->DeviceObject();
+      auto d_query_map = ctx.get_map(query_map_id)->DeviceObject();
+      auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
 
       unique_eids.resize(n_xsects);
 
@@ -205,14 +229,13 @@ class MapOverlayLBVH {
 
       stream.Sync();
 
-      auto query_config = get_query_config(base_map_id);
-
-      pip_.set_query_config(query_config);
-      pip_.Query(stream, base_map_id, d_mid_points);
+      config_.lbvh = lbvhs_[base_map_id];
+      pip->set_config(config_);
+      pip->Query(stream, query_map_id, d_mid_points);
 
       stream.Sync();
 
-      ArrayView<index_t> d_mid_point_closest_eid(pip_.get_closest_eids());
+      ArrayView<index_t> d_mid_point_closest_eid(pip->get_closest_eids());
 
       // fill in polygon id for mid-points
       ForEach(stream, d_unique_eids.size(), [=] __device__(size_t idx) mutable {
@@ -242,33 +265,13 @@ class MapOverlayLBVH {
   }
 
   void WriteResult(const char* path) {
-    WriteOutputChain(ctx_, xsect_edges_sorted_, point_in_polygon_, path);
+    WriteOutputChain(this->ctx_, xsect_edges_sorted_, this->point_in_polygon_,
+                     path);
   }
-
-  const thrust::device_vector<xsect_t>& get_xsect_edges(int im) const {
-    return xsect_edges_sorted_[im];
-  }
-
-  const thrust::device_vector<index_t>& get_closet_eids() const {
-    return pip_.get_closest_eids();
-  }
-
-  ArrayView<xsect_t> get_xsect_edges() const { return xsect_edges_; }
 
  private:
-  QueryConfigLBVH get_query_config(int base_map_id) {
-    QueryConfigLBVH config;
-    config.lbvh = lbvhs_[base_map_id];
-    return config;
-  }
-
-  CONTEXT_T& ctx_;
-  LSILBVH<CONTEXT_T> lsi_;
-  LSILBVH<CONTEXT_T> pip_;
-  float xsect_factor_;
-  ArrayView<xsect_t> xsect_edges_;
+  QueryConfigLBVH config_;
   thrust::device_vector<xsect_t> xsect_edges_sorted_[2];
-  thrust::device_vector<polygon_id_t> point_in_polygon_[2];
   std::shared_ptr<lbvh::bvh<float, segment, aabb_getter>> lbvhs_[2];
 };
 

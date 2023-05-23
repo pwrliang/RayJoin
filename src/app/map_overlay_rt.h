@@ -8,12 +8,8 @@
 #include "app/output_chain.h"
 #include "app/overlay_config.h"
 #include "app/pip_rt.h"
-#include "grid/uniform_grid.h"
 #include "rt/primitive.h"
 #include "rt/rt_engine.h"
-#include "util/bitset.h"
-#include "util/cta_scheduler.h"
-#include "util/helper_mortonCode.h"
 #include "util/helpers.h"
 #include "util/stopwatch.h"
 #include "util/util.h"
@@ -38,33 +34,32 @@ class MapOverlayRT : public MapOverlay<CONTEXT_T> {
 
   void Init() override {
     auto& ctx = this->ctx_;
-    auto& stream = ctx.get_stream();
     auto xsect_factor = config_.xsect_factor;
     auto exec_root = ctx.get_exec_root();
     RTConfig rt_config = get_default_rt_config(exec_root);
-    size_t max_ne = 0;
+    size_t max_n_points = 0;
+    size_t max_n_edges = 0;
 
     FOR2 {
       auto map = ctx.get_map(im);
-      auto points_num = map->get_points_num();
+      auto np = map->get_points_num();
       auto ne = map->get_edges_num();
 
-      this->closest_eids_[im].resize(points_num, DONTKNOW);
-      this->point_in_polygon_[im].resize(points_num, DONTKNOW);
+      this->closest_eids_[im].resize(np, DONTKNOW);
+      this->point_in_polygon_[im].resize(np, DONTKNOW);
       eid_range_[im] = std::make_shared<
           thrust::device_vector<thrust::pair<size_t, size_t>>>();
       eid_range_[im]->reserve(ne);
-      max_ne = std::max(max_ne, ne);
+      max_n_points = std::max(max_n_points, np);
+      max_n_edges = std::max(max_n_edges, ne);
     }
-    aabbs_.reserve(max_ne);
+    aabbs_.reserve(max_n_edges);
     size_t n_edges = 0;
     FOR2 { n_edges += ctx.get_map(im)->get_edges_num(); }
 
     rt_engine_->Init(rt_config);
     this->lsi_->Init(n_edges * xsect_factor);
-    this->pip_->Init(max_ne);
-
-    stream.Sync();
+    this->pip_->Init(max_n_points);
   }
 
   void BuildIndex() override {
