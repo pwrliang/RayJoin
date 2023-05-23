@@ -32,10 +32,11 @@ class PIPRT : public PIP<CONTEXT_T> {
     query_config_ = query_config;
   }
 
-  void Query(Stream& stream, int base_map_id,
+  void Query(Stream& stream, int query_map_id,
              ArrayView<point_t> d_query_points) {
     auto& ctx = this->ctx_;
     auto& scaling = ctx.get_scaling();
+    auto base_map_id = 1 - query_map_id;
     auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
     auto points_num = d_query_points.size();
     auto module_id = ModuleIdentifier::MODULE_ID_PIP_CUSTOM;
@@ -50,7 +51,7 @@ class PIPRT : public PIP<CONTEXT_T> {
     params.base_map_points = d_base_map.get_points().data();
     params.eid_range =
         thrust::raw_pointer_cast(query_config_.eid_range->data());
-    params.query_map_id = 1 - base_map_id;
+    params.query_map_id = query_map_id;
     params.query_points = d_query_points;
     params.scaling = scaling;
     params.traversable = query_config_.handle;

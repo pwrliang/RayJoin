@@ -20,7 +20,7 @@ class PIP {
 
   virtual void Init(size_t n_points) { closest_eids_.reserve(n_points); }
 
-  virtual void Query(Stream& stream, int base_map_id,
+  virtual void Query(Stream& stream, int query_map_id,
                      ArrayView<point_t> query_points) = 0;
 
   CONTEXT_T& get_context() { return ctx_; }

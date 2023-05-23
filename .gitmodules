@@ -1,3 +1,0 @@
-[submodule "deps/lbvh"]
-	path = deps/lbvh
-	url = git@github.com:pwrliang/lbvh.git

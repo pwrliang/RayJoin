@@ -33,7 +33,7 @@ struct aabb_getter {
 template <typename MAP_T, typename SCALING_T, typename SEGMENT_T>
 void FillPrimitivesLBVH(Stream& stream, const MAP_T& d_map,
                         const SCALING_T& scaling,
-                        pinned_vector<SEGMENT_T>& primitives) {
+                        thrust::device_vector<SEGMENT_T>& primitives) {
   primitives.resize(d_map.get_edges_num());
 
   ForEach(

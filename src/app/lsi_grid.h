@@ -9,6 +9,7 @@
 #include "grid/uniform_grid.h"
 #include "map/map.h"
 #include "map/scaling.h"
+#include "query_config.h"
 #include "util/cta_scheduler.h"
 #include "util/queue.h"
 
@@ -147,7 +148,7 @@ class LSIGrid : public LSI<CONTEXT_T> {
 
  public:
   LSIGrid(CONTEXT_T& ctx, std::shared_ptr<grid_t> grid)
-      : LSI<CONTEXT_T>(ctx), grid_(std::move(grid)), load_balancing_(false) {}
+      : LSI<CONTEXT_T>(ctx), grid_(std::move(grid)) {}
 
   // fixme: respect query map id
   void Query(Stream& stream, int query_map_id) override {
@@ -162,7 +163,7 @@ class LSIGrid : public LSI<CONTEXT_T> {
 
     this->xsect_queue_.Clear(stream);
 
-    if (load_balancing_) {
+    if (config_.lb) {
       size_t work_size = gsize * gsize;
 
       KernelSizing(grid_dim, block_dim, work_size);
@@ -224,13 +225,13 @@ class LSIGrid : public LSI<CONTEXT_T> {
                                        this->xsect_queue_.size(stream));
   }
 
-  void set_load_balancing(bool lb) { load_balancing_ = lb; }
+  void set_config(const QueryConfigGrid& config) { config_ = config; }
 
   std::shared_ptr<grid_t> get_grid() { return grid_; }
 
  private:
   std::shared_ptr<grid_t> grid_;
-  bool load_balancing_;
+  QueryConfigGrid config_;
 };
 }  // namespace rayjoin
 #endif  // APP_LSI_GRID_H

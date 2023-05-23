@@ -1,5 +1,5 @@
-#ifndef RAYJOIN_APP_RT_OVERLAY_H
-#define RAYJOIN_APP_RT_OVERLAY_H
+#ifndef APP_MAP_OVERLAY_RT_H
+#define APP_MAP_OVERLAY_RT_H
 #include <iomanip>
 #include <random>
 
@@ -114,7 +114,7 @@ class MapOverlayRT {
     auto query_config = get_rt_query_config(base_map_id);
 
     pip_.set_query_config(query_config);
-    pip_.Query(stream, base_map_id, d_points);
+    pip_.Query(stream, query_map_id, d_points);
 
     auto& closest_eid = pip_.get_closest_eids();
 
@@ -260,7 +260,7 @@ class MapOverlayRT {
       auto query_config = get_rt_query_config(base_map_id);
 
       pip_.set_query_config(query_config);
-      pip_.Query(stream, base_map_id, d_mid_points);
+      pip_.Query(stream, query_map_id, d_mid_points);
 
       stream.Sync();
 
@@ -337,4 +337,4 @@ class MapOverlayRT {
 
 }  // namespace rayjoin
 
-#endif  // RAYJOIN_APP_RT_OVERLAY_H
+#endif  // APP_MAP_OVERLAY_RT_H

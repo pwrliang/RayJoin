@@ -16,10 +16,11 @@ class PIPGrid : public PIP<CONTEXT_T> {
   PIPGrid(CONTEXT_T& ctx, std::shared_ptr<grid_t> grid)
       : PIP<CONTEXT_T>(ctx), grid_(std::move(grid)) {}
 
-  void Query(Stream& stream, int base_map_id,
+  void Query(Stream& stream, int query_map_id,
              ArrayView<point_t> d_query_points) {
     auto& scaling = this->ctx_.get_scaling();
     auto d_grid = grid_->DeviceObject();
+    auto base_map_id = 1 - query_map_id;
     auto d_base_map = this->ctx_.get_map(base_map_id)->DeviceObject();
     auto gsize = grid_->get_grid_size();
     auto n_points = d_query_points.size();

@@ -249,7 +249,7 @@ void RunLSIQuery(const QueryConfig& config) {
   } else if (config.mode == "lbvh") {
     auto lsi_lbvh = dynamic_cast<LSILBVH<context_t>*>(lsi);
     QueryConfigLBVH query_config;
-    pinned_vector<segment> primitives;
+    thrust::device_vector<segment> primitives;
     auto bvh = std::make_shared<lbvh::bvh<float, segment, aabb_getter>>();
 
     FillPrimitivesLBVH(stream, d_base_map, scaling, primitives);
@@ -370,7 +370,7 @@ void RunPIPQuery(const QueryConfig& config) {
   } else if (config.mode == "lbvh") {
     auto pip_lbvh = dynamic_cast<PIPLBVH<context_t>*>(pip);
     QueryConfigLBVH query_config;
-    pinned_vector<segment> primitives;
+    thrust::device_vector<segment> primitives;
     auto bvh = std::make_shared<lbvh::bvh<float, segment, aabb_getter>>();
 
     FillPrimitivesLBVH(stream, d_base_map, scaling, primitives);
@@ -387,13 +387,13 @@ void RunPIPQuery(const QueryConfig& config) {
   timer_next("Warmup");
 
   for (int i = 0; i < config.warmup; i++) {
-    pip->Query(stream, 0, query_points);
+    pip->Query(stream, query_map_id, query_points);
   }
   stream.Sync();
 
   timer_next("Query", config.repeat);
   for (int i = 0; i < config.repeat; i++) {
-    pip->Query(stream, 0, query_points);
+    pip->Query(stream, query_map_id, query_points);
 
     if (i == config.repeat - 1) {
       stream.Sync();

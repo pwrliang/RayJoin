@@ -2,8 +2,8 @@
 #include <array>
 #include <memory>
 
-#include "app/overlay.h"
-#include "app/rt_overlay.h"
+#include "app/map_overlay_grid.h"
+#include "app/map_overlay_rt.h"
 #include "context.h"
 #include "glog/logging.h"
 #include "map/planar_graph.h"
@@ -18,12 +18,14 @@ void CheckResult(CONTEXT_T& ctx, OVERLAY_IMPL_T& overlay,
                  const OverlayConfig& config) {
   using xsect_t = dev::Intersection<typename CONTEXT_T::internal_coord_t>;
   using map_t = typename CONTEXT_T::map_t;
-  MapOverlay<CONTEXT_T> cuda_grid(ctx, config.grid_size, config.xsect_factor);
+  MapOverlayGrid<CONTEXT_T> cuda_grid(ctx);
 
+  QueryConfigGrid query_config;
+
+  cuda_grid.set_query_config(query_config);
   cuda_grid.Init();
-  cuda_grid.AddMapsToGrid();
-  cuda_grid.IntersectEdge(true);
-  //  cuda_grid.ComputeOutputPolygons();
+  cuda_grid.BuildIndex();
+  cuda_grid.IntersectEdge(0);
   {
     auto n_xsects_ans = cuda_grid.get_xsect_edges().size();
     auto n_xsects_res = overlay.get_xsect_edges().size();
@@ -148,7 +150,7 @@ void RunOverlay(const OverlayConfig& config) {
   context_t ctx({g1, g2});
 
   if (config.mode == "rt") {
-    RTMapOverlay<context_t> overlay(ctx, config);
+    MapOverlayRT<context_t> overlay(ctx, config);
 
     timer_next("Init");
     overlay.Init();
@@ -191,16 +193,25 @@ void RunOverlay(const OverlayConfig& config) {
     }
 
   } else if (config.mode == "grid") {
-    MapOverlay<context_t> overlay(ctx, config.grid_size, config.xsect_factor);
+    MapOverlayGrid<context_t> overlay(ctx);
+
+    QueryConfigGrid query_config;
+
+    query_config.grid_size = config.grid_size;
+    query_config.profiling = !config.profiling.empty();
+    query_config.xsect_factor = config.xsect_factor;
+    query_config.lb = config.lb;
+
+    overlay.set_query_config(query_config);
 
     timer_next("Init");
     overlay.Init();
 
-    timer_next("Add map to grid");
-    overlay.AddMapsToGrid();
+    timer_next("Build Index");
+    overlay.BuildIndex();
 
     timer_next("Intersect edges");
-    overlay.IntersectEdge(config.lb);
+    overlay.IntersectEdge(0);
 
     FOR2 {
       timer_next("Map " + std::to_string(im) +

@@ -1,61 +1,70 @@
-#ifndef APP_OVERLAY_H
-#define APP_OVERLAY_H
+#ifndef APP_MAP_OVERLAY_GRID_H
+#define APP_MAP_OVERLAY_GRID_H
 #include "app/lsi_grid.h"
+#include "app/map_overlay.h"
 #include "app/output_chain.h"
 #include "app/pip_grid.h"
+#include "app/query_config.h"
 #include "grid/uniform_grid.h"
 
 namespace rayjoin {
 
 template <typename CONTEXT_T>
-class MapOverlayGrid {
+class MapOverlayGrid : MapOverlay<CONTEXT_T> {
   using coord_t = typename CONTEXT_T::coord_t;
   using internal_coord_t = typename CONTEXT_T::internal_coord_t;
   using coefficient_t = typename CONTEXT_T::coefficient_t;
   using xsect_t = dev::Intersection<internal_coord_t>;
 
  public:
-  explicit MapOverlayGrid(CONTEXT_T& ctx, unsigned int gsize, float xsect_factor)
-      : ctx_(ctx),
-        grid_(std::make_shared<UniformGrid>(gsize)),
-        lsi_(ctx, grid_),
-        pip_(ctx, grid_),
-        xsect_factor_(xsect_factor) {}
+  explicit MapOverlayGrid(CONTEXT_T& ctx) : MapOverlay<CONTEXT_T>(ctx) {}
 
-  void Init() {
+  void set_query_config(const QueryConfigGrid& config) { config_ = config; }
+
+  void Init() override {
+    auto& ctx = this->ctx_;
+    auto gsize = config_.grid_size;
+    auto xsect_factor = config_.xsect_factor;
     size_t n_edges = 0;
     size_t max_n_points = 0;
 
     FOR2 {
-      auto map = ctx_.get_map(im);
+      auto map = this->ctx_.get_map(im);
       auto points_num = map->get_points_num();
-      point_in_polygon_[im].resize(points_num, DONTKNOW);
+      this->point_in_polygon_[im].resize(points_num, DONTKNOW);
       n_edges += map->get_edges_num();
     }
-    lsi_.Init(xsect_factor_ * n_edges);
-    pip_.Init(max_n_points);  // allocate space
+
+    grid_ = std::make_shared<UniformGrid>(gsize);
+    this->lsi_ = std::make_shared<LSIGrid<CONTEXT_T>>(ctx, grid_);
+    this->pip_ = std::make_shared<PIPGrid<CONTEXT_T>>(ctx, grid_);
+    this->lsi_->Init(xsect_factor * n_edges);
+    this->pip_->Init(max_n_points);  // allocate space
   }
 
-  void AddMapsToGrid() { grid_->AddMapsToGrid(ctx_); }
+  void BuildIndex() override { grid_->AddMapsToGrid(this->ctx_); }
 
-  void IntersectEdge(bool lb = false) {
-    auto& stream = ctx_.get_stream();
-    lsi_.set_load_balancing(lb);
-    lsi_.Query(stream, 0);
-    xsect_edges_ = lsi_.get_xsects();
+  void IntersectEdge(int query_map_id) override {
+    auto& stream = this->ctx_.get_stream();
+    auto lsi = std::dynamic_pointer_cast<LSIGrid<CONTEXT_T>>(this->lsi_);
+
+    lsi->set_config(config_);
+    lsi->Query(stream, query_map_id);
+    xsect_edges_ = lsi->get_xsects();
     LOG(INFO) << "Xsects: " << xsect_edges_.size();
   }
 
-  void LocateVerticesInOtherMap(int query_map_id) {
-    auto& stream = ctx_.get_stream();
+  void LocateVerticesInOtherMap(int query_map_id) override {
+    auto& ctx = this->ctx_;
+    auto& stream = ctx.get_stream();
     int base_map_id = 1 - query_map_id;
-    auto d_base_map = ctx_.get_map(base_map_id)->DeviceObject();
-    auto d_query_map = ctx_.get_map(query_map_id)->DeviceObject();
+    auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
+    auto d_query_map = ctx.get_map(query_map_id)->DeviceObject();
     auto d_points = d_query_map.get_points();
 
-    pip_.Query(stream, base_map_id, d_points);
+    this->pip_->Query(stream, query_map_id, d_points);
 
-    auto& closest_eid = pip_.get_closest_eids();
+    auto& closest_eid = this->pip_->get_closest_eids();
 
     thrust::transform(thrust::cuda::par.on(stream.cuda_stream()),
                       closest_eid.begin(), closest_eid.end(),
@@ -72,10 +81,11 @@ class MapOverlayGrid {
     stream.Sync();
   }
 
-  void ComputeOutputPolygons() {
-    auto& stream = ctx_.get_stream();
+  void ComputeOutputPolygons() override {
+    auto& ctx = this->ctx_;
+    auto& stream = ctx.get_stream();
     size_t n_xsects = xsect_edges_.size();
-    const auto& scaling = ctx_.get_scaling();
+    const auto& scaling = ctx.get_scaling();
     auto d_grid = grid_->DeviceObject();
     thrust::device_vector<int64_t> unique_eids;
 
@@ -94,9 +104,9 @@ class MapOverlayGrid {
           });
 
       ArrayView<xsect_t> d_xsect_edges_sorted(xsect_edges_sorted);
-      auto d_map = ctx_.get_map(im)->DeviceObject();
+      auto d_map = ctx.get_map(im)->DeviceObject();
       auto dst_map_id = 1 - im;
-      auto d_dst_map = ctx_.get_map(dst_map_id)->DeviceObject();
+      auto d_dst_map = ctx.get_map(dst_map_id)->DeviceObject();
 
       unique_eids.resize(n_xsects);
 
@@ -185,8 +195,8 @@ class MapOverlayGrid {
     stream.Sync();
   }
 
-  void WriteResult(const char* path) {
-    WriteOutputChain(ctx_, xsect_edges_sorted_, point_in_polygon_, path);
+  void WriteResult(const char* path) override {
+    WriteOutputChain(this->ctx_, xsect_edges_sorted_, point_in_polygon_, path);
   }
 
   const thrust::device_vector<xsect_t>& get_xsect_edges(int im) const {
@@ -194,17 +204,14 @@ class MapOverlayGrid {
   }
 
   const thrust::device_vector<index_t>& get_closet_eids() const {
-    return pip_.get_closest_eids();
+    return this->pip_->get_closest_eids();
   }
 
   ArrayView<xsect_t> get_xsect_edges() const { return xsect_edges_; }
 
  private:
-  CONTEXT_T& ctx_;
   std::shared_ptr<UniformGrid> grid_;
-  LSIGrid<CONTEXT_T> lsi_;
-  PIPGrid<CONTEXT_T> pip_;
-  float xsect_factor_;
+  QueryConfigGrid config_;
   ArrayView<xsect_t> xsect_edges_;
   thrust::device_vector<xsect_t> xsect_edges_sorted_[2];
   thrust::device_vector<polygon_id_t> point_in_polygon_[2];
@@ -212,4 +219,4 @@ class MapOverlayGrid {
 
 }  // namespace rayjoin
 
-#endif  // APP_OVERLAY_H
+#endif  // APP_MAP_OVERLAY_GRID_H

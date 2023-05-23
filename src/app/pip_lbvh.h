@@ -22,9 +22,9 @@ class PIPLBVH : public PIP<CONTEXT_T> {
 
   void set_config(QueryConfigLBVH config) { config_ = std::move(config); }
 
-  void Query(Stream& stream, int base_map_id,
+  void Query(Stream& stream, int query_map_id,
              ArrayView<point_t> d_query_points) {
-    auto query_map_id = 1 - base_map_id;
+    auto base_map_id = 1 - query_map_id;
     auto& scaling = this->ctx_.get_scaling();
     auto d_base_map = this->ctx_.get_map(base_map_id)->DeviceObject();
     auto n_points = d_query_points.size();
