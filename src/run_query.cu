@@ -198,7 +198,13 @@ void RunLSIQuery(const QueryConfig& config) {
     auto grid = std::make_shared<UniformGrid>(config.grid_size);
 
     lsi = new LSIGrid<context_t>(ctx, grid);
-    dynamic_cast<LSIGrid<context_t>*>(lsi)->set_load_balancing(config.lb);
+    QueryConfigGrid query_config;
+
+    query_config.lb = config.lb;
+    query_config.grid_size = config.grid_size;
+    query_config.profiling = !config.profiling.empty();
+
+    dynamic_cast<LSIGrid<context_t>*>(lsi)->set_config(query_config);
   } else if (config.mode == "lbvh") {
     lsi = new LSILBVH<context_t>(ctx);
   } else if (config.mode == "rt") {
