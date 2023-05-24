@@ -45,8 +45,8 @@ class PIPLBVH : public PIP<CONTEXT_T> {
 
       lbvh::aabb<float> box;
       box.upper = make_float4(x, std::numeric_limits<float>::max(), 0.0, 0.0);
-      box.lower = make_float4(x, next_float_from_double(y, -1, ROUNDING_ITER),
-                              0.0, 0.0);
+      box.lower = make_float4(
+          x, next_float_from_double(y, -1, ROUNDING_ITER + 1), 0.0, 0.0);
 
       auto pair = lbvh::query_device_all(
           bvh_dev, lbvh::overlaps(box),

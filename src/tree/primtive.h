@@ -22,7 +22,7 @@ struct aabb_getter {
     min_x = next_float_from_double(min_x, -1, ROUNDING_ITER);
     max_x = next_float_from_double(max_x, 1, ROUNDING_ITER);
     min_y = next_float_from_double(min_y, -1, ROUNDING_ITER);
-    max_x = next_float_from_double(max_x, 1, ROUNDING_ITER);
+    max_y = next_float_from_double(max_y, 1, ROUNDING_ITER);
 
     box.lower = make_float4(min_x, min_y, 0, 0);
     box.upper = make_float4(max_x, max_y, 0, 0);

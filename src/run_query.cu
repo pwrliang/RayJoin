@@ -24,12 +24,12 @@ void CheckPIPResult(
     const thrust::device_vector<index_t>& eids) {
   auto& stream = ctx.get_stream();
   auto grid = std::make_shared<UniformGrid>(config.grid_size);
-  int base_map_id = 0;
+  int base_map_id = 0, query_map_id = 1 - base_map_id;
   grid->AddMapToGrid(ctx, base_map_id, !config.profiling.empty());
   PIPGrid<CONTEXT_T> pip_grid(ctx, grid);
 
   LOG(INFO) << "Checking point in polygon";
-  pip_grid.Query(stream, base_map_id, points);
+  pip_grid.Query(stream, query_map_id, points);
   stream.Sync();
 
   pinned_vector<typename CONTEXT_T::map_t::point_t> h_points = points;
@@ -50,7 +50,6 @@ void CheckPIPResult(
     // having same coordinates but different eid
     if (closest_eid_res != closest_eid_ans) {
       auto not_hit = std::numeric_limits<index_t>::max();
-      auto p = ctx.get_planar_graph(base_map_id)->points[point_idx];
       auto scaled_p = h_points[point_idx];
       bool diff = false;
       std::string ep_ans = "miss";
@@ -73,6 +72,7 @@ void CheckPIPResult(
       }
 
       if (diff && n_diff < 10) {
+        double2 p{scaling.UnscaleX(scaled_p.x), scaling.UnscaleY(scaled_p.y)};
         printf("point %lu (%.8lf, %.8lf) ans %u, res %u %s %s\n", point_idx,
                p.x, p.y, closest_eid_ans, closest_eid_res, ep_ans.c_str(),
                ep_res.c_str());
@@ -344,7 +344,6 @@ void RunPIPQuery(const QueryConfig& config) {
 
   timer_next("Init");
   auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
-  auto d_query_map = ctx.get_map(query_map_id)->DeviceObject();
   const auto& scaling = ctx.get_scaling();
   pip->Init(query_points.size());
 
