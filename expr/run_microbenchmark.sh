@@ -1,16 +1,11 @@
 #!/usr/bin/env bash
 set -e
-BIN_HOME_RELEASE="/tmp/RayJoin/cmake-build-release-dl190"
-BIN_HOME_DEBUG="/tmp/RayJoin/cmake-build-debug-dl190"
-MAPS=(Aquifers.cdb dtl_cnty.cdb Parks.cdb USACensusBlockGroupBoundaries.cdb USADetailedWaterBodies.cdb USAZIPCodeArea.cdb)
-DATASET_ROOT="/local/storage/liang/rt_datasets/cdb"
-DEFAULT_SEG_LEN="0.2"
-DEFAULT_NE=1000000
-DEFAULT_GRID_SIZE=2048
-DEFAULT_XSECT_FACTOR="0.5"
+source env.sh
+
 DEFAULT_N_WARMUP=5
 DEFAULT_N_REPEAT=5
-SERIALIZE_PREFIX="/dev/shm"
+DEFAULT_SEG_LEN="0.2"
+DEFAULT_NE=1000000
 
 function lsi_varying_seg_len() {
   debug=$1
@@ -34,7 +29,7 @@ function lsi_varying_seg_len() {
     map="${MAPS[i]}"
 
     for seg_len in ${seg_lens[*]}; do
-      for mode in rt grid_lb; do
+      for mode in rt grid; do
         out_prefix="${out_dir}/lsi_${map}_${mode}_${seg_len}"
 
         if [[ $mode == "grid_lb" ]]; then
@@ -102,7 +97,7 @@ function lsi_varying_query_size() {
       win="${win_sizes[j]}"
       enlarge="${enlarge_lims[j]}"
 
-      for mode in rt grid_lb lbvh; do
+      for mode in rt grid lbvh; do
         out_prefix="${out_dir}/${map}_${mode}_${ne}"
 
         if [[ $mode == "grid_lb" ]]; then
