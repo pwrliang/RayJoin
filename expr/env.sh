@@ -7,3 +7,5 @@ MAPS2=(dtl_cnty.cdb USACensusBlockGroupBoundaries.cdb USADetailedWaterBodies.cdb
 DEFAULT_GRID_SIZE=2048
 SERIALIZE_PREFIX="/dev/shm"
 DEFAULT_XSECT_FACTOR="0.5"
+DEFAULT_WIN_SIZE=32
+DEFAULT_ENLARGE_LIM=2

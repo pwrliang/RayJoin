@@ -227,8 +227,8 @@ void RunLSIQuery(const QueryConfig& config) {
   LOG(INFO) << "Queue capacity: " << queue_cap;
   lsi->Init(queue_cap);
 
-  timer_next("Build Index");
   if (config.mode == "grid") {
+    timer_next("Build Index");
     auto lsi_grid = dynamic_cast<LSIGrid<context_t>*>(lsi)->get_grid();
 
     lsi_grid->AddMapsToGrid(ctx, !config.profiling.empty());
@@ -242,9 +242,12 @@ void RunLSIQuery(const QueryConfig& config) {
     auto win_size = config.win;
     auto area_enlarge = config.enlarge;
 
+    timer_next("Adaptive Grouping");
     FillPrimitivesGroup(stream, d_base_map, scaling, win_size, area_enlarge,
                         aabbs, *eid_range);
+    stream.Sync();
 
+    timer_next("Build Index");
     query_config.fau = config.fau;
     query_config.rounding_iter = config.rounding_iter;
     query_config.handle =
@@ -253,6 +256,7 @@ void RunLSIQuery(const QueryConfig& config) {
 
     lsi_rt->set_config(query_config);
   } else if (config.mode == "lbvh") {
+    timer_next("Build Index");
     auto lsi_lbvh = dynamic_cast<LSILBVH<context_t>*>(lsi);
     QueryConfigLBVH query_config;
     thrust::device_vector<segment> primitives;
@@ -347,8 +351,8 @@ void RunPIPQuery(const QueryConfig& config) {
   const auto& scaling = ctx.get_scaling();
   pip->Init(query_points.size());
 
-  timer_next("Build Index");
   if (config.mode == "grid") {
+    timer_next("Build Index");
     auto grid = dynamic_cast<PIPGrid<context_t>*>(pip)->get_grid();
 
     grid->AddMapToGrid(ctx, 0, !config.profiling.empty());
@@ -360,9 +364,12 @@ void RunPIPQuery(const QueryConfig& config) {
         std::make_shared<thrust::device_vector<thrust::pair<size_t, size_t>>>();
     auto ne = d_base_map.get_edges_num();
 
+    timer_next("Adaptive Grouping");
     FillPrimitivesGroup(stream, d_base_map, scaling, config.win, config.enlarge,
                         aabbs, *eid_range);
+    stream.Sync();
 
+    timer_next("Build Index");
     ArrayView<OptixAabb> d_aabbs(aabbs);
 
     QueryConfigRT pip_config;
@@ -373,13 +380,15 @@ void RunPIPQuery(const QueryConfig& config) {
 
     pip_rt->set_config(pip_config);
   } else if (config.mode == "lbvh") {
+    timer_next("Build Index");
     auto pip_lbvh = dynamic_cast<PIPLBVH<context_t>*>(pip);
     QueryConfigLBVH query_config;
     thrust::device_vector<segment> primitives;
     auto bvh = std::make_shared<lbvh::bvh<float, segment, aabb_getter>>();
 
     FillPrimitivesLBVH(stream, d_base_map, scaling, primitives);
-    stream.Sync();
+    stream.Sync();  // Wait filling primitive finish
+
     bvh->assign(primitives);
     bvh->construct(!config.profiling.empty());
 

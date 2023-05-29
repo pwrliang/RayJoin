@@ -7,6 +7,7 @@ DEFAULT_N_REPEAT=5
 DEFAULT_SEG_LEN="0.2"
 DEFAULT_NE=1000000
 
+
 function lsi_varying_seg_len() {
   debug=$1
   seg_lens=(0.02 0.04 0.06 0.08 0.1)
@@ -196,6 +197,116 @@ function pip_varying_query_size() {
   done
 }
 
+function ag_varying_win_size() {
+  debug=$1
+  query=$2
+  win_sizes=(1 2 4 8 16 32 64)
+  enlarge_lim=$DEFAULT_ENLARGE_LIM
+  out_dir="ag_${query}_varying_win"
+  exec="${BIN_HOME_RELEASE}"/bin/query_exec
+  if [[ $debug -eq 1 ]]; then
+    out_dir="${out_dir}_debug"
+    exec="${BIN_HOME_DEBUG}/bin/query_exec"
+  fi
+  mkdir -p "$out_dir"
+
+  xsect_factor=$DEFAULT_XSECT_FACTOR
+  n_warmup=$DEFAULT_N_WARMUP
+  n_repeat=$DEFAULT_N_REPEAT
+  if [[ $debug -eq 1 ]]; then
+    n_warmup=1
+    n_repeat=1
+  fi
+
+  for ((i = 0; i < "${#MAPS[@]}"; i++)); do
+    map="${MAPS[i]}"
+
+    for ((j = 0; j < "${#win_sizes[@]}"; j++)); do
+      win="${win_sizes[j]}"
+      out_prefix="${out_dir}/${map}_win_${win}"
+      log_file="${out_prefix}.log"
+
+      cmd="$exec -poly1 ${DATASET_ROOT}/${map} \
+                   -serialize=${SERIALIZE_PREFIX} \
+                   -mode=rt \
+                   -v=1 \
+                   -query=$query \
+                   -seed=1 \
+                   -xsect_factor $xsect_factor \
+                   -gen_n=$DEFAULT_NE \
+                   -gen_t=$DEFAULT_SEG_LEN \
+                   -warmup=$n_warmup \
+                   -repeat=$n_repeat \
+                   -win=$win \
+                   -enlarge=$DEFAULT_ENLARGE_LIM"
+
+      if [[ ! -f "${log_file}" ]]; then
+        echo "$cmd" >"${log_file}.tmp"
+        eval "$cmd" 2>&1 | tee -a "${log_file}.tmp"
+
+        if grep -q "Timing results" "${log_file}.tmp"; then
+          mv "${log_file}.tmp" "${log_file}"
+        fi
+      fi
+    done
+  done
+}
+
+function ag_varying_enlarge_lim() {
+  debug=$1
+  query=$2
+  enlarge_lims=(1 2 4 8 16 32 64)
+  out_dir="ag_${query}_varying_enlarge"
+  exec="${BIN_HOME_RELEASE}"/bin/query_exec
+  if [[ $debug -eq 1 ]]; then
+    out_dir="${out_dir}_debug"
+    exec="${BIN_HOME_DEBUG}/bin/query_exec"
+  fi
+  mkdir -p "$out_dir"
+
+  xsect_factor=$DEFAULT_XSECT_FACTOR
+  n_warmup=$DEFAULT_N_WARMUP
+  n_repeat=$DEFAULT_N_REPEAT
+  if [[ $debug -eq 1 ]]; then
+    n_warmup=1
+    n_repeat=1
+  fi
+
+  for ((i = 0; i < "${#MAPS[@]}"; i++)); do
+    map="${MAPS[i]}"
+
+    for ((j = 0; j < "${#enlarge_lims[@]}"; j++)); do
+      enlarge_lim="${enlarge_lims[j]}"
+      out_prefix="${out_dir}/${map}_enlarge_$enlarge_lim"
+      log_file="${out_prefix}.log"
+
+      cmd="$exec -poly1 ${DATASET_ROOT}/${map} \
+                   -serialize=${SERIALIZE_PREFIX} \
+                   -grid_size=$DEFAULT_GRID_SIZE \
+                   -mode=rt \
+                   -v=1 \
+                   -query=$query \
+                   -seed=1 \
+                   -xsect_factor $xsect_factor \
+                   -gen_n=$DEFAULT_NE \
+                   -gen_t=$DEFAULT_SEG_LEN \
+                   -warmup=$n_warmup \
+                   -repeat=$n_repeat \
+                   -win=$DEFAULT_WIN_SIZE \
+                   -enlarge=$enlarge_lim"
+
+      if [[ ! -f "${log_file}" ]]; then
+        echo "$cmd" >"${log_file}.tmp"
+        eval "$cmd" 2>&1 | tee -a "${log_file}.tmp"
+
+        if grep -q "Timing results" "${log_file}.tmp"; then
+          mv "${log_file}.tmp" "${log_file}"
+        fi
+      fi
+    done
+  done
+}
+
 DEBUG=0
 for i in "$@"; do
   case $i in
@@ -222,6 +333,22 @@ for i in "$@"; do
     ;;
   --pip-query-size)
     pip_varying_query_size $DEBUG
+    shift
+    ;;
+  --lsi-vary-win-size)
+    ag_varying_win_size $DEBUG "lsi"
+    shift
+    ;;
+  --pip-vary-win-size)
+    ag_varying_win_size $DEBUG "pip"
+    shift
+    ;;
+  --lsi-vary-enlarge-lim)
+    ag_varying_enlarge_lim $DEBUG "lsi"
+    shift
+    ;;
+  --pip-vary-enlarge-lim)
+    ag_varying_enlarge_lim $DEBUG "pip"
     shift
     ;;
   --* | -*)

@@ -37,7 +37,9 @@ function run_overlay() {
                        -lb=$lb \
                        -v=1 \
                        -fau \
-                       -xsect_factor $xsect_factor"
+                       -xsect_factor $xsect_factor \
+                       -win=$DEFAULT_WIN_SIZE \
+                       -enlarge=$DEFAULT_ENLARGE_LIM"
 
       if [[ ! -f "${log_file}" ]]; then
         echo "$cmd" >"${log_file}.tmp"
