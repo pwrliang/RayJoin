@@ -111,7 +111,6 @@ evalute RayJoin with the following commands.
     -mode=grid/rt \
     -grid_size=20000 \
     -epsilon=0.00001 \ # the paramter of Reservative Representation
-    -early_term_deviant=1 \ # the paramter of Early Termination
     -check=true \ # Check Error Rate
     -fau \ # Free AABBs after builing the BVH, which allows loading big datasets at the overhead of free memory 
     -xsect_factor=0.5

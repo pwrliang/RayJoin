@@ -60,8 +60,6 @@ struct LaunchParamsPIP {
   // Used for BVH Traversable
   OptixTraversableHandle traversable;
 
-  float early_term_deviant;
-
   // Output
   index_t* closest_eids;
 
