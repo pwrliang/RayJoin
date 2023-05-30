@@ -7,7 +7,6 @@ DEFAULT_N_REPEAT=5
 DEFAULT_SEG_LEN="0.2"
 DEFAULT_NE=1000000
 
-
 function lsi_varying_seg_len() {
   debug=$1
   seg_lens=(0.02 0.04 0.06 0.08 0.1)
@@ -307,6 +306,45 @@ function ag_varying_enlarge_lim() {
   done
 }
 
+function profile_lsi_test_numbers() {
+  n_queries=10000000
+  out_dir="profile_lsi_${n_queries}_debug"
+  exec="${BIN_HOME_DEBUG}/bin/query_exec"
+  mkdir -p "$out_dir"
+
+  for ((i = 0; i < "${#MAPS[@]}"; i++)); do
+    map="${MAPS[i]}"
+
+    for mode in rt grid lbvh; do
+      out_prefix="${out_dir}/${map}_$mode"
+      log_file="${out_prefix}.log"
+
+      cmd="$exec -poly1 ${DATASET_ROOT}/${map} \
+                   -serialize=${SERIALIZE_PREFIX} \
+                   -grid_size=$DEFAULT_GRID_SIZE \
+                   -mode=$mode \
+                   -v=1 \
+                   -query=lsi \
+                   -seed=1 \
+                   -xsect_factor $DEFAULT_XSECT_FACTOR \
+                   -gen_n=$n_queries \
+                   -gen_t=$DEFAULT_SEG_LEN \
+                   -warmup=0 \
+                   -repeat=1 \
+                   -profile"
+
+      if [[ ! -f "${log_file}" ]]; then
+        echo "$cmd" >"${log_file}.tmp"
+        eval "$cmd" 2>&1 | tee -a "${log_file}.tmp"
+
+        if grep -q "Timing results" "${log_file}.tmp"; then
+          mv "${log_file}.tmp" "${log_file}"
+        fi
+      fi
+    done
+  done
+}
+
 DEBUG=0
 for i in "$@"; do
   case $i in
@@ -349,6 +387,10 @@ for i in "$@"; do
     ;;
   --pip-vary-enlarge-lim)
     ag_varying_enlarge_lim $DEBUG "pip"
+    shift
+    ;;
+  --lsi-test-numbers)
+    profile_lsi_test_numbers
     shift
     ;;
   --* | -*)
