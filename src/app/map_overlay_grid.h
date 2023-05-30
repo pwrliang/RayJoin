@@ -56,12 +56,14 @@ class MapOverlayGrid : public MapOverlay<CONTEXT_T> {
   void LocateVerticesInOtherMap(int query_map_id) override {
     auto& ctx = this->ctx_;
     auto& stream = ctx.get_stream();
+    auto pip = std::dynamic_pointer_cast<PIPGrid<CONTEXT_T>>(this->pip_);
     int base_map_id = 1 - query_map_id;
     auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
     auto d_query_map = ctx.get_map(query_map_id)->DeviceObject();
     auto d_points = d_query_map.get_points();
 
-    this->pip_->Query(stream, query_map_id, d_points);
+    pip->set_config(config_);
+    pip->Query(stream, query_map_id, d_points);
 
     auto& closest_eid = this->pip_->get_closest_eids();
 

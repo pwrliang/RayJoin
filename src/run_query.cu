@@ -197,14 +197,15 @@ void RunLSIQuery(const QueryConfig& config) {
   if (config.mode == "grid") {
     auto grid = std::make_shared<UniformGrid>(config.grid_size);
 
-    lsi = new LSIGrid<context_t>(ctx, grid);
+    auto* lsi_pip = new LSIGrid<context_t>(ctx, grid);
     QueryConfigGrid query_config;
 
     query_config.lb = config.lb;
     query_config.grid_size = config.grid_size;
     query_config.profile = config.profile;
 
-    dynamic_cast<LSIGrid<context_t>*>(lsi)->set_config(query_config);
+    lsi_pip->set_config(query_config);
+    lsi = lsi_pip;
   } else if (config.mode == "lbvh") {
     lsi = new LSILBVH<context_t>(ctx);
   } else if (config.mode == "rt") {
@@ -332,8 +333,14 @@ void RunPIPQuery(const QueryConfig& config) {
   timer_next("Create App");
   if (config.mode == "grid") {
     auto grid = std::make_shared<UniformGrid>(config.grid_size);
+    auto* pip_grid = new PIPGrid<context_t>(ctx, grid);
+    QueryConfigGrid config;
 
-    pip = new PIPGrid<context_t>(ctx, grid);
+    config.grid_size = config.grid_size;
+    config.profile = config.profile;
+
+    pip_grid->set_config(config);
+    pip = pip_grid;
   } else if (config.mode == "rt") {
     auto rt_engine = std::make_shared<RTEngine>();
     RTConfig rt_config = get_default_rt_config(config.exec_root);

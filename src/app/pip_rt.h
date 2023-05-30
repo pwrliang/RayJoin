@@ -68,6 +68,17 @@ class PIPRT : public PIP<CONTEXT_T> {
     rt_engine_->Render(stream, module_id,
                        dim3{(unsigned int) points_num, 1, 1});
     stream.Sync();
+#ifndef NDEBUG
+    if (config_.profile) {
+      thrust::host_vector<uint32_t> hit_count = hit_count_;
+      uint32_t n_tests = 0;
+
+      for (auto& n : hit_count) {
+        n_tests += n;
+      }
+      LOG(INFO) << "Total tests: " << n_tests;
+    }
+#endif
   }
 
   void DumpStatistics(const char* path) {

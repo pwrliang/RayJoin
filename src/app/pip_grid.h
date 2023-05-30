@@ -16,6 +16,8 @@ class PIPGrid : public PIP<CONTEXT_T> {
   PIPGrid(CONTEXT_T& ctx, std::shared_ptr<grid_t> grid)
       : PIP<CONTEXT_T>(ctx), grid_(std::move(grid)) {}
 
+  void set_config(QueryConfigGrid config) { config_ = config; }
+
   void Query(Stream& stream, int query_map_id,
              ArrayView<point_t> d_query_points) {
     auto& scaling = this->ctx_.get_scaling();
@@ -28,7 +30,10 @@ class PIPGrid : public PIP<CONTEXT_T> {
     this->closest_eids_.resize(n_points);
 
     ArrayView<index_t> d_closest_eids(this->closest_eids_);
-
+#ifndef NDEBUG
+    n_tests_.set(0, stream);
+    auto* d_ntests = n_tests_.data();
+#endif
     ForEach(stream, n_points, [=] __device__(size_t point_idx) mutable {
       const auto& p = d_query_points[point_idx];
       auto cx = dev::calculate_cell(gsize, scaling, p.x);
@@ -51,6 +56,11 @@ class PIPGrid : public PIP<CONTEXT_T> {
             scaling,   /* IN: Scaling */
             d_base_map /* IN: Map to test */
         );
+#ifndef NDEBUG
+        const auto& cell = d_grid.get_cell(cx, curr_cy);
+        auto ne = cell.ne[base_map_id];
+        atomicAdd(d_ntests, ne);
+#endif
         if (beste != nullptr) {
           closest_eid = beste->eid;
           break;
@@ -58,12 +68,20 @@ class PIPGrid : public PIP<CONTEXT_T> {
       }
       d_closest_eids[point_idx] = closest_eid;
     });
+    stream.Sync();
+#ifndef NDEBUG
+    if (config_.profile) {
+      LOG(INFO) << "Total tests: " << n_tests_.get(stream);
+    }
+#endif
   }
 
   std::shared_ptr<grid_t> get_grid() { return grid_; }
 
  private:
+  QueryConfigGrid config_;
   std::shared_ptr<grid_t> grid_;
+  SharedValue<uint32_t> n_tests_;
 };
 }  // namespace rayjoin
 #endif  // APP_PIP_GRID_H

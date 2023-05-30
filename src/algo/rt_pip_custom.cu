@@ -34,7 +34,7 @@ extern "C" __global__ void __intersection__pip_custom() {
   unpack64(best_y_storage.x, best_y_storage.y, &best_y);
 
 #ifndef NDEBUG
-  params.hit_count[point_idx]++;
+  params.hit_count[point_idx] += end_eid - begin_eid;
 #endif
 
   auto t = std::numeric_limits<double>::max();

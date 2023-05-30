@@ -306,9 +306,10 @@ function ag_varying_enlarge_lim() {
   done
 }
 
-function profile_lsi_test_numbers() {
+function profile_number_of_tests() {
+  query=$1
   n_queries=10000000
-  out_dir="profile_lsi_${n_queries}_debug"
+  out_dir="profile_${query}_${n_queries}_debug"
   exec="${BIN_HOME_DEBUG}/bin/query_exec"
   mkdir -p "$out_dir"
 
@@ -324,7 +325,7 @@ function profile_lsi_test_numbers() {
                    -grid_size=$DEFAULT_GRID_SIZE \
                    -mode=$mode \
                    -v=1 \
-                   -query=lsi \
+                   -query=$query \
                    -seed=1 \
                    -xsect_factor $DEFAULT_XSECT_FACTOR \
                    -gen_n=$n_queries \
@@ -389,8 +390,12 @@ for i in "$@"; do
     ag_varying_enlarge_lim $DEBUG "pip"
     shift
     ;;
-  --lsi-test-numbers)
-    profile_lsi_test_numbers
+  --lsi-ntests)
+    profile_number_of_tests "lsi"
+    shift
+    ;;
+  --pip-ntests)
+    profile_number_of_tests "pip"
     shift
     ;;
   --* | -*)

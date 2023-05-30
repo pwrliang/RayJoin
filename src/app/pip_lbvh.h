@@ -33,6 +33,10 @@ class PIPLBVH : public PIP<CONTEXT_T> {
     this->closest_eids_.resize(n_points);
 
     ArrayView<index_t> d_closest_eids(this->closest_eids_);
+#ifndef NDEBUG
+    n_tests_.set(0, stream);
+    auto* d_ntests = n_tests_.data();
+#endif
 
     ForEach(stream, n_points, [=] __device__(size_t point_idx) mutable {
       const auto& p = d_query_points[point_idx];
@@ -117,18 +121,29 @@ class PIPLBVH : public PIP<CONTEXT_T> {
             best_y = xsect_y;
             best_e = &e;
           });
+#ifndef NDEBUG
       auto traversed_aabbs = pair.first;
       auto num_found = pair.second;
 
+      atomicAdd(d_ntests, num_found);
+#endif
       if (best_e != nullptr) {
         closest_eid = best_e->eid;
       }
       d_closest_eids[point_idx] = closest_eid;
     });
+
+    stream.Sync();
+#ifndef NDEBUG
+    if (config_.profile) {
+      LOG(INFO) << "Total tests: " << n_tests_.get(stream);
+    }
+#endif
   }
 
  private:
   QueryConfigLBVH config_;
+  SharedValue<uint32_t> n_tests_;
 };
 }  // namespace rayjoin
 #endif  // APP_PIP_LBVH_H
