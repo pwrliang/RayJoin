@@ -47,9 +47,8 @@ class LSIRT : public LSI<CONTEXT_T> {
     params.traversable = config_.handle;
     params.rounding_iter = config_.rounding_iter;
     params.xsects = xsects_queue.DeviceObject();
-    params.n_tests = n_tests_.data();
-
 #ifndef NDEBUG
+    params.n_tests = n_tests_.data();
     n_tests_.set(0, stream);
 #endif
     xsects_queue.Clear(stream);
