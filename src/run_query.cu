@@ -250,7 +250,6 @@ void RunLSIQuery(const QueryConfig& config) {
     timer_next("Build Index");
     query_config.profile = config.profile;
     query_config.fau = config.fau;
-    query_config.rounding_iter = config.rounding_iter;
     query_config.handle =
         rt_engine->BuildAccelCustom(stream, ArrayView<OptixAabb>(aabbs));
     query_config.eid_range = eid_range;

@@ -35,9 +35,6 @@ struct LaunchParamsLSI {
   // Used for BVH Traversable
   OptixTraversableHandle traversable;
 
-  // precision related
-  int rounding_iter;
-
   // Output
   dev::Queue<xsect_t, uint32_t> xsects;
 #ifndef NDEBUG
@@ -63,8 +60,6 @@ struct LaunchParamsPIP {
   // Used for BVH Traversable
   OptixTraversableHandle traversable;
 
-  // precision related
-  int rounding_iter;
   float early_term_deviant;
 
   // Output

@@ -16,7 +16,6 @@ struct QueryConfigRT {
   float xsect_factor = 1.5;
   int win;
   float enlarge;
-  int rounding_iter = 2;
   OptixTraversableHandle handle;
   std::shared_ptr<thrust::device_vector<thrust::pair<size_t, size_t>>>
       eid_range;

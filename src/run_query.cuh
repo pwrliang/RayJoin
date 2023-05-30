@@ -9,7 +9,6 @@ struct QueryConfig {
   int warmup;
   int repeat;
   unsigned int grid_size;
-  bool dynamic_query;
   std::string sample;
   float sample_rate;
   float xsect_factor;
@@ -22,7 +21,6 @@ struct QueryConfig {
   bool print_histo;
   bool profile;
   bool fau;
-  int rounding_iter;
   int win;
   float enlarge;
 };

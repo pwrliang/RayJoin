@@ -11,7 +11,6 @@ struct OverlayConfig {
   std::string serialize_prefix;
   std::string output_path;
   unsigned int grid_size;
-  float rounding_iter;
   float xsect_factor;
   std::string mode;
   bool fau;
