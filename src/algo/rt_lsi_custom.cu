@@ -43,6 +43,9 @@ extern "C" __global__ void __intersection__lsi() {
       params.xsects.Append(xsect);
     }
   }
+#ifndef NDEBUG
+  atomicAdd(params.n_tests, end_eid - begin_eid);
+#endif
 }
 
 extern "C" __global__ void __raygen__lsi() {

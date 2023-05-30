@@ -28,6 +28,6 @@ DEFINE_int32(seed, 0, "Random seed for sampling and data generating");
 DEFINE_double(gen_t, 0.1, "Len of generated line segments");
 DEFINE_int32(gen_n, 10000, "Number of generated edges/points");
 DEFINE_bool(histo, false, "Whether to print histogram");
-DEFINE_string(
-    profile, "",
+DEFINE_bool(
+    profile, false,
     "Enable profiling, some counters are only compiled available under debug");

@@ -25,7 +25,7 @@ void CheckPIPResult(
   auto& stream = ctx.get_stream();
   auto grid = std::make_shared<UniformGrid>(config.grid_size);
   int base_map_id = 0, query_map_id = 1 - base_map_id;
-  grid->AddMapToGrid(ctx, base_map_id, !config.profiling.empty());
+  grid->AddMapToGrid(ctx, base_map_id, config.profile);
   PIPGrid<CONTEXT_T> pip_grid(ctx, grid);
 
   LOG(INFO) << "Checking point in polygon";
@@ -202,7 +202,7 @@ void RunLSIQuery(const QueryConfig& config) {
 
     query_config.lb = config.lb;
     query_config.grid_size = config.grid_size;
-    query_config.profiling = !config.profiling.empty();
+    query_config.profile = config.profile;
 
     dynamic_cast<LSIGrid<context_t>*>(lsi)->set_config(query_config);
   } else if (config.mode == "lbvh") {
@@ -231,7 +231,7 @@ void RunLSIQuery(const QueryConfig& config) {
     timer_next("Build Index");
     auto lsi_grid = dynamic_cast<LSIGrid<context_t>*>(lsi)->get_grid();
 
-    lsi_grid->AddMapsToGrid(ctx, !config.profiling.empty());
+    lsi_grid->AddMapsToGrid(ctx, config.profile);
   } else if (config.mode == "rt") {
     auto lsi_rt = dynamic_cast<LSIRT<context_t>*>(lsi);
     thrust::device_vector<OptixAabb> aabbs;
@@ -248,6 +248,7 @@ void RunLSIQuery(const QueryConfig& config) {
     stream.Sync();
 
     timer_next("Build Index");
+    query_config.profile = config.profile;
     query_config.fau = config.fau;
     query_config.rounding_iter = config.rounding_iter;
     query_config.handle =
@@ -265,10 +266,10 @@ void RunLSIQuery(const QueryConfig& config) {
     FillPrimitivesLBVH(stream, d_base_map, scaling, primitives);
     stream.Sync();
     bvh->assign(primitives);
-    bvh->construct(!config.profiling.empty());
+    bvh->construct(config.profile);
 
     query_config.lbvh = bvh;
-    query_config.profiling = !config.profiling.empty();
+    query_config.profile = config.profile;
     lsi_lbvh->set_config(query_config);
   }
 
@@ -355,7 +356,7 @@ void RunPIPQuery(const QueryConfig& config) {
     timer_next("Build Index");
     auto grid = dynamic_cast<PIPGrid<context_t>*>(pip)->get_grid();
 
-    grid->AddMapToGrid(ctx, 0, !config.profiling.empty());
+    grid->AddMapToGrid(ctx, 0, config.profile);
   } else if (config.mode == "rt") {
     auto pip_rt = dynamic_cast<PIPRT<context_t>*>(pip);
     auto rt_engine = pip_rt->get_rt_engine();
@@ -374,6 +375,7 @@ void RunPIPQuery(const QueryConfig& config) {
 
     QueryConfigRT pip_config;
 
+    pip_config.profile = config.profile;
     pip_config.fau = config.fau;
     pip_config.eid_range = eid_range;
     pip_config.handle = rt_engine->BuildAccelCustom(stream, d_aabbs);
@@ -390,10 +392,10 @@ void RunPIPQuery(const QueryConfig& config) {
     stream.Sync();  // Wait filling primitive finish
 
     bvh->assign(primitives);
-    bvh->construct(!config.profiling.empty());
+    bvh->construct(config.profile);
 
     query_config.lbvh = bvh;
-    query_config.profiling = !config.profiling.empty();
+    query_config.profile = config.profile;
     pip_lbvh->set_config(query_config);
   }
   stream.Sync();

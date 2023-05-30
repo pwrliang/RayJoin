@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
   config.check = FLAGS_check;
   config.lb = FLAGS_lb;
   config.fau = FLAGS_fau;
-  config.profiling = FLAGS_profile;
+  config.profile = FLAGS_profile;
   config.win = FLAGS_win;
   config.enlarge = FLAGS_enlarge;
 

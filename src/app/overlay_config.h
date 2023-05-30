@@ -16,7 +16,7 @@ struct OverlayConfig {
   std::string mode;
   bool fau;
   bool check;
-  std::string profiling;
+  bool profile;
   bool lb;
   int win;
   float enlarge;

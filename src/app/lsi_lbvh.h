@@ -89,8 +89,10 @@ class LSILBVH : public LSI<CONTEXT_T> {
     stream.Sync();
 
 #ifndef NDEBUG
-    LOG(INFO) << "Total tests: " << this->prof_counter_.get(stream);
-    LOG(INFO) << "Visited nodes: " << visited_nodes_.get(stream);
+    if (config_.profile) {
+      LOG(INFO) << "Total tests: " << this->prof_counter_.get(stream);
+      LOG(INFO) << "Visited nodes: " << visited_nodes_.get(stream);
+    }
 #endif
     stream.Sync();
   }

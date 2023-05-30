@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
   config.gen_n = FLAGS_gen_n;
   config.print_histo = FLAGS_histo;
   config.dynamic_query = FLAGS_dynamic;
-  config.profiling = FLAGS_profile;
+  config.profile = FLAGS_profile;
   config.fau = FLAGS_fau;
   config.rounding_iter = FLAGS_rounding_iter;
   config.win = FLAGS_win;

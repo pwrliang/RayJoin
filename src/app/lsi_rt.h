@@ -47,7 +47,11 @@ class LSIRT : public LSI<CONTEXT_T> {
     params.traversable = config_.handle;
     params.rounding_iter = config_.rounding_iter;
     params.xsects = xsects_queue.DeviceObject();
+    params.n_tests = n_tests_.data();
 
+#ifndef NDEBUG
+    n_tests_.set(0, stream);
+#endif
     xsects_queue.Clear(stream);
 
     rt_engine_->CopyLaunchParams(stream, params);
@@ -108,7 +112,9 @@ class LSIRT : public LSI<CONTEXT_T> {
 
     stream.Sync();
 #ifndef NDEBUG
-    LOG(INFO) << "Total Tests: " << n_xsects;
+    if (config_.profile) {
+      LOG(INFO) << "Total tests: " << n_tests_.get(stream);
+    }
 #endif
   }
 
@@ -121,6 +127,7 @@ class LSIRT : public LSI<CONTEXT_T> {
  private:
   std::shared_ptr<RTEngine> rt_engine_;
   QueryConfigRT config_;
+  SharedValue<uint32_t> n_tests_;
 };
 }  // namespace rayjoin
 

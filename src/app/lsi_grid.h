@@ -191,35 +191,39 @@ class LSIGrid : public LSI<CONTEXT_T> {
       });
     }
 #ifndef NDEBUG
-    SharedValue<uint64_t> total_ne1, total_ne2;
-    auto *d_total_ne1 = total_ne1.data(), *d_total_ne2 = total_ne2.data();
-    auto* d_pro_counter = this->prof_counter_.data();
+    if (config_.profile) {
+      SharedValue<uint64_t> total_ne1, total_ne2;
+      auto *d_total_ne1 = total_ne1.data(), *d_total_ne2 = total_ne2.data();
+      auto* d_pro_counter = this->prof_counter_.data();
 
-    total_ne1.set(0, stream);
-    total_ne2.set(0, stream);
-    this->prof_counter_.set(0, stream);
-    grid_->KernelSizingGrid(grid_dim, block_dim);
+      total_ne1.set(0, stream);
+      total_ne2.set(0, stream);
+      this->prof_counter_.set(0, stream);
+      grid_->KernelSizingGrid(grid_dim, block_dim);
 
-    LaunchKernel(stream, grid_dim, block_dim, [=] __device__() mutable {
-      auto cell_x = blockIdx.x * blockDim.x + threadIdx.x;
-      auto cell_y = blockIdx.y * blockDim.y + threadIdx.y;
+      LaunchKernel(stream, grid_dim, block_dim, [=] __device__() mutable {
+        auto cell_x = blockIdx.x * blockDim.x + threadIdx.x;
+        auto cell_y = blockIdx.y * blockDim.y + threadIdx.y;
 
-      if (cell_x < gsize && cell_y < gsize) {
-        const auto& cell = d_grid.get_cell(cell_x, cell_y);
-        auto ne1 = cell.ne[0], ne2 = cell.ne[1];
+        if (cell_x < gsize && cell_y < gsize) {
+          const auto& cell = d_grid.get_cell(cell_x, cell_y);
+          auto ne1 = cell.ne[0], ne2 = cell.ne[1];
 
-        atomicAdd(reinterpret_cast<unsigned long long int*>(d_total_ne1), ne1);
-        atomicAdd(reinterpret_cast<unsigned long long int*>(d_total_ne2), ne2);
-        atomicAdd(reinterpret_cast<unsigned long long int*>(d_pro_counter),
-                  ne1 * ne2);
-      }
-    });
-    LOG(INFO) << "Total ne1: " << total_ne1.get(stream);
-    LOG(INFO) << "Total ne2: " << total_ne2.get(stream);
-    LOG(INFO) << "Total tests: " << this->prof_counter_.get(stream);
-    LOG(INFO) << "Ave #E per cell: "
-              << (total_ne1.get(stream) + total_ne2.get(stream)) /
-                     (gsize * gsize);
+          atomicAdd(reinterpret_cast<unsigned long long int*>(d_total_ne1),
+                    ne1);
+          atomicAdd(reinterpret_cast<unsigned long long int*>(d_total_ne2),
+                    ne2);
+          atomicAdd(reinterpret_cast<unsigned long long int*>(d_pro_counter),
+                    ne1 * ne2);
+        }
+      });
+      LOG(INFO) << "Total ne1: " << total_ne1.get(stream);
+      LOG(INFO) << "Total ne2: " << total_ne2.get(stream);
+      LOG(INFO) << "Total tests: " << this->prof_counter_.get(stream);
+      LOG(INFO) << "Ave #E per cell: "
+                << (total_ne1.get(stream) + total_ne2.get(stream)) /
+                       (gsize * gsize);
+    }
 #endif
     stream.Sync();
   }

@@ -132,7 +132,7 @@ void RunOverlay(const OverlayConfig& config) {
     auto overlay_rt = std::make_shared<MapOverlayRT<context_t>>(ctx);
     QueryConfigRT query_config;
 
-    query_config.profiling = !config.profiling.empty();
+    query_config.profile = config.profile;
     query_config.fau = config.fau;
     query_config.xsect_factor = config.xsect_factor;
     query_config.win = config.win;
@@ -145,17 +145,17 @@ void RunOverlay(const OverlayConfig& config) {
     QueryConfigGrid query_config;
 
     query_config.grid_size = config.grid_size;
-    query_config.profiling = !config.profiling.empty();
+    query_config.profile = config.profile;
     query_config.xsect_factor = config.xsect_factor;
     query_config.lb = config.lb;
 
     overlay_grid->set_config(query_config);
     overlay = overlay_grid;
-  } else if(config.mode == "lbvh") {
+  } else if (config.mode == "lbvh") {
     auto overlay_lbvh = std::make_shared<MapOverlayLBVH<context_t>>(ctx);
     QueryConfigLBVH query_config;
 
-    query_config.profiling = !config.profiling.empty();
+    query_config.profile = config.profile;
     query_config.xsect_factor = config.xsect_factor;
 
     overlay_lbvh->set_config(query_config);

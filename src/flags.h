@@ -33,5 +33,5 @@ DECLARE_int32(seed);
 DECLARE_double(gen_t);
 DECLARE_int32(gen_n);
 DECLARE_bool(histo);
-DECLARE_string(profile);
+DECLARE_bool(profile);
 #endif  // RAYJOIN_FLAGS_H

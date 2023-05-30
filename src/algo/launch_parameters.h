@@ -40,6 +40,9 @@ struct LaunchParamsLSI {
 
   // Output
   dev::Queue<xsect_t, uint32_t> xsects;
+#ifndef NDEBUG
+  uint32_t *n_tests;
+#endif
 };
 
 struct LaunchParamsPIP {

@@ -20,7 +20,7 @@ struct QueryConfig {
   bool check;
   bool lb;
   bool print_histo;
-  std::string profiling;
+  bool profile;
   bool fau;
   int rounding_iter;
   int win;
