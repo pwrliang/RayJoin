@@ -100,7 +100,6 @@ class Map {
   using coord_t = COORD_T;
   using coefficient_t = COEFFICIENT_T;
   using point_t = typename cuda_vec<coord_t>::type_2d;
-  using bounding_box_t = BoundingBox<COORD_T>;
   using edge_t = dev::Edge<COEFFICIENT_T>;
   using dev_map_t = dev::Map<COORD_T, COEFFICIENT_T>;
 
@@ -271,8 +270,6 @@ class Map {
     return ipol;
   }
 
-  bounding_box_t bounding_box() const { return bounding_box_; }
-
   std::string ScaledEndpointsToString(size_t eid) const {
     return ScaledEndpointsToString(get_edge(eid));
   }
@@ -328,12 +325,11 @@ class Map {
   }
 
  private:
-  char id_;
+  int id_;
   thrust::device_vector<point_t> points_;
   thrust::device_vector<edge_t> edges_;
   pinned_vector<point_t> h_points_;  // For debugging
   pinned_vector<edge_t> h_edges_;
-  bounding_box_t bounding_box_;
 };
 
 }  // namespace rayjoin
