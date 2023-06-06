@@ -15,7 +15,7 @@ enum { SURFACE_RAY_TYPE = 0, RAY_TYPE_COUNT };
 
 extern "C" __constant__ rayjoin::LaunchParamsLSI params;
 
-extern "C" __global__ void __intersection__lsi() {
+extern "C" __global__ void __intersection__lsi_custom() {
   using xsect_t = typename rayjoin::LaunchParamsLSI::xsect_t;
   using edge_t = typename rayjoin::LaunchParamsLSI::edge_t;
   using point_t = typename rayjoin::LaunchParamsLSI::point_t;
@@ -47,7 +47,7 @@ extern "C" __global__ void __intersection__lsi() {
 #endif
 }
 
-extern "C" __global__ void __raygen__lsi() {
+extern "C" __global__ void __raygen__lsi_custom() {
   using coefficient_t = rayjoin::coefficient_t;
   const auto& scaling = params.scaling;
   const auto& edges = params.query_edges;

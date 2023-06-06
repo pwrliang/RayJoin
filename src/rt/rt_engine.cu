@@ -24,7 +24,7 @@ RTConfig get_default_rt_config(const std::string& exec_root) {
   Module mod_lsi_custom(ModuleIdentifier::MODULE_ID_LSI_CUSTOM);
 
   mod_lsi_custom.set_program_name(exec_root + "/ptx/rt_lsi_custom.ptx");
-  mod_lsi_custom.set_function_suffix("lsi");
+  mod_lsi_custom.set_function_suffix("lsi_custom");
   mod_lsi_custom.set_launch_params_name("params");
   mod_lsi_custom.EnableIsIntersection();
   mod_lsi_custom.set_n_payload(1);
