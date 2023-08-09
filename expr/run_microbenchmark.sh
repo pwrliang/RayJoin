@@ -70,6 +70,7 @@ function lsi_varying_seg_len() {
 
 function lsi_varying_query_size() {
   debug=$1
+  sample=$2
   query_sizes=(1000 10000 100000 1000000 10000000)
   win_sizes=(32 32 32 16 8 8)
   enlarge_lims=(8 8 8 4 2 2)
@@ -106,31 +107,61 @@ function lsi_varying_query_size() {
         else
           lb=false
         fi
-        log_file="${out_prefix}.log"
 
-        cmd="$exec -poly1 ${DATASET_ROOT}/${map} \
-                   -serialize=${SERIALIZE_PREFIX} \
-                   -grid_size=$DEFAULT_GRID_SIZE \
-                   -mode=$mode \
-                   -lb=$lb \
-                   -v=1 \
-                   -query=lsi \
-                   -seed=1 \
-                   -xsect_factor $xsect_factor \
-                   -gen_n=$ne \
-                   -gen_t=$DEFAULT_SEG_LEN \
-                   -warmup=$n_warmup \
-                   -repeat=$n_repeat \
-                   -win=$win \
-                   -enlarge=$enlarge"
+        if [[ -z $sample ]]; then
+          log_file="${out_prefix}.log"
+          cmd="$exec -poly1 ${DATASET_ROOT}/${map} \
+                     -serialize=${SERIALIZE_PREFIX} \
+                     -grid_size=$DEFAULT_GRID_SIZE \
+                     -mode=$mode \
+                     -lb=$lb \
+                     -v=1 \
+                     -query=lsi \
+                     -seed=1 \
+                     -xsect_factor $xsect_factor \
+                     -gen_n=$ne \
+                     -gen_t=$DEFAULT_SEG_LEN \
+                     -warmup=$n_warmup \
+                     -repeat=$n_repeat \
+                     -win=$win \
+                     -enlarge=$enlarge"
+          if [[ ! -f "${log_file}" ]]; then
+            echo "$cmd" >"${log_file}.tmp"
+            eval "$cmd" 2>&1 | tee -a "${log_file}.tmp"
 
-        if [[ ! -f "${log_file}" ]]; then
-          echo "$cmd" >"${log_file}.tmp"
-          eval "$cmd" 2>&1 | tee -a "${log_file}.tmp"
-
-          if grep -q "Timing results" "${log_file}.tmp"; then
-            mv "${log_file}.tmp" "${log_file}"
+            if grep -q "Timing results" "${log_file}.tmp"; then
+              mv "${log_file}.tmp" "${log_file}"
+            fi
           fi
+        else
+          for rate in "${SAMPLE_RATES[@]}"; do
+            log_file="${out_prefix}_sample_${sample}_${rate}.log"
+            cmd="$exec -poly1 ${DATASET_ROOT}/${map} \
+                       -serialize=${SERIALIZE_PREFIX} \
+                       -grid_size=$DEFAULT_GRID_SIZE \
+                       -sample=$sample \
+                       -sample_rate=$rate \
+                       -mode=$mode \
+                       -lb=$lb \
+                       -v=1 \
+                       -query=lsi \
+                       -seed=1 \
+                       -xsect_factor $xsect_factor \
+                       -gen_n=$ne \
+                       -gen_t=$DEFAULT_SEG_LEN \
+                       -warmup=$n_warmup \
+                       -repeat=$n_repeat \
+                       -win=$win \
+                       -enlarge=$enlarge"
+            if [[ ! -f "${log_file}" ]]; then
+              echo "$cmd" >"${log_file}.tmp"
+              eval "$cmd" 2>&1 | tee -a "${log_file}.tmp"
+
+              if grep -q "Timing results" "${log_file}.tmp"; then
+                mv "${log_file}.tmp" "${log_file}"
+              fi
+            fi
+          done
         fi
       done
     done
@@ -139,6 +170,7 @@ function lsi_varying_query_size() {
 
 function pip_varying_query_size() {
   debug=$1
+  sample=$2
   query_sizes=(1000 10000 100000 1000000 10000000)
   win_sizes=(32 32 32 16 8 8)
   enlarge_lims=(8 8 8 4 2 2)
@@ -168,28 +200,57 @@ function pip_varying_query_size() {
 
       for mode in rt grid lbvh; do
         out_prefix="${out_dir}/${map}_${mode}_${ne}"
-        log_file="${out_prefix}.log"
+        if [[ -z $sample ]]; then
+          log_file="${out_prefix}.log"
 
-        cmd="$exec -poly1 ${DATASET_ROOT}/${map} \
-                   -serialize=${SERIALIZE_PREFIX} \
-                   -grid_size=$DEFAULT_GRID_SIZE \
-                   -mode=$mode \
-                   -v=1 \
-                   -query=pip \
-                   -seed=1 \
-                   -gen_n=$ne \
-                   -warmup=$n_warmup \
-                   -repeat=$n_repeat \
-                   -win=$win \
-                   -enlarge=$enlarge"
+          cmd="$exec -poly1 ${DATASET_ROOT}/${map} \
+                     -serialize=${SERIALIZE_PREFIX} \
+                     -grid_size=$DEFAULT_GRID_SIZE \
+                     -mode=$mode \
+                     -v=1 \
+                     -query=pip \
+                     -seed=1 \
+                     -gen_n=$ne \
+                     -warmup=$n_warmup \
+                     -repeat=$n_repeat \
+                     -win=$win \
+                     -enlarge=$enlarge"
 
-        if [[ ! -f "${log_file}" ]]; then
-          echo "$cmd" >"${log_file}.tmp"
-          eval "$cmd" 2>&1 | tee -a "${log_file}.tmp"
+          if [[ ! -f "${log_file}" ]]; then
+            echo "$cmd" >"${log_file}.tmp"
+            eval "$cmd" 2>&1 | tee -a "${log_file}.tmp"
 
-          if grep -q "Timing results" "${log_file}.tmp"; then
-            mv "${log_file}.tmp" "${log_file}"
+            if grep -q "Timing results" "${log_file}.tmp"; then
+              mv "${log_file}.tmp" "${log_file}"
+            fi
           fi
+        else
+          for rate in "${SAMPLE_RATES[@]}"; do
+            log_file="${out_prefix}_sample_${sample}_${rate}.log"
+            cmd="$exec -poly1 ${DATASET_ROOT}/${map} \
+                       -serialize=${SERIALIZE_PREFIX} \
+                       -grid_size=$DEFAULT_GRID_SIZE \
+                       -sample=$sample \
+                       -sample_rate=$rate \
+                       -mode=$mode \
+                       -v=1 \
+                       -query=pip \
+                       -seed=1 \
+                       -gen_n=$ne \
+                       -warmup=$n_warmup \
+                       -repeat=$n_repeat \
+                       -win=$win \
+                       -enlarge=$enlarge"
+
+            if [[ ! -f "${log_file}" ]]; then
+              echo "$cmd" >"${log_file}.tmp"
+              eval "$cmd" 2>&1 | tee -a "${log_file}.tmp"
+
+              if grep -q "Timing results" "${log_file}.tmp"; then
+                mv "${log_file}.tmp" "${log_file}"
+              fi
+            fi
+          done
         fi
       done
     done
@@ -347,6 +408,7 @@ function profile_number_of_tests() {
 }
 
 DEBUG=0
+SAMPLE=""
 for i in "$@"; do
   case $i in
   -b | --build)
@@ -362,16 +424,20 @@ for i in "$@"; do
     DEBUG=1
     shift
     ;;
+  -s=* | --sample=*)
+    SAMPLE="${i#*=}"
+    shift
+    ;;
   --lsi-seg-len)
     lsi_varying_seg_len $DEBUG
     shift
     ;;
   --lsi-query-size)
-    lsi_varying_query_size $DEBUG
+    lsi_varying_query_size $DEBUG $SAMPLE
     shift
     ;;
   --pip-query-size)
-    pip_varying_query_size $DEBUG
+    pip_varying_query_size $DEBUG $SAMPLE
     shift
     ;;
   --lsi-vary-win-size)

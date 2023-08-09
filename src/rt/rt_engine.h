@@ -156,7 +156,7 @@ class RTEngine {
     h_launch_params_.assign(begin, begin + sizeof(params));
     launch_params_.resize(h_launch_params_.size());
 
-    LOG(INFO) << "Parm size: " << launch_params_.size();
+    VLOG(1) << "Parm size: " << launch_params_.size();
     thrust::copy(thrust::cuda::par.on(stream.cuda_stream()),
                  h_launch_params_.begin(), h_launch_params_.end(),
                  launch_params_.begin());
