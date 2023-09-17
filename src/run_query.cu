@@ -169,35 +169,53 @@ void RunLSIQuery(const QueryConfig& config) {
 
   timer_start();
   timer_next("Read map");
-  auto base_map = load_from<coord_t>(config.map_path, config.serialize_prefix);
+  auto base_pgraph =
+      load_from<coord_t>(config.map_path, config.serialize_prefix);
   int base_map_id = 0, query_map_id = 1;
 
-  if (config.sample == "edges") {
-    LOG(INFO) << "Sampling edges from map, sample rate: " << config.sample_rate
-              << ", seed: " << config.random_seed;
-    base_map =
-        sample_edges_from(base_map, config.sample_rate, config.random_seed);
-  } else if (config.sample == "map") {
-    LOG(INFO) << "Sampling map, sample rate: " << config.sample_rate
-              << ", seed: " << config.random_seed;
-    base_map =
-        sample_map_from(base_map, config.sample_rate, config.random_seed);
+  auto sample = [&](std::shared_ptr<PlanarGraph<coord_t>> pgraph) {
+    if (config.sample == "edges") {
+      LOG(INFO) << "Sampling edges from map, sample rate: "
+                << config.sample_rate << ", seed: " << config.random_seed;
+      pgraph =
+          sample_edges_from(pgraph, config.sample_rate, config.random_seed);
+    } else if (config.sample == "map") {
+      LOG(INFO) << "Sampling map, sample rate: " << config.sample_rate
+                << ", seed: " << config.random_seed;
+      pgraph = sample_map_from(pgraph, config.sample_rate, config.random_seed);
+    }
+    return pgraph;
+  };
+
+  if (config.sample_map_id == 0) {
+    base_pgraph = sample(base_pgraph);
   }
 
   timer_next("Create Context");
-  context_t ctx(base_map);
-  Stream& stream = ctx.get_stream();
+  context_t* ctx;
   LSI<context_t>* lsi;
 
   timer_next("Generate Workloads");
-  auto query_map = GenerateLSIQueries(config, ctx);
-  ctx.set_map(query_map_id, query_map);
+
+  if (config.query_path.empty()) {
+    ctx = new context_t(base_pgraph);
+    auto query_map = GenerateLSIQueries(config, *ctx);
+    ctx->set_map(query_map_id, query_map);
+  } else {
+    auto query_pgraph =
+        load_from<coord_t>(config.query_path, config.serialize_prefix);
+    if (config.sample_map_id == 1) {
+      query_pgraph = sample(query_pgraph);
+    }
+    ctx = new context_t({base_pgraph, query_pgraph});
+  }
+  Stream& stream = ctx->get_stream();
 
   timer_next("Create App");
   if (config.mode == "grid") {
     auto grid = std::make_shared<UniformGrid>(config.grid_size);
 
-    auto* lsi_pip = new LSIGrid<context_t>(ctx, grid);
+    auto* lsi_pip = new LSIGrid<context_t>(*ctx, grid);
     QueryConfigGrid query_config;
 
     query_config.lb = config.lb;
@@ -207,21 +225,21 @@ void RunLSIQuery(const QueryConfig& config) {
     lsi_pip->set_config(query_config);
     lsi = lsi_pip;
   } else if (config.mode == "lbvh") {
-    lsi = new LSILBVH<context_t>(ctx);
+    lsi = new LSILBVH<context_t>(*ctx);
   } else if (config.mode == "rt") {
     auto rt_engine = std::make_shared<RTEngine>();
     RTConfig rt_config = get_default_rt_config(config.exec_root);
 
     rt_engine->Init(rt_config);
-    lsi = new LSIRT<context_t>(ctx, rt_engine);
+    lsi = new LSIRT<context_t>(*ctx, rt_engine);
   } else {
     LOG(FATAL) << "Invalid index type: " << config.mode;
   }
 
   timer_next("Init");
-  auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
-  auto d_query_map = ctx.get_map(query_map_id)->DeviceObject();
-  const auto& scaling = ctx.get_scaling();
+  auto d_base_map = ctx->get_map(base_map_id)->DeviceObject();
+  auto d_query_map = ctx->get_map(query_map_id)->DeviceObject();
+  const auto& scaling = ctx->get_scaling();
   size_t queue_cap =
       (d_base_map.get_edges_num() + d_query_map.get_edges_num()) *
       config.xsect_factor;
@@ -232,7 +250,7 @@ void RunLSIQuery(const QueryConfig& config) {
     timer_next("Build Index");
     auto lsi_grid = dynamic_cast<LSIGrid<context_t>*>(lsi)->get_grid();
 
-    lsi_grid->AddMapsToGrid(ctx, config.profile);
+    lsi_grid->AddMapsToGrid(*ctx, config.profile);
   } else if (config.mode == "rt") {
     auto lsi_rt = dynamic_cast<LSIRT<context_t>*>(lsi);
     thrust::device_vector<OptixAabb> aabbs;
@@ -295,6 +313,7 @@ void RunLSIQuery(const QueryConfig& config) {
   timer_next("Cleanup");
 
   delete lsi;
+  delete ctx;
   timer_end();
 }
 
@@ -305,35 +324,56 @@ void RunPIPQuery(const QueryConfig& config) {
 
   timer_start();
   timer_next("Read map");
-  auto base_map = load_from<coord_t>(config.map_path, config.serialize_prefix);
+  auto base_pgraph =
+      load_from<coord_t>(config.map_path, config.serialize_prefix);
   int base_map_id = 0, query_map_id = 1;
 
-  if (config.sample == "edges") {
-    LOG(INFO) << "Sampling edges from map, sample rate: " << config.sample_rate
-              << ", seed: " << config.random_seed;
-    base_map =
-        sample_edges_from(base_map, config.sample_rate, config.random_seed);
-  } else if (config.sample == "map") {
-    LOG(INFO) << "Sampling map, sample rate: " << config.sample_rate
-              << ", seed: " << config.random_seed;
-    base_map =
-        sample_map_from(base_map, config.sample_rate, config.random_seed);
+  auto sample = [&](std::shared_ptr<PlanarGraph<coord_t>> pgraph) {
+    if (config.sample == "edges") {
+      LOG(INFO) << "Sampling edges from map, sample rate: "
+                << config.sample_rate << ", seed: " << config.random_seed;
+      pgraph =
+          sample_edges_from(pgraph, config.sample_rate, config.random_seed);
+    } else if (config.sample == "map") {
+      LOG(INFO) << "Sampling map, sample rate: " << config.sample_rate
+                << ", seed: " << config.random_seed;
+      pgraph = sample_map_from(pgraph, config.sample_rate, config.random_seed);
+    }
+    return pgraph;
+  };
+
+  if (config.sample_map_id == 0) {
+    base_pgraph = sample(base_pgraph);
   }
 
   timer_next("Create Context");
-  context_t ctx(base_map);
+  context_t* ctx;
   PIP<context_t>* pip;
-  Stream& stream = ctx.get_stream();
+  thrust::device_vector<point_t> query_points;
 
   timer_next("Generate Workloads");
-  thrust::device_vector<point_t> query_points =
-      rayjoin::GeneratePIPQueries(config, ctx);
+
+  if (config.query_path.empty()) {
+    ctx = new context_t(base_pgraph);
+    query_points = rayjoin::GeneratePIPQueries(config, *ctx);
+  } else {
+    auto query_pgraph =
+        load_from<coord_t>(config.query_path, config.serialize_prefix);
+    if (config.sample_map_id == 1) {
+      query_pgraph = sample(query_pgraph);
+    }
+    ctx = new context_t({base_pgraph, query_pgraph});
+    query_points = ctx->get_map(query_map_id)->get_points();
+  }
+
+  Stream& stream = ctx->get_stream();
+
   ArrayView<typename context_t::map_t::point_t> d_query_points(query_points);
 
   timer_next("Create App");
   if (config.mode == "grid") {
     auto grid = std::make_shared<UniformGrid>(config.grid_size);
-    auto* pip_grid = new PIPGrid<context_t>(ctx, grid);
+    auto* pip_grid = new PIPGrid<context_t>(*ctx, grid);
     QueryConfigGrid config;
 
     config.grid_size = config.grid_size;
@@ -346,23 +386,23 @@ void RunPIPQuery(const QueryConfig& config) {
     RTConfig rt_config = get_default_rt_config(config.exec_root);
 
     rt_engine->Init(rt_config);
-    pip = new PIPRT<context_t>(ctx, rt_engine);
+    pip = new PIPRT<context_t>(*ctx, rt_engine);
   } else if (config.mode == "lbvh") {
-    pip = new PIPLBVH<context_t>(ctx);
+    pip = new PIPLBVH<context_t>(*ctx);
   } else {
     LOG(FATAL) << "Invalid index type: " << config.mode;
   }
 
   timer_next("Init");
-  auto d_base_map = ctx.get_map(base_map_id)->DeviceObject();
-  const auto& scaling = ctx.get_scaling();
+  auto d_base_map = ctx->get_map(base_map_id)->DeviceObject();
+  const auto& scaling = ctx->get_scaling();
   pip->Init(query_points.size());
 
   if (config.mode == "grid") {
     timer_next("Build Index");
     auto grid = dynamic_cast<PIPGrid<context_t>*>(pip)->get_grid();
 
-    grid->AddMapToGrid(ctx, 0, config.profile);
+    grid->AddMapToGrid(*ctx, 0, config.profile);
   } else if (config.mode == "rt") {
     auto pip_rt = dynamic_cast<PIPRT<context_t>*>(pip);
     auto rt_engine = pip_rt->get_rt_engine();
@@ -421,7 +461,7 @@ void RunPIPQuery(const QueryConfig& config) {
       stream.Sync();
       if (config.check && config.mode != "grid") {
         timer_next("Check");
-        CheckPIPResult(ctx, config, query_points, pip->get_closest_eids());
+        CheckPIPResult(*ctx, config, query_points, pip->get_closest_eids());
       }
     }
   }

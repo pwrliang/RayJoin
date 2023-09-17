@@ -23,6 +23,7 @@ int main(int argc, char* argv[]) {
   std::string exec_path = argv[0];
 
   config.map_path = FLAGS_poly1;
+  config.query_path = FLAGS_poly2;
   config.output_path = FLAGS_output;
   config.serialize_prefix = FLAGS_serialize;
   config.warmup = FLAGS_warmup;
@@ -33,6 +34,7 @@ int main(int argc, char* argv[]) {
   config.exec_root = exec_path.substr(0, exec_path.find_last_of('/'));
   config.check = FLAGS_check;
   config.lb = FLAGS_lb;
+  config.sample_map_id = FLAGS_sample_map_id;
   config.sample = FLAGS_sample;
   config.sample_rate = FLAGS_sample_rate;
   config.random_seed = FLAGS_seed;

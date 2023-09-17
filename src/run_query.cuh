@@ -4,11 +4,13 @@ namespace rayjoin {
 struct QueryConfig {
   std::string exec_root;
   std::string map_path;
+  std::string query_path;
   std::string output_path;
   std::string serialize_prefix;
   int warmup;
   int repeat;
   unsigned int grid_size;
+  int sample_map_id;
   std::string sample;
   float sample_rate;
   float xsect_factor;

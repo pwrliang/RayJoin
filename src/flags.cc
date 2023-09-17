@@ -16,6 +16,7 @@ DEFINE_string(serialize, "", "");
 DEFINE_int32(win, 32, "Window size for AABB compression");
 DEFINE_double(enlarge, 2, "Threshold for AABB merge");
 // Queries
+DEFINE_int32(sample_map_id, -1, "0->poly1 / 1->poly2");
 DEFINE_string(sample, "",
               "Whether to sample edges or map. Sampling map keeps every chain, "
               "so it holds the topology of original map. As a result, it looks "

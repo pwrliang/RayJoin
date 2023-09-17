@@ -24,6 +24,7 @@ DECLARE_string(serialize);
 DECLARE_int32(win);
 DECLARE_double(enlarge);
 // Queries
+DECLARE_int32(sample_map_id);
 DECLARE_string(query);
 DECLARE_string(sample);
 DECLARE_double(sample_rate);

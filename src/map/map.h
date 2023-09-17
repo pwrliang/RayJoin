@@ -324,6 +324,8 @@ class Map {
     return p1.x == p.x && p1.y == p.y || p2.x == p.x && p2.y == p.y;
   }
 
+  const thrust::device_vector<point_t> get_points() const { return points_; }
+
  private:
   int id_;
   thrust::device_vector<point_t> points_;
