@@ -183,6 +183,8 @@ void RunLSIQuery(const QueryConfig& config) {
       LOG(INFO) << "Sampling map, sample rate: " << config.sample_rate
                 << ", seed: " << config.random_seed;
       pgraph = sample_map_from(pgraph, config.sample_rate, config.random_seed);
+    } else {
+      LOG(FATAL) << "Invalid sample method: " << config.sample;
     }
     return pgraph;
   };
@@ -338,6 +340,8 @@ void RunPIPQuery(const QueryConfig& config) {
       LOG(INFO) << "Sampling map, sample rate: " << config.sample_rate
                 << ", seed: " << config.random_seed;
       pgraph = sample_map_from(pgraph, config.sample_rate, config.random_seed);
+    } else {
+      LOG(FATAL) << "Invalid sample method: " << config.sample;
     }
     return pgraph;
   };
