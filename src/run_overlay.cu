@@ -23,6 +23,7 @@ void CheckResult(CONTEXT_T& ctx, std::shared_ptr<OVERLAY_IMPL_T> overlay,
 
   QueryConfigGrid query_config;
 
+  query_config.xsect_factor = config.xsect_factor;
   cuda_grid.set_config(query_config);
   cuda_grid.Init();
   cuda_grid.BuildIndex();
@@ -135,6 +136,8 @@ void RunOverlay(const OverlayConfig& config) {
     query_config.profile = config.profile;
     query_config.fau = config.fau;
     query_config.xsect_factor = config.xsect_factor;
+    query_config.new_compress = config.new_comp;
+    query_config.compress_iter = config.compress_iter;
     query_config.win = config.win;
     query_config.enlarge = config.enlarge;
 

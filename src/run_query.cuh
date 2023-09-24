@@ -23,6 +23,8 @@ struct QueryConfig {
   bool print_histo;
   bool profile;
   bool fau;
+  bool new_compress;
+  int compress_iter;
   int win;
   float enlarge;
 };

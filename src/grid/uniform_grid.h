@@ -175,6 +175,7 @@ class UniformGrid {
                             atomicAdd(&cell.ne[im], 1);
                           });
       });
+      ne_[im] = d_map.get_edges_num();
     }
     if (profiling) {
       stream.Sync();
@@ -398,6 +399,13 @@ class UniformGrid {
     }
     size_t total_n_cells = gsize_ * gsize_;
     size_t empty_n_cells = 0;
+    size_t total_workloads = 0;
+    std::vector<size_t> workloads(n_group);
+
+    for (int gid = 0; gid < n_group; gid++) {
+      workloads[gid] = n_edges_in_group[0][gid] * n_edges_in_group[1][gid];
+      total_workloads += workloads[gid];
+    }
 
     for (int gid = 0; gid < n_group; gid++) {
       auto n_cells1 = n_cells_in_group[0][gid];
@@ -409,20 +417,80 @@ class UniformGrid {
       if (n_cells == 0) {
         empty_n_cells++;
       }
-      //      printf(
-      //          "group: %d, [%lu, %lu), n_cells1: %lu, ratio: %.2f, n_cells2:
-      //          %lu, " "ratio: %.2f, n_cells: %lu, ratio: %.2f\n", gid, begin,
-      //          end, n_cells1, (float) n_cells1 / total_n_cells, n_cells2,
-      //          (float) n_cells2 / total_n_cells, n_cells,
-      //          (float) n_cells / total_n_cells);
+      /*
       printf(
-          "group: %d, [%lu, %lu), n_cells: %lu, ratio: %2.2f%% contri: "
-          "%2.2f%%\n",
-          gid, begin, end, n_cells, (float) n_cells / total_n_cells * 100,
-          (float) n_edges_in_group[2][gid] / total_edges[2] * 100);
+          "group: %d, [%lu, %lu), n_cells1: %lu, ratio: %.2f, n_cells2: %lu, "
+          "ratio: %.2f, n_cells: %lu, ratio: %.2f\n",
+          gid, begin, end, n_cells1, (float) n_cells1 / total_n_cells, n_cells2,
+          (float) n_cells2 / total_n_cells, n_cells,
+          (float) n_cells / total_n_cells);
+      */
+      FOR2 {
+        printf(
+            "im: %d group: %d, [%lu, %lu), n_cells: %lu, ratio: %2.2f%% "
+            "contri: "
+            "%2.2f%%\n",
+            im, gid, begin, end, n_cells, (float) n_cells / total_n_cells * 100,
+            (float) n_edges_in_group[im][gid] / total_edges[im] * 100);
+      }
+
+      printf("Workload %zu, total %zu, percentage: %.2f\n", workloads[gid],
+             total_workloads, (float) workloads[gid] / total_workloads);
     }
     printf("Total cells: %lu, Empty cells: %lu\n", total_n_cells,
            empty_n_cells);
+  }
+
+  void PrintHistogram1() const {
+    pinned_vector<cell_t> cells(cells_);
+    size_t max_workloads = 0;
+
+    for (auto& cell : cells) {
+      max_workloads = std::max(max_workloads, (size_t) cell.ne[0] * cell.ne[1]);
+    }
+
+    int n_group = 10;
+    size_t group_size = (max_workloads + n_group - 1) / n_group;
+    std::vector<size_t> n_cells_in_group, n_works_in_group;
+
+    auto to_group_id = [&](size_t val) {
+      for (int ig = 0; ig < n_group; ig++) {
+        auto begin = group_size * ig;
+        auto end = group_size * (ig + 1);
+
+        if (val >= begin && val < end) {
+          return ig;
+        }
+      }
+      return n_group;
+    };
+
+    n_cells_in_group.resize(n_group, 0);
+    n_works_in_group.resize(n_group, 0);
+    size_t total_works = 0;
+
+    for (auto& cell : cells) {
+      auto work = cell.ne[0] * cell.ne[1];
+      auto gid = to_group_id(work);
+
+      n_cells_in_group[gid]++;
+      n_works_in_group[gid] += work;
+      total_works += work;
+    }
+
+    size_t total_n_cells = gsize_ * gsize_;
+
+    for (int gid = 0; gid < n_group; gid++) {
+      auto begin = group_size * gid;
+      auto end = group_size * (gid + 1);
+      auto n_cells = n_cells_in_group[gid];
+      printf(
+          "group: %d, [%lu, %lu), n_cells: %lu, ratio: %2.2f%% "
+          "contri: "
+          "%2.2f%%\n",
+          gid, begin, end, n_cells, (float) n_cells / total_n_cells * 100,
+          (float) n_works_in_group[gid] / total_works * 100);
+    }
   }
 
   void DumpCells(const std::string& out_prefix) const {
@@ -467,6 +535,7 @@ class UniformGrid {
 
  protected:
   uint32_t gsize_;
+  int ne_[2];
   // Input
   thrust::device_vector<cell_t> cells_;
   /* number of edges per cell */

@@ -226,6 +226,7 @@ class LSIGrid : public LSI<CONTEXT_T> {
     }
 #endif
     stream.Sync();
+//    grid_->PrintHistogram1();
   }
 
   void set_config(const QueryConfigGrid& config) { config_ = config; }

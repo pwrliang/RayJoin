@@ -46,6 +46,9 @@ class LSIRT : public LSI<CONTEXT_T> {
     params.query_points = d_query_map.get_points().data();
     params.traversable = config_.handle;
     params.xsects = xsects_queue.DeviceObject();
+
+    LOG(INFO) << "queries: " << d_query_map.get_edges().size();
+
 #ifndef NDEBUG
     params.n_tests = n_tests_.data();
     n_tests_.set(0, stream);

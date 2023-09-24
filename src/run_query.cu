@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <memory>
 #include <random>
 
@@ -209,6 +210,8 @@ void RunLSIQuery(const QueryConfig& config) {
     if (config.sample_map_id == 1) {
       query_pgraph = sample(query_pgraph);
     }
+    LOG(INFO) << "After sampling , edges: "
+              << query_pgraph->points.size() - query_pgraph->chains.size();
     ctx = new context_t({base_pgraph, query_pgraph});
   }
   Stream& stream = ctx->get_stream();
@@ -260,12 +263,18 @@ void RunLSIQuery(const QueryConfig& config) {
         std::make_shared<thrust::device_vector<thrust::pair<size_t, size_t>>>();
     QueryConfigRT query_config;
     auto rt_engine = lsi_rt->get_rt_engine();
+    auto comp_iter = config.compress_iter;
     auto win_size = config.win;
     auto area_enlarge = config.enlarge;
 
     timer_next("Adaptive Grouping");
-    FillPrimitivesGroup(stream, d_base_map, scaling, win_size, area_enlarge,
-                        aabbs, *eid_range);
+    if (config.new_compress) {
+      FillPrimitivesGroupNew(stream, d_base_map, scaling, comp_iter,
+                             area_enlarge, aabbs, *eid_range);
+    } else {
+      FillPrimitivesGroup(stream, d_base_map, scaling, win_size, area_enlarge,
+                          aabbs, *eid_range);
+    }
     stream.Sync();
 
     timer_next("Build Index");
@@ -307,8 +316,7 @@ void RunLSIQuery(const QueryConfig& config) {
   }
   d_xsects = lsi->get_xsects();
 
-  LOG(INFO) << "Query: " << config.gen_n
-            << " Intersections: " << d_xsects.size()
+  LOG(INFO) << "Intersections: " << d_xsects.size()
             << " Selective: " << (double) d_xsects.size() / config.gen_n
             << " Queue Load Factor: " << (double) d_xsects.size() / queue_cap;
 
@@ -363,11 +371,41 @@ void RunPIPQuery(const QueryConfig& config) {
   } else {
     auto query_pgraph =
         load_from<coord_t>(config.query_path, config.serialize_prefix);
-    if (config.sample_map_id == 1) {
-      query_pgraph = sample(query_pgraph);
-    }
     ctx = new context_t({base_pgraph, query_pgraph});
-    query_points = ctx->get_map(query_map_id)->get_points();
+    auto points = query_pgraph->points;
+    pinned_vector<point_t> scaled_points;
+    auto scaling = ctx->get_scaling();
+
+    if (config.sample_map_id == 1) {
+      if (config.sample == "points") {
+        auto gen = std::mt19937{std::random_device{}()};
+        size_t k = points.size() * config.sample_rate;
+
+        std::shuffle(points.begin(), points.end(), gen);
+
+        scaled_points.resize(k);
+
+        for (int i = 0; i < k; i++) {
+          scaled_points[i].x = scaling.ScaleX(points[i].x);
+          scaled_points[i].y = scaling.ScaleY(points[i].y);
+        }
+
+        query_points = scaled_points;
+        LOG(INFO) << "Sampling points, sample rate: " << config.sample_rate
+                  << ", seed: " << config.random_seed << " Points: " << k;
+      } else {
+        query_pgraph = sample(query_pgraph);
+        query_points = ctx->get_map(query_map_id)->get_points();
+      }
+    } else {
+      scaled_points.resize(points.size());
+
+      for (int i = 0; i < points.size(); i++) {
+        scaled_points[i].x = scaling.ScaleX(points[i].x);
+        scaled_points[i].y = scaling.ScaleY(points[i].y);
+      }
+      query_points = scaled_points;
+    }
   }
 
   Stream& stream = ctx->get_stream();
@@ -416,8 +454,13 @@ void RunPIPQuery(const QueryConfig& config) {
     auto ne = d_base_map.get_edges_num();
 
     timer_next("Adaptive Grouping");
-    FillPrimitivesGroup(stream, d_base_map, scaling, config.win, config.enlarge,
-                        aabbs, *eid_range);
+    if (config.new_compress) {
+      FillPrimitivesGroupNew(stream, d_base_map, scaling, config.compress_iter,
+                             config.enlarge, aabbs, *eid_range);
+    } else {
+      FillPrimitivesGroup(stream, d_base_map, scaling, config.win,
+                          config.enlarge, aabbs, *eid_range);
+    }
     stream.Sync();
 
     timer_next("Build Index");

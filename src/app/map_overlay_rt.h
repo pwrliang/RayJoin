@@ -67,13 +67,18 @@ class MapOverlayRT : public MapOverlay<CONTEXT_T> {
     auto& stream = ctx.get_stream();
     const auto& scaling = ctx.get_scaling();
     auto win_size = config_.win;
+    auto compress_iter = config_.compress_iter;
     auto area_enlarge = config_.enlarge;
 
     FOR2 {
       auto d_map = ctx.get_map(im)->DeviceObject();
-
-      FillPrimitivesGroup(stream, d_map, scaling, win_size, area_enlarge,
-                          aabbs_, *eid_range_[im]);
+      if (config_.new_compress) {
+        FillPrimitivesGroupNew(stream, d_map, scaling, compress_iter,
+                               area_enlarge, aabbs_, *eid_range_[im]);
+      } else {
+        FillPrimitivesGroup(stream, d_map, scaling, win_size, area_enlarge,
+                            aabbs_, *eid_range_[im]);
+      }
       traverse_handles_[im] =
           rt_engine_->BuildAccelCustom(stream, ArrayView<OptixAabb>(aabbs_));
 

@@ -39,7 +39,8 @@ class ArrayView {
   DEV_INLINE const T& operator[](size_t i) const {
 #ifndef NDEBUG
     if (i >= size_) {
-      printf("thread: %u i: %llu size: %llu\n", TID_1D, i, size_);
+      printf("Index out of bound, thread: %u i: %llu size: %llu\n", TID_1D, i,
+             size_);
     }
 #endif
     assert(i < size_);

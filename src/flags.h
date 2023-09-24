@@ -22,6 +22,8 @@ DECLARE_int32(repeat);
 DECLARE_string(serialize);
 
 DECLARE_int32(win);
+DECLARE_bool(new_compress);
+DECLARE_int32(compress_iter);
 DECLARE_double(enlarge);
 // Queries
 DECLARE_int32(sample_map_id);
