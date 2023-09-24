@@ -13,10 +13,10 @@ DEFINE_bool(fau, false, "Free after use");
 DEFINE_int32(warmup, 5, "");
 DEFINE_int32(repeat, 5, "");
 DEFINE_string(serialize, "", "");
-DEFINE_bool(new_compress, false, "Use new compression method");
+DEFINE_bool(new_compress, true, "Use new compression method");
 DEFINE_int32(compress_iter, 5, "Max iteration of compression");
 DEFINE_int32(win, 32, "Window size for AABB compression");
-DEFINE_double(enlarge, 2, "Threshold for AABB merge");
+DEFINE_double(enlarge, 5, "Threshold for AABB merge");
 // Queries
 DEFINE_int32(sample_map_id, -1, "0->poly1 / 1->poly2");
 DEFINE_string(sample, "",
