@@ -249,8 +249,8 @@ void FillPrimitivesGroupNew(
   eid_range.resize(n_aabbs);
   sw.stop();
 
-  LOG(INFO) << "Enlarge limit: " << area_enlarge << " ne: " << ne
-            << " aabbs: " << n_aabbs
+  LOG(INFO) << "Enlarge limit: " << area_enlarge << " max iter:" << max_iter
+            << " ne: " << ne << " aabbs: " << n_aabbs
             << " Compress ratio: " << (float) (ne - n_aabbs) / ne
             << " Time: " << sw.ms() << " ms";
 }

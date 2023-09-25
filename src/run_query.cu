@@ -266,6 +266,10 @@ void RunLSIQuery(const QueryConfig& config) {
     auto comp_iter = config.compress_iter;
     auto win_size = config.win;
     auto area_enlarge = config.enlarge;
+    auto ne = d_base_map.get_edges_num();
+
+    aabbs.reserve(ne);
+    eid_range->reserve(ne);
 
     timer_next("Adaptive Grouping");
     if (config.new_compress) {
@@ -452,6 +456,9 @@ void RunPIPQuery(const QueryConfig& config) {
     auto eid_range =
         std::make_shared<thrust::device_vector<thrust::pair<size_t, size_t>>>();
     auto ne = d_base_map.get_edges_num();
+
+    aabbs.reserve(ne);
+    eid_range->reserve(ne);
 
     timer_next("Adaptive Grouping");
     if (config.new_compress) {
