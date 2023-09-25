@@ -26,7 +26,6 @@ with open(out_file, 'w') as fo:
         first_point_id = None
         last_point_id = None
         points = []
-        last_p = None
         for row_index, row in df_group.iterrows():
             if lr_fid is None:
                 left_fid = int(row['LEFT_FID'])
@@ -38,11 +37,7 @@ with open(out_file, 'w') as fo:
             point_id += 1
             p = row['geometry']
             assert isinstance(p, shapely.geometry.point.Point)
-            if str(last_p) != str(p):
-                points.append(p)
-            else:
-                print("Duplicated point idx: {} {}".format(row_index, p))
-            p = last_p
+            points.append(p)
         last_point_id = point_id - 1
         fo.write("{obj_id} {np} {fpid} {lpid} {lid} {rid}\n".format(
             obj_id=original_id,

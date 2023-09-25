@@ -5,20 +5,21 @@ source env.sh
 function run() {
   map1=$1
   map2=$2
-  log_file=$3
-  mode=$4
-  if [[ ! -f "${log_file}" ]]; then
-    cmd="$exec -poly1 ${map1} \
+  enlarge=$3
+  log_file=$4
+
+  cmd="$exec -poly1 ${map1} \
              -poly2 ${map2} \
              -serialize=${SERIALIZE_PREFIX} \
-             -grid_size=${DEFAULT_GRID_SIZE} \
-             -mode=$mode \
-             -lb=false \
+             -mode=rt \
+             -query=$query \
              -v=1 \
              -fau \
              -xsect_factor $DEFAULT_XSECT_FACTOR \
-             -enlarge=$DEFAULT_ENLARGE_LIM"
+             -enlarge=$enlarge \
+             -check=false"
 
+  if [[ ! -f "${log_file}" ]]; then
     echo "$cmd" >"${log_file}.tmp"
     eval "$cmd" 2>&1 | tee -a "${log_file}.tmp"
 
@@ -28,38 +29,45 @@ function run() {
   fi
 }
 
-function run_overlay() {
+function ag_varying_enlarge_lim() {
   debug=$1
-  out_dir="overlay"
-  exec="${BIN_HOME_RELEASE}"/bin/polyover_exec
+  query=$2
+  enlarge_lims=(1 2 3 4 5 6 7 8)
+  out_dir="ag_${query}_varying_enlarge"
+  exec="${BIN_HOME_RELEASE}"/bin/query_exec
   if [[ $debug -eq 1 ]]; then
     out_dir="${out_dir}_debug"
-    exec="${BIN_HOME_DEBUG}/bin/polyover_exec"
+    exec="${BIN_HOME_DEBUG}/bin/query_exec"
   fi
   mkdir -p "$out_dir"
 
-  #  for mode in grid rt lbvh; do
-  for mode in rt; do
+  for ((j = 0; j < "${#enlarge_lims[@]}"; j++)); do
+    enlarge_lim="${enlarge_lims[j]}"
+
     for ((i = 0; i < "${#MAPS1[@]}"; i++)); do
       map1=${MAPS1[$i]}
       map2=${MAPS2[$i]}
-      out_prefix="${out_dir}/${map1}_${map2}_${mode}"
+      out_prefix="${out_dir}/${map1}_${map2}_enlarge_${enlarge_lim}"
       log_file="${out_prefix}.log"
-      run "$DATASET_ROOT/point_cdb/${map1}/${map1}_Point.cdb" "$DATASET_ROOT/point_cdb/${map2}/${map2}_Point.cdb" "$log_file" "$mode"
+      run "$DATASET_ROOT/point_cdb/${map1}/${map1}_Point.cdb" \
+        "$DATASET_ROOT/point_cdb/${map2}/${map2}_Point.cdb" \
+        "$enlarge_lim" \
+        "$log_file"
     done
 
     for ((i = 0; i < "${#CONTINENTS[@]}"; i++)); do
       con=${CONTINENTS[$i]}
-      out_prefix="${out_dir}/lakes_parks_${con}_${mode}"
+      out_prefix="${out_dir}/lakes_parks_${con}_enlarge_${enlarge_lim}"
       log_file="${out_prefix}.log"
-      run "$DATASET_ROOT/point_cdb/lakes/$con/lakes_${con}_Point.cdb" "$DATASET_ROOT/point_cdb/parks/$con/parks_${con}_Point.cdb" "$log_file" "$mode"
+      run "$DATASET_ROOT/point_cdb/lakes/$con/lakes_${con}_Point.cdb" \
+        "$DATASET_ROOT/point_cdb/parks/$con/parks_${con}_Point.cdb" \
+        "$enlarge_lim" \
+        "$log_file"
     done
   done
-
 }
 
 DEBUG=0
-PROFILE=0
 for i in "$@"; do
   case $i in
   -b | --build)
@@ -75,12 +83,12 @@ for i in "$@"; do
     DEBUG=1
     shift
     ;;
-  -p | --profile)
-    PROFILE=1
+  --lsi-vary-enlarge-lim)
+    ag_varying_enlarge_lim $DEBUG "lsi"
     shift
     ;;
-  -ov | --overlay)
-    run_overlay $DEBUG
+  --pip-vary-enlarge-lim)
+    ag_varying_enlarge_lim $DEBUG "pip"
     shift
     ;;
   --* | -*)

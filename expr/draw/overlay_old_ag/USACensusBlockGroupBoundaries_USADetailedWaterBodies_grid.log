@@ -1,0 +1,40 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/USACensusBlockGroupBoundaries/USACensusBlockGroupBoundaries_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/USADetailedWaterBodies/USADetailedWaterBodies_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=grid              -lb=false              -v=1              -fau              -xsect_factor 0.2              -win=32              -enlarge=2
+I0919 15:42:49.419701 2389642 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-USACensusBlockGroupBoundaries-USACensusBlockGroupBoundaries_Point.cdb.bin is deserialized, chains: 872624 points: 29345959 edges: 28473335
+I0919 15:42:50.155333 2389642 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-USADetailedWaterBodies-USADetailedWaterBodies_Point.cdb.bin is deserialized, chains: 2442900 points: 28007655 edges: 25564755
+I0919 15:42:50.155366 2389642 context.h:51] Bounding Box, Bottom-left: (-179.149, 18.9107), Top-right: (-66.9496, 71.3652)
+I0919 15:42:50.155378 2389642 context.h:58] Scaled Bounding Box, Bottom-left: (-69136359329185, -67784245771247), Top-right: (69136359329184, 67784245771246)
+I0919 15:42:50.155380 2389642 context.h:61] Unscaled Bounding Box, Bottom-left: (-179.149, 18.9107), Top-right: (-66.9496, 71.3652)
+I0919 15:42:54.663534 2389642 lsi.h:22] Queue size: 494 MB
+I0919 15:42:54.674360 2389642 uniform_grid.h:148] Creating the uniform grid, resolution: 15000, Size: 6008 MB
+I0919 15:42:54.692456 2389642 uniform_grid.h:206] Total Edges in the grid: 63817246, Size: 486 MB
+I0919 15:42:56.020954 2389642 lsi.h:22] Queue size: 494 MB
+I0919 15:42:56.022882 2389642 uniform_grid.h:148] Creating the uniform grid, resolution: 2048, Size: 112 MB
+I0919 15:42:56.028281 2389642 uniform_grid.h:206] Total Edges in the grid: 55273774, Size: 421 MB
+I0919 15:42:56.359119 2389642 run_overlay.cu:43] LSI passed check
+I0919 15:42:56.359126 2389642 run_overlay.cu:48] Checking point in polygon
+I0919 15:42:58.938041 2389642 run_overlay.cu:112] Map: 0 passed check
+I0919 15:42:58.941870 2389642 run_overlay.cu:48] Checking point in polygon
+I0919 15:42:59.402586 2389642 run_overlay.cu:112] Map: 1 passed check
+Timing results:
+ - Read map 0: 753.117 ms
+
+ - Read map 1: 735.435 ms
+
+ - Create Context: 4506.62 ms
+
+ - Create App: 0.00214577 ms
+
+ - Init: 3.25894 ms
+
+ - Build Index: 62.8059 ms
+
+ - Intersection edges: 202.307 ms
+
+ - Map 0: Locate vertices in other map: 794.578 ms
+
+ - Map 1: Locate vertices in other map: 132.135 ms
+
+ - Computer output polygons: 162.984 ms
+
+ - Check result: 3398.04 ms
+
