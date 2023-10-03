@@ -144,3 +144,5 @@ evalute RayJoin with the following commands.
 ### AG
 1. LSI `./run_ag.sh --lsi-vary-enlarge-lim`
 2. PIP `./run_ag.sh --pip-vary-enlarge-lim`
+### Evaluate Grid,LBVH,RayJoin for LSI+PIP+Overlay queries
+1. `./run_e2e.sh -ov`

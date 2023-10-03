@@ -32,7 +32,7 @@ function run() {
 function ag_varying_enlarge_lim() {
   debug=$1
   query=$2
-  enlarge_lims=(1 2 3 4 5 6 7 8)
+  enlarge_lims=(1 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0)
   out_dir="ag_${query}_varying_enlarge"
   exec="${BIN_HOME_RELEASE}"/bin/query_exec
   if [[ $debug -eq 1 ]]; then

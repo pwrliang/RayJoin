@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.scale import LogScale
+from numpy import diff
 import os
 import numpy as np
 import comm_settings
@@ -13,6 +14,7 @@ def get_time(prefix, map, mode, suffixes):
     time_build = []
     time_query = []
     ratio_compression = []
+    size_BVH = []
 
     for suffix in suffixes:
         path = prefix + "/{map}_{mode}_{suffix}.log".format(map=map, mode=mode, suffix=suffix)
@@ -30,7 +32,12 @@ def get_time(prefix, map, mode, suffixes):
                 m = re.search(r"Query: (.*?) ms$", line)
                 if m is not None:
                     time_query.append(float(m.groups()[0]))
-    return (np.asarray(ratio_compression), np.asarray(time_ag), np.asarray(time_build), np.asarray(time_query))
+                m = re.search(r"Output Size: (.*)$", line)
+                if m is not None:
+                    size_BVH.append(float(m.groups()[0]))
+
+    return (np.asarray(size_BVH), np.asarray(ratio_compression), np.asarray(time_ag), np.asarray(time_build),
+            np.asarray(time_query))
 
 
 patterns = ['', '\\\\', '\\\\--', '..', '..--']
@@ -63,10 +70,6 @@ def draw_enlarge_lim(prefix):
             "lakes_parks_Europe",
             "lakes_parks_North_America",
             "lakes_parks_South_America"]
-    labels = (
-        r"LKNA $\bowtie$ PKNA",
-    )
-    maps = ["lakes_parks_North_America", ]
     fig, axes = plt.subplots(nrows=2, ncols=8, figsize=(36, 6))
 
     for i in range(16):
@@ -76,13 +79,14 @@ def draw_enlarge_lim(prefix):
         fig_idx = i
         map = maps[col]
 
-        enlarge_list = (1, 2, 3, 4, 5, 6, 7, 8)
+        enlarge_list = ("1", "1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0")
 
         loc = [x for x in range(len(enlarge_list))]
-        ratio_compression, time_ag_rt, time_build_rt, time_lsi_rt = get_time(prefix + "/ag_pip_varying_enlarge", map,
-                                                                             "enlarge",
-                                                                             enlarge_list)
-        _, _, _, time_pip_rt = get_time(prefix + "/ag_pip_varying_enlarge", map, "enlarge", enlarge_list)
+        size_bvh, ratio_compression, time_ag_rt, time_build_rt, time_lsi_rt = get_time(
+            prefix + "/ag_lsi_varying_enlarge", map,
+            "enlarge",
+            enlarge_list)
+        _, _, _, _, time_pip_rt = get_time(prefix + "/ag_pip_varying_enlarge", map, "enlarge", enlarge_list)
         label = "({}) {}".format(chr(ord('a') + fig_idx), labels[col])
 
         if row == 0:
@@ -117,41 +121,52 @@ def draw_enlarge_lim(prefix):
         ax.legend(loc='upper left', ncol=2, handletextpad=0.3,
                   fontsize='medium', borderaxespad=1, frameon=False)
     fig.tight_layout()
-    fig.savefig(os.path.join(prefix, '../', prefix + 'ag_varying_enlarge.pdf'), format='pdf',
+    fig.savefig(os.path.join(prefix, '../', prefix + 'ag_varying_enlarge_all.pdf'), format='pdf',
                 bbox_inches='tight')
     plt.show()
 
 
+
 def draw_enlarge_lim_pick(prefix):
-    labels = (
-        r"LKNA $\bowtie$ PKNA",
-    )
     maps = ["lakes_parks_North_America", ]
-    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(7, 3.5))
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(10.7, 3.5))
 
     map = maps[0]
-    ax_time = axes[0]
-    ax_rate = axes[1]
+    ax_total = axes[0]
+    ax_bvh = axes[1]
+    ax_query = axes[2]
 
-    enlarge_list = (1, 2, 3, 4, 5, 6, 7, 8)
+    enlarge_list = ("1", "1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0")
 
     loc = [x for x in range(len(enlarge_list))]
-    ratio_compression, time_ag_rt, time_build_rt, time_lsi_rt = get_time(prefix + "/ag_pip_varying_enlarge", map,
-                                                                         "enlarge",
-                                                                         enlarge_list)
-    _, _, _, time_pip_rt = get_time(prefix + "/ag_pip_varying_enlarge", map, "enlarge", enlarge_list)
-    titles = ("(a) {} - Exec. Time".format(labels[0]), "(b) {} - Comp. Rate".format(labels[0]))
-    y_labels = ('Execution Time (ms)', 'Compression Rate - $r$')
+    size_bvh, ratio_compression, time_ag_rt, time_build_rt, time_lsi_rt = get_time(prefix + "/ag_lsi_varying_enlarge",
+                                                                                   map,
+                                                                                   "enlarge",
+                                                                                   enlarge_list)
+    _, _, _, _, time_pip_rt = get_time(prefix + "/ag_pip_varying_enlarge", map, "enlarge", enlarge_list)
+    titles = ("(a) Total Exec. Time Breakdown", "(b) BVH Construction Time", "(c) Query Time")
+    y_labels = ('Execution Time (ms)', 'Execution Time (ms)', 'Execution Time (ms)')
+    total_time = time_ag_rt + time_build_rt + time_lsi_rt + time_pip_rt
+
+    print("Total", total_time)
+    print("No AG", total_time[0], "Min", min(total_time), "Speedup", total_time[0] / min(total_time), "Reduce",
+          (total_time[0] - min(total_time)) / total_time[0])
 
     df = pd.DataFrame({"AG Overhead": time_ag_rt,
-                       "Build BVH": time_build_rt,
-                       "LSI": time_lsi_rt,
-                       "PIP": time_pip_rt})
+                       "BVH Buildup": time_build_rt,
+                       "LSI Query": time_lsi_rt,
+                       "PIP Query": time_pip_rt})
 
-    df.plot(kind="bar", stacked=True, width=width, ax=axes[0], hatch='')
-    axes[1].plot(loc, ratio_compression, label="Comp. Rate")
+    df.plot(kind="bar", stacked=True, width=width, ax=ax_total, hatch='')
+    ax_bvh.plot(loc, time_build_rt, label="BVH Buildup")
+    ax_query.plot(loc, time_lsi_rt, label="LSI Query")
+    ax_query.plot(loc, time_pip_rt, label="PIP Query")
 
-    for i in range(2):
+    dydx = diff(ratio_compression) / diff([float(x) for x in enlarge_list])
+
+    print("dydx", dydx)
+
+    for i in range(3):
         ax = axes[i]
         title = titles[i]
         ylabel = y_labels[i]
@@ -161,11 +176,8 @@ def draw_enlarge_lim_pick(prefix):
         ax.set_ylabel(ylabel=ylabel, labelpad=1)
         ax.autoscale(tight=True)
 
-        if i == 0:
-            ax.margins(x=0.05, y=0.8)
-        else:
-            ax.set_ylim((0, 1))
-            ax.margins(x=0.05, )
+        ax.margins(x=0.05, y=0.25)
+        # ax.set_ylim((0, 1))
         ax.legend(loc='upper left', ncol=2, handletextpad=0.3,
                   fontsize='medium', borderaxespad=0.2, frameon=False)
     fig.tight_layout()
@@ -176,4 +188,5 @@ def draw_enlarge_lim_pick(prefix):
 
 if __name__ == '__main__':
     dir = os.path.dirname(sys.argv[0])
+    # draw_enlarge_lim(dir)
     draw_enlarge_lim_pick(dir)

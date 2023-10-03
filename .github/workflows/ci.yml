@@ -24,4 +24,4 @@ jobs:
           make
       - name: Test
         run: |
-          ./misc/test_overlay.sh
+          ./test/test_overlay.sh
