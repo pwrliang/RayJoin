@@ -1,0 +1,92 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/query_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Europe/lakes_Europe_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/Europe/parks_Europe_Point.cdb              -serialize=/dev/shm              -mode=rt              -query=lsi              -v=1              -fau              -xsect_factor 0.1              -enlarge=3.0              -check=false
+I1002 17:18:33.783985 193540 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-Europe-lakes_Europe_Point.cdb.bin is deserialized, chains: 831264 points: 28687526 edges: 27856262
+I1002 17:18:35.380782 193540 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-Europe-parks_Europe_Point.cdb.bin is deserialized, chains: 3299874 points: 69273661 edges: 65973787
+I1002 17:18:35.380795 193540 run_query.cu:213] After sampling , edges: 65973787
+I1002 17:18:35.380817 193540 context.h:51] Bounding Box, Bottom-left: (-31.2515, 35.0264), Top-right: (68.8331, 81.3082)
+I1002 17:18:35.380832 193540 context.h:58] Scaled Bounding Box, Bottom-left: (-68990108085658, -67453827351386), Top-right: (68990108085657, 67453827351385)
+I1002 17:18:35.380834 193540 context.h:61] Unscaled Bounding Box, Bottom-left: (-31.2515, 35.0264), Top-right: (68.8331, 81.3082)
+I1002 17:18:42.833436 193540 rt_engine.cu:282] Info: Pipeline statistics
+	module(s)                            :     1
+	entry function(s)                    :     2
+	trace call(s)                        :     1
+	continuation callable call(s)        :     0
+	direct callable call(s)              :     0
+	basic block(s) in entry functions    :    67
+	instruction(s) in entry functions    :  1011
+	non-entry function(s)                :     1
+	basic block(s) in non-entry functions:     1
+	instruction(s) in non-entry functions:     1
+	debug information                    :    no
+I1002 17:18:42.838449 193540 rt_engine.cu:282] Info: Pipeline statistics
+	module(s)                            :     1
+	entry function(s)                    :     2
+	trace call(s)                        :     1
+	continuation callable call(s)        :     0
+	direct callable call(s)              :     0
+	basic block(s) in entry functions    :    43
+	instruction(s) in entry functions    :   831
+	non-entry function(s)                :     1
+	basic block(s) in non-entry functions:     1
+	instruction(s) in non-entry functions:     1
+	debug information                    :    no
+I1002 17:18:42.839181 193540 run_query.cu:251] Queue capacity: 9383005
+I1002 17:18:42.839187 193540 lsi.h:22] Queue size: 429 MB
+I1002 17:18:42.854458 193540 primitive.h:252] Enlarge limit: 3 max iter:5 ne: 27856262 aabbs: 7274946 Compress ratio: 0.73884 Time: 13.424 ms
+I1002 17:18:42.854497 193540 rt_engine.cu:397] Building AS, num prims: 7274946, Required Temp Size: 554034816 Output Size: 272189184
+I1002 17:18:42.872822 193540 lsi_rt.h:50] queries: 65973787
+I1002 17:18:42.872853 193540 rt_engine.h:159] Parm size: 176
+I1002 17:18:42.872865 193540 rt_engine.cu:554] optixLaunch, [w,h,d] = 65973787,1,1
+I1002 17:18:42.896658 193540 lsi_rt.h:50] queries: 65973787
+I1002 17:18:42.896665 193540 rt_engine.h:159] Parm size: 176
+I1002 17:18:42.896672 193540 rt_engine.cu:554] optixLaunch, [w,h,d] = 65973787,1,1
+I1002 17:18:42.920048 193540 lsi_rt.h:50] queries: 65973787
+I1002 17:18:42.920054 193540 rt_engine.h:159] Parm size: 176
+I1002 17:18:42.920061 193540 rt_engine.cu:554] optixLaunch, [w,h,d] = 65973787,1,1
+I1002 17:18:42.943112 193540 lsi_rt.h:50] queries: 65973787
+I1002 17:18:42.943118 193540 rt_engine.h:159] Parm size: 176
+I1002 17:18:42.943125 193540 rt_engine.cu:554] optixLaunch, [w,h,d] = 65973787,1,1
+I1002 17:18:42.965979 193540 lsi_rt.h:50] queries: 65973787
+I1002 17:18:42.965986 193540 rt_engine.h:159] Parm size: 176
+I1002 17:18:42.965992 193540 rt_engine.cu:554] optixLaunch, [w,h,d] = 65973787,1,1
+I1002 17:18:42.988720 193540 run_query.cu:318] Iter: 0
+I1002 17:18:42.988723 193540 lsi_rt.h:50] queries: 65973787
+I1002 17:18:42.988729 193540 rt_engine.h:159] Parm size: 176
+I1002 17:18:42.988734 193540 rt_engine.cu:554] optixLaunch, [w,h,d] = 65973787,1,1
+I1002 17:18:43.011469 193540 run_query.cu:318] Iter: 1
+I1002 17:18:43.011471 193540 lsi_rt.h:50] queries: 65973787
+I1002 17:18:43.011476 193540 rt_engine.h:159] Parm size: 176
+I1002 17:18:43.011483 193540 rt_engine.cu:554] optixLaunch, [w,h,d] = 65973787,1,1
+I1002 17:18:43.034205 193540 run_query.cu:318] Iter: 2
+I1002 17:18:43.034206 193540 lsi_rt.h:50] queries: 65973787
+I1002 17:18:43.034212 193540 rt_engine.h:159] Parm size: 176
+I1002 17:18:43.034219 193540 rt_engine.cu:554] optixLaunch, [w,h,d] = 65973787,1,1
+I1002 17:18:43.056957 193540 run_query.cu:318] Iter: 3
+I1002 17:18:43.056975 193540 lsi_rt.h:50] queries: 65973787
+I1002 17:18:43.056982 193540 rt_engine.h:159] Parm size: 176
+I1002 17:18:43.056988 193540 rt_engine.cu:554] optixLaunch, [w,h,d] = 65973787,1,1
+I1002 17:18:43.079735 193540 run_query.cu:318] Iter: 4
+I1002 17:18:43.079736 193540 lsi_rt.h:50] queries: 65973787
+I1002 17:18:43.079742 193540 rt_engine.h:159] Parm size: 176
+I1002 17:18:43.079748 193540 rt_engine.cu:554] optixLaunch, [w,h,d] = 65973787,1,1
+I1002 17:18:43.102484 193540 run_query.cu:323] Intersections: 278461 Selective: 27.8461 Queue Load Factor: 0.0296772
+Timing results:
+ - Read map: 671.222 ms
+
+ - Create Context: 0 ms
+
+ - Generate Workloads: 8971.7 ms
+
+ - Create App: 83.297 ms
+
+ - Init: 1.85108 ms
+
+ - Adaptive Grouping: 13.443 ms
+
+ - Build Index: 18.347 ms
+
+ - Warmup: 115.9 ms
+
+ - Query: 22.7538 ms
+
+ - Cleanup: 569.575 ms
+

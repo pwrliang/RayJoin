@@ -1,0 +1,16 @@
+./main3 -t odd /local/storage/liang/Downloads/Datasets/point_cdb/USACensusBlockGroupBoundaries/USACensusBlockGroupBoundaries_Point.cdb /local/storage/liang/Downloads/Datasets/point_cdb/USADetailedWaterBodies/USADetailedWaterBodies_Point.cdb
+Argc 5
+/local/storage/liang/Downloads/Datasets/point_cdb/USACensusBlockGroupBoundaries/USACensusBlockGroupBoundaries_Point.cdb
+Reading map 0, file /local/storage/liang/Downloads/Datasets/point_cdb/USACensusBlockGroupBoundaries/USACensusBlockGroupBoundaries_Point.cdb
+/local/storage/liang/Downloads/Datasets/point_cdb/USADetailedWaterBodies/USADetailedWaterBodies_Point.cdb
+Reading map 1, file /local/storage/liang/Downloads/Datasets/point_cdb/USADetailedWaterBodies/USADetailedWaterBodies_Point.cdb
+Intersections: 774210
+number of intersections: 1535441
+times in seconds:
+total time:                         2.28908
+data transfer host->device:         0.20244
+compute work list:                  0.203254
+compute intersections and topology: 1.17165
+allocate and transfer device->host: 0.171901
+create final segs and labels:       0.539833
+

@@ -1,0 +1,19 @@
+Origin Bound from config, lat: 18.910693 - 71.365162, lon: -179.148909 - -66.949608
+attributes size: 1
+fname=/local/storage/liang/Downloads/Datasets/rasterjoin_backendindex/USADetailedWaterBodies/USADetailedWaterBodies2
+mname=/local/storage/liang/Downloads/Datasets/rasterjoin_backendindex/USADetailedWaterBodies/USADetailedWaterBodies2_mapping
+backend index loaded
+Add Polygon collection 1, path: /local/storage/liang/Downloads/Datasets/rasterjoin_polygon/USACensusBlockGroupBoundaries/USACensusBlockGroupBoundaries.txt
+Polygon file, /local/storage/liang/Downloads/Datasets/rasterjoin_polygon/USACensusBlockGroupBoundaries/USACensusBlockGroupBoundaries.txt, total polygons: 248954
+Point 51.268124, -179.148911, bound: 18.910693 ~ 71.365162, -179.148909 ~ -66.949608
+Point 71.365166, -156.345642, bound: 18.910693 ~ 71.365162, -179.148909 ~ -66.949608
+Point 18.910692, -155.680817, bound: 18.910693 ~ 71.365162, -179.148909 ~ -66.949608
+Point 44.815903, -66.949608, bound: 18.910693 ~ 71.365162, -179.148909 ~ -66.949608
+Bounds left-bottom -167056800.000000 -157562032.000000, right-top 167235040.000000 93690080.000000
+transformed bound x -167056800.000000 167235040.000000, y -157562032.000000 93690080.000000
+npolys: 248950, vertices: 308222424, mem: 1766 MB
+splitx 16, splity: 12
+
+Point Render Time: 2735.4020 ms
+Poly Render Time: 18922.9527 ms
+22818694		248950	0	1	0	47900	4	2735	570	18922	5	21067	0	0	100

@@ -1,0 +1,16 @@
+./main3 -t odd /local/storage/liang/Downloads/Datasets/point_cdb/dtl_cnty/dtl_cnty_Point.cdb /local/storage/liang/Downloads/Datasets/point_cdb/USAZIPCodeArea/USAZIPCodeArea_Point.cdb
+Argc 5
+/local/storage/liang/Downloads/Datasets/point_cdb/dtl_cnty/dtl_cnty_Point.cdb
+Reading map 0, file /local/storage/liang/Downloads/Datasets/point_cdb/dtl_cnty/dtl_cnty_Point.cdb
+/local/storage/liang/Downloads/Datasets/point_cdb/USAZIPCodeArea/USAZIPCodeArea_Point.cdb
+Reading map 1, file /local/storage/liang/Downloads/Datasets/point_cdb/USAZIPCodeArea/USAZIPCodeArea_Point.cdb
+Intersections: 131848
+number of intersections: 260037
+times in seconds:
+total time:                         0.669082
+data transfer host->device:         0.152824
+compute work list:                  0.0889244
+compute intersections and topology: 0.146715
+allocate and transfer device->host: 0.0769135
+create final segs and labels:       0.203705
+

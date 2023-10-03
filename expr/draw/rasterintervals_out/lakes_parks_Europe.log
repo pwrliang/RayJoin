@@ -1,0 +1,25 @@
+Setting universal min/max...
+Done: -31.2515 35.0264,68.8331 82.5
+Loading rasterintervals/interval_data/lakes_Europe_binary_interval_data.dat...
+Loaded in 0.276714 seconds
+Loading rasterintervals/interval_data/parks_Europe_binary_interval_data.dat...
+Loaded in 0.959438 seconds
+Loading MBRs...
+lakes_Europe: 654836 polygons.
+parks_Europe: 1856318 polygons.
+Begin evaluation...
+Join in pipeline: 
+-----------------------------------
+MBR Filter -> Raster Intervals Filter -> Refinement -> result
+-----------------------------------
+Finished in 15.291114 seconds.
+   MBR Filter time: 0.858596 seconds.
+   Raster Intervals time: 3.746565 seconds.
+   Refinement time: 10.685953 seconds.
+Candidate pairs analysis: 
+   Candidates after MBR Filter: 782534
+   Accepted by RI: 13.059752%
+   Rejected by RI: 55.661735%
+   Inconclusive by RI: 31.278513%
+   Accepted AFTER refinement (as a percentage of the refinement candiadtes): 13.648608%
+Result: 209002 pairs.

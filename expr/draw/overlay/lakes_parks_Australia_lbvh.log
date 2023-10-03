@@ -1,0 +1,38 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Australia/lakes_Australia_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/Australia/parks_Australia_Point.cdb              -serialize=/dev/shm              -grid_size=20000              -mode=lbvh              -lb=false              -v=1              -fau              -xsect_factor 0.5              -win=32              -enlarge=2
+I0919 15:29:56.238209 2379517 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-Australia-lakes_Australia_Point.cdb.bin is deserialized, chains: 16702 points: 1254743 edges: 1238041
+I0919 15:29:56.254004 2379517 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-Australia-parks_Australia_Point.cdb.bin is deserialized, chains: 22386 points: 589464 edges: 567078
+I0919 15:29:56.254027 2379517 context.h:51] Bounding Box, Bottom-left: (112.971, -54.7384), Top-right: (158.947, -10.1168)
+I0919 15:29:56.254043 2379517 context.h:58] Scaled Bounding Box, Bottom-left: (-67435232688127, -67350025946940), Top-right: (67435232688126, 67350025946939)
+I0919 15:29:56.254045 2379517 context.h:61] Unscaled Bounding Box, Bottom-left: (112.971, -54.7384), Top-right: (158.947, -10.1168)
+I0919 15:29:56.423286 2379517 lsi.h:22] Queue size: 41 MB
+I0919 15:29:56.478893 2379517 lsi.h:22] Queue size: 123 MB
+I0919 15:29:56.479622 2379517 uniform_grid.h:148] Creating the uniform grid, resolution: 2048, Size: 112 MB
+I0919 15:29:56.480204 2379517 uniform_grid.h:206] Total Edges in the grid: 1868569, Size: 14 MB
+I0919 15:29:56.509218 2379517 run_overlay.cu:42] LSI passed check
+I0919 15:29:56.509222 2379517 run_overlay.cu:47] Checking point in polygon
+I0919 15:29:56.553535 2379517 run_overlay.cu:111] Map: 0 passed check
+I0919 15:29:56.553542 2379517 run_overlay.cu:47] Checking point in polygon
+I0919 15:29:56.598434 2379517 run_overlay.cu:111] Map: 1 passed check
+Timing results:
+ - Read map 0: 98.861 ms
+
+ - Read map 1: 14.3611 ms
+
+ - Create Context: 168.99 ms
+
+ - Create App: 0.139952 ms
+
+ - Init: 0.378132 ms
+
+ - Build Index: 9.08399 ms
+
+ - Intersection edges: 1.98388 ms
+
+ - Map 0: Locate vertices in other map: 14.9281 ms
+
+ - Map 1: Locate vertices in other map: 15.0659 ms
+
+ - Computer output polygons: 14.1439 ms
+
+ - Check result: 123.617 ms
+

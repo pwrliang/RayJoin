@@ -1,0 +1,25 @@
+Setting universal min/max...
+Done: -92.6829 -55.9828,-34.788 12.5803
+Loading rasterintervals/interval_data/lakes_South_America_binary_interval_data.dat...
+Loaded in 0.023329 seconds
+Loading rasterintervals/interval_data/parks_South_America_binary_interval_data.dat...
+Loaded in 0.065783 seconds
+Loading MBRs...
+lakes_South_America: 32609 polygons.
+parks_South_America: 49510 polygons.
+Begin evaluation...
+Join in pipeline: 
+-----------------------------------
+MBR Filter -> Raster Intervals Filter -> Refinement -> result
+-----------------------------------
+Finished in 0.447837 seconds.
+   MBR Filter time: 0.024076 seconds.
+   Raster Intervals time: 0.181069 seconds.
+   Refinement time: 0.242692 seconds.
+Candidate pairs analysis: 
+   Candidates after MBR Filter: 13959
+   Accepted by RI: 14.256036%
+   Rejected by RI: 65.183752%
+   Inconclusive by RI: 20.560212%
+   Accepted AFTER refinement (as a percentage of the refinement candiadtes): 9.047926%
+Result: 3253 pairs.

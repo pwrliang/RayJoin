@@ -1,0 +1,15 @@
+Origin Bound from config, lat: -55.982824 - 12.580260, lon: -92.682879 - -34.787970
+attributes size: 1
+fname=/local/storage/liang/Downloads/Datasets/rasterjoin_backendindex/parks/South_America/parks2
+mname=/local/storage/liang/Downloads/Datasets/rasterjoin_backendindex/parks/South_America/parks2_mapping
+backend index loaded
+Add Polygon collection 1, path: /local/storage/liang/Downloads/Datasets/rasterjoin_polygon/lakes/South_America/lakes.txt
+Polygon file, /local/storage/liang/Downloads/Datasets/rasterjoin_polygon/lakes/South_America/lakes.txt, total polygons: 32609
+Bounds left-bottom -82435080.000000 -104159376.000000, right-top 86302256.000000 135598480.000000
+transformed bound x -82435080.000000 86302256.000000, y -104159376.000000 135598480.000000
+npolys: 32609, vertices: 13673286, mem: 78 MB
+splitx 11, splity: 15
+
+Point Render Time: 254.4865 ms
+Poly Render Time: 715.0060 ms
+3148268		32609	0	1	0	9253	1	254	30	715	3	4955	0	0	100

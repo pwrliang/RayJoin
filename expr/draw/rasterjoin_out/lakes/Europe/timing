@@ -1,0 +1,35 @@
+Origin Bound from config, lat: 35.026418 - 82.500000, lon: -31.251521 - 68.833060
+attributes size: 1
+fname=/local/storage/liang/Downloads/Datasets/rasterjoin_backendindex/parks/Europe/parks2
+mname=/local/storage/liang/Downloads/Datasets/rasterjoin_backendindex/parks/Europe/parks2_mapping
+backend index loaded
+Add Polygon collection 1, path: /local/storage/liang/Downloads/Datasets/rasterjoin_polygon/lakes/Europe/lakes.txt
+Polygon file, /local/storage/liang/Downloads/Datasets/rasterjoin_polygon/lakes/Europe/lakes.txt, total polygons: 654836
+Point 76.615761, 68.833061, bound: 35.026418 ~ 82.500000, -31.251521 ~ 68.833060
+Bounds left-bottom -149221488.000000 -222587280.000000, right-top 140106832.000000 106145296.000000
+transformed bound x -149221488.000000 140106832.000000, y -222587280.000000 106145296.000000
+Cannot triangle 495301
+Cannot triangle 441446
+Cannot triangle 552237
+Cannot triangle 416779
+Cannot triangle 390548
+Cannot triangle 392273
+Cannot triangle 367817
+Cannot triangle 231221
+Cannot triangle 343308
+Cannot triangle 644031
+Cannot triangle 480286
+Cannot triangle 564523
+Cannot triangle 538295
+Cannot triangle 540026
+Cannot triangle 515214
+Cannot triangle 107799
+Cannot triangle 244758
+Cannot triangle 40727
+Cannot triangle 46587
+npolys: 654835, vertices: 155318214, mem: 896 MB
+splitx 10, splity: 11
+
+Point Render Time: 5543.3841 ms
+Poly Render Time: 5382.6744 ms
+78059830		654835	0	1	0	43022	9	5543	297	5382	4	27287	0	0	100

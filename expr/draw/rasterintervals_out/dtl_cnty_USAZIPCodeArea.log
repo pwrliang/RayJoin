@@ -1,0 +1,25 @@
+Setting universal min/max...
+Done: -171.743 13.4141,144.957 70.5057
+Loading rasterintervals/interval_data/dtl_cnty_binary_interval_data.dat...
+Loaded in 0.057411 seconds
+Loading rasterintervals/interval_data/USAZIPCodeArea_binary_interval_data.dat...
+Loaded in 0.098678 seconds
+Loading MBRs...
+dtl_cnty: 2813 polygons.
+USAZIPCodeArea: 30307 polygons.
+Begin evaluation...
+Join in pipeline: 
+-----------------------------------
+MBR Filter -> Raster Intervals Filter -> Refinement -> result
+-----------------------------------
+Finished in 2.910789 seconds.
+   MBR Filter time: 0.072428 seconds.
+   Raster Intervals time: 0.471691 seconds.
+   Refinement time: 2.366670 seconds.
+Candidate pairs analysis: 
+   Candidates after MBR Filter: 69521
+   Accepted by RI: 65.926842%
+   Rejected by RI: 17.351592%
+   Inconclusive by RI: 16.721566%
+   Accepted AFTER refinement (as a percentage of the refinement candiadtes): 5.608377%
+Result: 49732 pairs.

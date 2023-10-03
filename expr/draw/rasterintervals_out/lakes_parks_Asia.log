@@ -1,0 +1,25 @@
+Setting universal min/max...
+Done: -179.972 -10.8197,179.984 81.2255
+Loading rasterintervals/interval_data/lakes_Asia_binary_interval_data.dat...
+Loaded in 0.062708 seconds
+Loading rasterintervals/interval_data/parks_Asia_binary_interval_data.dat...
+Loaded in 0.069971 seconds
+Loading MBRs...
+lakes_Asia: 151616 polygons.
+parks_Asia: 172647 polygons.
+Begin evaluation...
+Join in pipeline: 
+-----------------------------------
+MBR Filter -> Raster Intervals Filter -> Refinement -> result
+-----------------------------------
+Finished in 5.179460 seconds.
+   MBR Filter time: 0.068817 seconds.
+   Raster Intervals time: 0.215145 seconds.
+   Refinement time: 4.895498 seconds.
+Candidate pairs analysis: 
+   Candidates after MBR Filter: 52747
+   Accepted by RI: 7.270556%
+   Rejected by RI: 55.125410%
+   Inconclusive by RI: 37.604034%
+   Accepted AFTER refinement (as a percentage of the refinement candiadtes): 10.842323%
+Result: 9554 pairs.

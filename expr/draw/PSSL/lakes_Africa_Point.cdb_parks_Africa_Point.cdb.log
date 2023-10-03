@@ -1,0 +1,16 @@
+./main3 -t odd /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Africa/lakes_Africa_Point.cdb /local/storage/liang/Downloads/Datasets/point_cdb/parks/Africa/parks_Africa_Point.cdb
+Argc 5
+/local/storage/liang/Downloads/Datasets/point_cdb/lakes/Africa/lakes_Africa_Point.cdb
+Reading map 0, file /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Africa/lakes_Africa_Point.cdb
+/local/storage/liang/Downloads/Datasets/point_cdb/parks/Africa/parks_Africa_Point.cdb
+Reading map 1, file /local/storage/liang/Downloads/Datasets/point_cdb/parks/Africa/parks_Africa_Point.cdb
+Intersections: 608
+number of intersections: 1215
+times in seconds:
+total time:                         0.256928
+data transfer host->device:         0.178617
+compute work list:                  0.0145704
+compute intersections and topology: 0.0296792
+allocate and transfer device->host: 0.0096869
+create final segs and labels:       0.024374
+

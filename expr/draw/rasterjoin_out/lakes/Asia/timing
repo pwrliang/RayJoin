@@ -1,0 +1,18 @@
+Origin Bound from config, lat: -10.819686 - 81.225490, lon: -179.972490 - 179.983776
+attributes size: 1
+fname=/local/storage/liang/Downloads/Datasets/rasterjoin_backendindex/parks/Asia/parks2
+mname=/local/storage/liang/Downloads/Datasets/rasterjoin_backendindex/parks/Asia/parks2_mapping
+backend index loaded
+Add Polygon collection 1, path: /local/storage/liang/Downloads/Datasets/rasterjoin_polygon/lakes/Asia/lakes.txt
+Polygon file, /local/storage/liang/Downloads/Datasets/rasterjoin_polygon/lakes/Asia/lakes.txt, total polygons: 151616
+Point 68.977890, 179.983780, bound: -10.819686 ~ 81.225490, -179.972490 ~ 179.983776
+Bounds left-bottom -536805696.000000 -326470880.000000, right-top 536699392.000000 144768304.000000
+transformed bound x -536805696.000000 536699392.000000, y -326470880.000000 144768304.000000
+Cannot triangle 117619
+Cannot triangle 74388
+npolys: 151615, vertices: 58785816, mem: 338 MB
+splitx 57, splity: 25
+
+Point Render Time: 10166.1655 ms
+Poly Render Time: 26589.5404 ms
+11977307		151615	0	1	0	58655	3	10166	114	26589	3	16509	0	0	100

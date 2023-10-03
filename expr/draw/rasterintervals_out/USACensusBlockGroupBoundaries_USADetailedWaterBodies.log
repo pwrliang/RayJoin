@@ -1,0 +1,25 @@
+Setting universal min/max...
+Done: -166.841 18.9107,-66.9496 71.2973
+Loading rasterintervals/interval_data/USACensusBlockGroupBoundaries_binary_interval_data.dat...
+Loaded in 0.368499 seconds
+Loading rasterintervals/interval_data/USADetailedWaterBodies_binary_interval_data.dat...
+Loaded in 0.229747 seconds
+Loading MBRs...
+USADetailedWaterBodies: 463590 polygons.
+USACensusBlockGroupBoundaries: 236966 polygons.
+Begin evaluation...
+Join in pipeline: 
+-----------------------------------
+MBR Filter -> Raster Intervals Filter -> Refinement -> result
+-----------------------------------
+Finished in 10.479122 seconds.
+   MBR Filter time: 0.793125 seconds.
+   Raster Intervals time: 5.713428 seconds.
+   Refinement time: 3.972569 seconds.
+Candidate pairs analysis: 
+   Candidates after MBR Filter: 968252
+   Accepted by RI: 50.267905%
+   Rejected by RI: 44.594589%
+   Inconclusive by RI: 5.137506%
+   Accepted AFTER refinement (as a percentage of the refinement candiadtes): 0.543970%
+Result: 491987 pairs.

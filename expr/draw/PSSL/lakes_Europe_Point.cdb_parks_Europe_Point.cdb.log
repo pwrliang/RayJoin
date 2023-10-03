@@ -1,0 +1,16 @@
+./main3 -t odd /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Europe/lakes_Europe_Point.cdb /local/storage/liang/Downloads/Datasets/point_cdb/parks/Europe/parks_Europe_Point.cdb
+Argc 5
+/local/storage/liang/Downloads/Datasets/point_cdb/lakes/Europe/lakes_Europe_Point.cdb
+Reading map 0, file /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Europe/lakes_Europe_Point.cdb
+/local/storage/liang/Downloads/Datasets/point_cdb/parks/Europe/parks_Europe_Point.cdb
+Reading map 1, file /local/storage/liang/Downloads/Datasets/point_cdb/parks/Europe/parks_Europe_Point.cdb
+Intersections: 66116
+number of intersections: 131331
+times in seconds:
+total time:                         4.31047
+data transfer host->device:         0.286732
+compute work list:                  0.349196
+compute intersections and topology: 2.55433
+allocate and transfer device->host: 0.282339
+create final segs and labels:       0.837866
+

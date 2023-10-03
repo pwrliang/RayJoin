@@ -1,0 +1,30 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Europe/lakes_Europe_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/Europe/parks_Europe_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=lbvh              -lb=false              -v=1              -fau              -xsect_factor 0.05              -win=32              -enlarge=2
+I0919 15:48:08.664940 2392442 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-Europe-lakes_Europe_Point.cdb.bin is deserialized, chains: 831264 points: 28687526 edges: 27856262
+I0919 15:48:10.308483 2392442 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-Europe-parks_Europe_Point.cdb.bin is deserialized, chains: 3299874 points: 69273661 edges: 65973787
+I0919 15:48:10.308521 2392442 context.h:51] Bounding Box, Bottom-left: (-31.2515, 35.0264), Top-right: (68.8331, 81.3082)
+I0919 15:48:10.308538 2392442 context.h:58] Scaled Bounding Box, Bottom-left: (-68990108085658, -67453827351386), Top-right: (68990108085657, 67453827351385)
+I0919 15:48:10.308540 2392442 context.h:61] Unscaled Bounding Box, Bottom-left: (-31.2515, 35.0264), Top-right: (68.8331, 81.3082)
+I0919 15:48:17.933395 2392442 lsi.h:22] Queue size: 214 MB
+terminate called after throwing an instance of 'thrust::system::detail::bad_alloc'
+  what():  std::bad_alloc: cudaErrorMemoryAllocation: out of memory
+*** Aborted at 1695152898 (unix time) try "date -d @1695152898" if you are using GNU date ***
+PC: @     0x7f57e29f000b gsignal
+*** SIGABRT (@0x2fcf4d020024817a) received by PID 2392442 (TID 0x7f57e2960000) from PID 2392442; stack trace: ***
+    @     0x7f57e2f2a631 (unknown)
+    @     0x7f57e2eff420 (unknown)
+    @     0x7f57e29f000b gsignal
+    @     0x7f57e29cf859 abort
+    @     0x7f57e2da78d1 (unknown)
+    @     0x7f57e2db337c (unknown)
+    @     0x7f57e2db33e7 std::terminate()
+    @     0x7f57e2db3699 __cxa_throw
+    @     0x55d68f14ce9b thrust::cuda_cub::malloc<>()
+    @     0x55d68f14db87 thrust::detail::temporary_allocator<>::allocate()
+    @     0x55d68f16954f thrust::cuda_cub::stable_sort_by_key<>()
+    @     0x55d68f169bdd lbvh::bvh<>::construct()
+    @     0x55d68f16fffd rayjoin::MapOverlayLBVH<>::BuildIndex()
+    @     0x55d68f117a43 rayjoin::RunOverlay()
+    @     0x55d68f113bb1 main
+    @     0x7f57e29d1083 __libc_start_main
+    @     0x55d68f1146de _start
+./run_e2e.sh: line 24: 2392442 Aborted                 (core dumped) /local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Europe/lakes_Europe_Point.cdb -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/Europe/parks_Europe_Point.cdb -serialize=/dev/shm -grid_size=15000 -mode=lbvh -lb=false -v=1 -fau -xsect_factor 0.05 -win=32 -enlarge=2

@@ -1,0 +1,15 @@
+Origin Bound from config, lat: -34.785207 - 37.345587, lon: -25.213468 - 63.437138
+attributes size: 1
+fname=/local/storage/liang/Downloads/Datasets/rasterjoin_backendindex/parks/Africa/parks2
+mname=/local/storage/liang/Downloads/Datasets/rasterjoin_backendindex/parks/Africa/parks2_mapping
+backend index loaded
+Add Polygon collection 1, path: /local/storage/liang/Downloads/Datasets/rasterjoin_polygon/lakes/Africa/lakes.txt
+Polygon file, /local/storage/liang/Downloads/Datasets/rasterjoin_polygon/lakes/Africa/lakes.txt, total polygons: 18156
+Bounds left-bottom -132071016.000000 -116342136.000000, right-top 132195032.000000 114519216.000000
+transformed bound x -132071016.000000 132195032.000000, y -116342136.000000 114519216.000000
+npolys: 18156, vertices: 10802622, mem: 62 MB
+splitx 18, splity: 15
+
+Point Render Time: 94.4353 ms
+Poly Render Time: 922.1755 ms
+1274470		18156	0	1	0	9027	0	94	18	922	3	4629	0	0	100

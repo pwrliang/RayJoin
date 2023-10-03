@@ -1,0 +1,16 @@
+Origin Bound from config, lat: -14.548692 - 71.390482, lon: -179.148909 - 179.778465
+attributes size: 1
+fname=/local/storage/liang/Downloads/Datasets/rasterjoin_backendindex/USAZIPCodeArea/USAZIPCodeArea2
+mname=/local/storage/liang/Downloads/Datasets/rasterjoin_backendindex/USAZIPCodeArea/USAZIPCodeArea2_mapping
+backend index loaded
+Add Polygon collection 1, path: /local/storage/liang/Downloads/Datasets/rasterjoin_polygon/dtl_cnty/dtl_cnty.txt
+Polygon file, /local/storage/liang/Downloads/Datasets/rasterjoin_polygon/dtl_cnty/dtl_cnty.txt, total polygons: 12234
+Point 51.268124, -179.148911, bound: -14.548692 ~ 71.390482, -179.148909 ~ 179.778465
+Bounds left-bottom -535004384.000000 -220405904.000000, right-top -200623840.000000 31019114.000000
+transformed bound x -535004384.000000 -200623840.000000, y -220405904.000000 31019114.000000
+npolys: 12233, vertices: 56222784, mem: 321 MB
+splitx 19, splity: 15
+
+Point Render Time: 6877.9592 ms
+Poly Render Time: 5371.0705 ms
+43299000		12233	0	1	0	47980	1	6877	107	5371	3	31088	0	0	100

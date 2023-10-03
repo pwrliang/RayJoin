@@ -1,0 +1,18 @@
+Origin Bound from config, lat: -55.000000 - -10.000000, lon: 113.000000 - 159.000000
+attributes size: 1
+fname=/local/storage/liang/Downloads/Datasets/rasterjoin_backendindex/parks/Australia/parks2
+mname=/local/storage/liang/Downloads/Datasets/rasterjoin_backendindex/parks/Australia/parks2_mapping
+backend index loaded
+Add Polygon collection 1, path: /local/storage/liang/Downloads/Datasets/rasterjoin_polygon/lakes/Australia/lakes.txt
+Polygon file, /local/storage/liang/Downloads/Datasets/rasterjoin_polygon/lakes/Australia/lakes.txt, total polygons: 14479
+Bounds left-bottom -67640048.000000 -72262336.000000, right-top 68441432.000000 93297856.000000
+transformed bound x -67640048.000000 68441432.000000, y -72262336.000000 93297856.000000
+Cannot triangle 7336
+Cannot triangle 13959
+Cannot triangle 11963
+npolys: 14479, vertices: 6797964, mem: 39 MB
+splitx 8, splity: 9
+
+Point Render Time: 1.0609 ms
+Poly Render Time: 154.9056 ms
+597278		14479	0	1	0	5273	2	1	39	154	4	1875	0	0	100

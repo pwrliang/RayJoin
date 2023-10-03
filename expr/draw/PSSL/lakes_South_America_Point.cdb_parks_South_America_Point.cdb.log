@@ -1,0 +1,16 @@
+./main3 -t odd /local/storage/liang/Downloads/Datasets/point_cdb/lakes/South_America/lakes_South_America_Point.cdb /local/storage/liang/Downloads/Datasets/point_cdb/parks/South_America/parks_South_America_Point.cdb
+Argc 5
+/local/storage/liang/Downloads/Datasets/point_cdb/lakes/South_America/lakes_South_America_Point.cdb
+Reading map 0, file /local/storage/liang/Downloads/Datasets/point_cdb/lakes/South_America/lakes_South_America_Point.cdb
+/local/storage/liang/Downloads/Datasets/point_cdb/parks/South_America/parks_South_America_Point.cdb
+Reading map 1, file /local/storage/liang/Downloads/Datasets/point_cdb/parks/South_America/parks_South_America_Point.cdb
+Intersections: 2939
+number of intersections: 5856
+times in seconds:
+total time:                         0.25432
+data transfer host->device:         0.0930801
+compute work list:                  0.0224049
+compute intersections and topology: 0.0686926
+allocate and transfer device->host: 0.0174071
+create final segs and labels:       0.0527348
+

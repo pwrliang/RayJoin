@@ -1,0 +1,25 @@
+Setting universal min/max...
+Done: 112.971 -54.7384,158.947 -10.1168
+Loading rasterintervals/interval_data/lakes_Australia_binary_interval_data.dat...
+Loaded in 0.008714 seconds
+Loading rasterintervals/interval_data/parks_Australia_binary_interval_data.dat...
+Loaded in 0.013576 seconds
+Loading MBRs...
+parks_Australia: 12809 polygons.
+lakes_Australia: 14475 polygons.
+Begin evaluation...
+Join in pipeline: 
+-----------------------------------
+MBR Filter -> Raster Intervals Filter -> Refinement -> result
+-----------------------------------
+Finished in 0.120389 seconds.
+   MBR Filter time: 0.014820 seconds.
+   Raster Intervals time: 0.049989 seconds.
+   Refinement time: 0.055580 seconds.
+Candidate pairs analysis: 
+   Candidates after MBR Filter: 6842
+   Accepted by RI: 43.189126%
+   Rejected by RI: 44.723765%
+   Inconclusive by RI: 12.087109%
+   Accepted AFTER refinement (as a percentage of the refinement candiadtes): 5.451622%
+Result: 3328 pairs.
