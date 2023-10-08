@@ -7,6 +7,8 @@ import comm_settings
 import sys
 import re
 import pandas as pd
+import matplotlib as mpl
+import itertools
 
 
 def get_time(prefix, map, mode, suffixes):
@@ -36,8 +38,9 @@ def get_time(prefix, map, mode, suffixes):
                 if m is not None:
                     size_BVH.append(float(m.groups()[0]))
 
-    return (np.asarray(size_BVH), np.asarray(ratio_compression), np.asarray(time_ag), np.asarray(time_build),
-            np.asarray(time_query))
+    return (
+        np.asarray(size_BVH) / 1024 / 1024, np.asarray(ratio_compression), np.asarray(time_ag), np.asarray(time_build),
+        np.asarray(time_query))
 
 
 patterns = ['', '\\\\', '\\\\--', '..', '..--']
@@ -50,7 +53,7 @@ def scale_size(size_list, k_scale=1024):
                  np.asarray(size_list) / k_scale)
 
 
-width = 0.5
+width = 0.7
 
 
 def draw_enlarge_lim(prefix):
@@ -126,15 +129,14 @@ def draw_enlarge_lim(prefix):
     plt.show()
 
 
-
 def draw_enlarge_lim_pick(prefix):
     maps = ["lakes_parks_North_America", ]
-    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(10.7, 3.5))
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(11, 3.5))
 
     map = maps[0]
     ax_total = axes[0]
-    ax_bvh = axes[1]
-    ax_query = axes[2]
+    ax_bvh_query = axes[1]
+    ax_memory = axes[2]
 
     enlarge_list = ("1", "1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0")
 
@@ -144,8 +146,8 @@ def draw_enlarge_lim_pick(prefix):
                                                                                    "enlarge",
                                                                                    enlarge_list)
     _, _, _, _, time_pip_rt = get_time(prefix + "/ag_pip_varying_enlarge", map, "enlarge", enlarge_list)
-    titles = ("(a) Total Exec. Time Breakdown", "(b) BVH Construction Time", "(c) Query Time")
-    y_labels = ('Execution Time (ms)', 'Execution Time (ms)', 'Execution Time (ms)')
+    titles = ("(a) Total Exec. Time Breakdown", "(b) BVH Const. and Query Time", "(c) Memory Consumption")
+    y_labels = ('Time (ms)', 'Time (ms)', 'Memory (MB)')
     total_time = time_ag_rt + time_build_rt + time_lsi_rt + time_pip_rt
 
     print("Total", total_time)
@@ -156,15 +158,33 @@ def draw_enlarge_lim_pick(prefix):
                        "BVH Buildup": time_build_rt,
                        "LSI Query": time_lsi_rt,
                        "PIP Query": time_pip_rt})
+    # 1. Choose your desired colormap
+    cmap = plt.get_cmap('gist_gray')
 
-    df.plot(kind="bar", stacked=True, width=width, ax=ax_total, hatch='')
-    ax_bvh.plot(loc, time_build_rt, label="BVH Buildup")
-    ax_query.plot(loc, time_lsi_rt, label="LSI Query")
-    ax_query.plot(loc, time_pip_rt, label="PIP Query")
+    # 2. Segmenting the whole range (from 0 to 1) of the color map into multiple segments
+    slicedCM = cmap(np.linspace(0, 1, 6))
+
+    df.plot(kind="bar", stacked=True, width=width, ax=ax_total, color=slicedCM[1:-1])
+    bars = [thing for thing in ax_total.containers if isinstance(thing, mpl.container.BarContainer)]
+    df.sum(axis=1).plot.bar(facecolor='none', width=width, edgecolor='black', lw=0.8, ax=ax_total)
+
+    patterns = ('', 'xx', '//', r'\\', '\\', '*', 'o', 'O', '.')
+    for i, bar in zip(range(len(bars)), bars):
+        for patch in bar:
+            patch.set_hatch(patterns[i])
+
+    ax_bvh_query.plot(loc, time_build_rt, label="BVH Buildup", color=slicedCM[2], marker='')
+    ax_bvh_query.plot(loc, time_lsi_rt, label="LSI Query", color=slicedCM[3], marker='x')
+    ax_bvh_query.plot(loc, time_pip_rt, label="PIP Query", color=slicedCM[4], marker='*')
+    ax_memory.bar(loc, size_bvh, width=width, label="BVH Memory", color=slicedCM[1])
 
     dydx = diff(ratio_compression) / diff([float(x) for x in enlarge_list])
 
     print("dydx", dydx)
+    print("BVH", time_build_rt)
+    print("LSI", time_lsi_rt)
+    print("PIP", time_pip_rt)
+    print("Memory", size_bvh)
 
     for i in range(3):
         ax = axes[i]
@@ -172,15 +192,19 @@ def draw_enlarge_lim_pick(prefix):
         ylabel = y_labels[i]
         ax.set_xticks(loc, enlarge_list, rotation=0)
         ax.set_title(title, verticalalignment="top")
-        ax.set_xlabel(xlabel='Merging Threshold - $s$')
+        ax.set_xlabel(xlabel='Parameter $s$')
         ax.set_ylabel(ylabel=ylabel, labelpad=1)
         ax.autoscale(tight=True)
 
-        ax.margins(x=0.05, y=0.25)
+        ax.margins(x=0.05, y=0.3)
         # ax.set_ylim((0, 1))
+        # if i == 0:
         ax.legend(loc='upper left', ncol=2, handletextpad=0.3,
-                  fontsize='medium', borderaxespad=0.2, frameon=False)
-    fig.tight_layout()
+                      fontsize='medium', borderaxespad=0.2, frameon=False)
+        # else:
+        #     ax.legend(loc='upper left', ncol=3, handletextpad=0.3,
+        #               fontsize='medium', borderaxespad=0.2, frameon=False)
+    fig.tight_layout(pad=0.2)
     fig.savefig(os.path.join(prefix, 'ag_varying_enlarge.pdf'), format='pdf',
                 bbox_inches='tight')
     plt.show()
