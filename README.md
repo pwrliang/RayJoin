@@ -91,7 +91,8 @@ Just use the script shp2cdb.py, which is under "RayJoin/misc/". Example: `python
 ./polyover_exec -poly1 dataset1.cdb \
     -poly2 dataset2.cdb \
     -mode=rt \
-    -grid_size=20000 \
+    -warmup=5 \ # warmup rounds
+    -repeat=5 \ # number of rounds to evaluate. Average time is reported
     -xsect_factor=0.5
 ```
 
