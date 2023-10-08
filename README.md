@@ -1,4 +1,4 @@
-# RayJoin: Real-Time Spatial Join Processing with Ray-Tracing
+# RayJoin: Fast and Accurate Spatial Join with Ray-Tracing
 
 ## 1. Build
 
