@@ -43,8 +43,8 @@ int main(int argc, char* argv[]) {
   config.print_histo = FLAGS_histo;
   config.profile = FLAGS_profile;
   config.fau = FLAGS_fau;
-  config.new_compress = FLAGS_new_compress;
-  config.compress_iter = FLAGS_compress_iter;
+  config.ag = FLAGS_ag;
+  config.ag_iter = FLAGS_ag_iter;
   config.win = FLAGS_win;
   config.enlarge = FLAGS_enlarge;
 

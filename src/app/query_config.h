@@ -15,9 +15,9 @@ struct QueryConfigRT {
   bool fau = true;
   float xsect_factor = 1.5;
   int win;
-  int compress_iter;
+  int ag_iter;
   float enlarge;
-  bool new_compress;
+  int ag;
   OptixTraversableHandle handle;
   std::shared_ptr<thrust::device_vector<thrust::pair<size_t, size_t>>>
       eid_range;

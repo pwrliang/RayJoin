@@ -263,7 +263,7 @@ void RunLSIQuery(const QueryConfig& config) {
         std::make_shared<thrust::device_vector<thrust::pair<size_t, size_t>>>();
     QueryConfigRT query_config;
     auto rt_engine = lsi_rt->get_rt_engine();
-    auto comp_iter = config.compress_iter;
+    auto comp_iter = config.ag_iter;
     auto win_size = config.win;
     auto area_enlarge = config.enlarge;
     auto ne = d_base_map.get_edges_num();
@@ -272,10 +272,12 @@ void RunLSIQuery(const QueryConfig& config) {
     eid_range->reserve(ne);
 
     timer_next("Adaptive Grouping");
-    if (config.new_compress) {
+    if (config.ag == 0) {
+      FillPrimitives(stream, d_base_map, scaling, aabbs);
+    } else if (config.ag == 1) {
       FillPrimitivesGroupNew(stream, d_base_map, scaling, comp_iter,
                              area_enlarge, aabbs, *eid_range);
-    } else {
+    } else if (config.ag == 2) {
       FillPrimitivesGroup(stream, d_base_map, scaling, win_size, area_enlarge,
                           aabbs, *eid_range);
     }
@@ -461,8 +463,10 @@ void RunPIPQuery(const QueryConfig& config) {
     eid_range->reserve(ne);
 
     timer_next("Adaptive Grouping");
-    if (config.new_compress) {
-      FillPrimitivesGroupNew(stream, d_base_map, scaling, config.compress_iter,
+    if (config.ag == 0) {
+      FillPrimitives(stream, d_base_map, scaling, aabbs);
+    } else if (config.ag == 1) {
+      FillPrimitivesGroupNew(stream, d_base_map, scaling, config.ag_iter,
                              config.enlarge, aabbs, *eid_range);
     } else {
       FillPrimitivesGroup(stream, d_base_map, scaling, config.win,

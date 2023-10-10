@@ -35,8 +35,8 @@ int main(int argc, char* argv[]) {
   config.fau = FLAGS_fau;
   config.profile = FLAGS_profile;
   config.win = FLAGS_win;
-  config.new_comp = FLAGS_new_compress;
-  config.compress_iter = FLAGS_compress_iter;
+  config.ag = FLAGS_ag;
+  config.ag_iter = FLAGS_ag_iter;
   config.enlarge = FLAGS_enlarge;
 
   rayjoin::RunOverlay(config);

@@ -67,15 +67,17 @@ class MapOverlayRT : public MapOverlay<CONTEXT_T> {
     auto& stream = ctx.get_stream();
     const auto& scaling = ctx.get_scaling();
     auto win_size = config_.win;
-    auto compress_iter = config_.compress_iter;
+    auto ag_iter = config_.ag_iter;
     auto area_enlarge = config_.enlarge;
 
     FOR2 {
       auto d_map = ctx.get_map(im)->DeviceObject();
-      if (config_.new_compress) {
-        FillPrimitivesGroupNew(stream, d_map, scaling, compress_iter,
+      if (config_.ag == 0) {
+        FillPrimitives(stream, d_map, scaling, aabbs_);
+      } else if (config_.ag == 1) {
+        FillPrimitivesGroupNew(stream, d_map, scaling, ag_iter,
                                area_enlarge, aabbs_, *eid_range_[im]);
-      } else {
+      } else if (config_.ag == 2) {
         FillPrimitivesGroup(stream, d_map, scaling, win_size, area_enlarge,
                             aabbs_, *eid_range_[im]);
       }
