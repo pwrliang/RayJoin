@@ -1,26 +1,10 @@
-/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/dtl_cnty/dtl_cnty_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/USAZIPCodeArea/USAZIPCodeArea_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=rt              -lb=false              -v=1              -fau              -xsect_factor 0.1              -enlarge=5
-I0929 10:34:46.967983 67464 planar_graph.h:117] Map /local/storage/liang/Downloads/Datasets/point_cdb/dtl_cnty/dtl_cnty_Point.cdb is loaded, chains: 3157 points: 1028000 edges: 1024843, min seg len: 6.56633e-06, max seg len: 0.125003, avg seg len: 0.000320088, stdev: 0.00125728
-I0929 10:34:56.888662 67464 planar_graph.h:117] Map /local/storage/liang/Downloads/Datasets/point_cdb/USAZIPCodeArea/USAZIPCodeArea_Point.cdb is loaded, chains: 134894 points: 23894675 edges: 23759781, min seg len: 9.9e-08, max seg len: 0.958594, avg seg len: 0.000648469, stdev: 0.00152461
-I0929 10:34:57.356393 67464 context.h:51] Bounding Box, Bottom-left: (-179.147, -14.5487), Top-right: (179.778, 71.3905)
-I0929 10:34:57.356405 67464 context.h:58] Scaled Bounding Box, Bottom-left: (-69978809497444, -68768348336364), Top-right: (69978809497443, 68768348336363)
-I0929 10:34:57.356407 67464 context.h:61] Unscaled Bounding Box, Bottom-left: (-179.147, -14.5487), Top-right: (179.778, 71.3905)
-I0929 10:34:59.539544 67464 rt_engine.cu:133] Info: Pipeline parameter "params" size is 176 bytes
-Warning: Program is doing double precision computations. No source location available. The input PTX may not contain debug information (nvcc option: -lineinfo), OptixModuleCompileOptions::debugLevel set to OPTIX_COMPILE_DEBUG_LEVEL_NONE, or no useful information is present for the current block.
-Warning: Program is doing double precision computations. No source location available. The input PTX may not contain debug information (nvcc option: -lineinfo), OptixModuleCompileOptions::debugLevel set to OPTIX_COMPILE_DEBUG_LEVEL_NONE, or no useful information is present for the current block.
-Warning: Program is doing double precision computations. No source location available. The input PTX may not contain debug information (nvcc option: -lineinfo), OptixModuleCompileOptions::debugLevel set to OPTIX_COMPILE_DEBUG_LEVEL_NONE, or no useful information is present for the current block.
-Warning: Program is doing double precision computations. No source location available. The input PTX may not contain debug information (nvcc option: -lineinfo), OptixModuleCompileOptions::debugLevel set to OPTIX_COMPILE_DEBUG_LEVEL_NONE, or no useful information is present for the current block.
-Warning: Program is doing double precision computations. No source location available. The input PTX may not contain debug information (nvcc option: -lineinfo), OptixModuleCompileOptions::debugLevel set to OPTIX_COMPILE_DEBUG_LEVEL_NONE, or no useful information is present for the current block.
-Warning: Program is doing double precision computations. No source location available. The input PTX may not contain debug information (nvcc option: -lineinfo), OptixModuleCompileOptions::debugLevel set to OPTIX_COMPILE_DEBUG_LEVEL_NONE, or no useful information is present for the current block.
-Warning: Program is doing double precision computations. No source location available. The input PTX may not contain debug information (nvcc option: -lineinfo), OptixModuleCompileOptions::debugLevel set to OPTIX_C
-I0929 10:34:59.606604 67464 rt_engine.cu:133] Info: Pipeline parameter "params" size is 152 bytes
-Warning: Program is doing double precision computations. No source location available. The input PTX may not contain debug information (nvcc option: -lineinfo), OptixModuleCompileOptions::debugLevel set to OPTIX_COMPILE_DEBUG_LEVEL_NONE, or no useful information is present for the current block.
-Warning: Program is doing double precision computations. No source location available. The input PTX may not contain debug information (nvcc option: -lineinfo), OptixModuleCompileOptions::debugLevel set to OPTIX_COMPILE_DEBUG_LEVEL_NONE, or no useful information is present for the current block.
-Warning: Program is doing double precision computations. No source location available. The input PTX may not contain debug information (nvcc option: -lineinfo), OptixModuleCompileOptions::debugLevel set to OPTIX_COMPILE_DEBUG_LEVEL_NONE, or no useful information is present for the current block.
-Warning: Program is doing double precision computations. No source location available. The input PTX may not contain debug information (nvcc option: -lineinfo), OptixModuleCompileOptions::debugLevel set to OPTIX_COMPILE_DEBUG_LEVEL_NONE, or no useful information is present for the current block.
-Warning: Program is doing double precision computations. No source location available. The input PTX may not contain debug information (nvcc option: -lineinfo), OptixModuleCompileOptions::debugLevel set to OPTIX_COMPILE_DEBUG_LEVEL_NONE, or no useful information is present for the current block.
-Warning: Program is doing double precision computations. No source location available. The input PTX may not contain debug information (nvcc option: -lineinfo), OptixModuleCompileOptions::debugLevel set to OPTIX_COMPILE_DEBUG_LEVEL_NONE, or no useful information is present for the current block.
-Warning: Program is doing double precision computations. No source location available. The input PTX may not contain debug information (nvcc option: -lineinfo), OptixModuleCompileOptions::debugLevel set to OPTIX_C
-I0929 10:34:59.611913 67464 rt_engine.cu:282] Info: Pipeline statistics
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/dtl_cnty/dtl_cnty_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/USAZIPCodeArea/USAZIPCodeArea_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=rt              -lb=false              -v=1              -fau              -xsect_factor 0.1              -enlarge=3.5
+I1010 14:23:57.105914 1923624 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-dtl_cnty-dtl_cnty_Point.cdb.bin is deserialized, chains: 3157 points: 1028000 edges: 1024843
+I1010 14:23:58.197826 1923624 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-USAZIPCodeArea-USAZIPCodeArea_Point.cdb.bin is deserialized, chains: 134894 points: 23894675 edges: 23759781
+I1010 14:23:58.197868 1923624 context.h:51] Bounding Box, Bottom-left: (-179.147, -14.5487), Top-right: (179.778, 71.3905)
+I1010 14:23:58.197886 1923624 context.h:58] Scaled Bounding Box, Bottom-left: (-69978809497444, -68768348336364), Top-right: (69978809497443, 68768348336363)
+I1010 14:23:58.197889 1923624 context.h:61] Unscaled Bounding Box, Bottom-left: (-179.147, -14.5487), Top-right: (179.778, 71.3905)
+I1010 14:24:00.473158 1923624 rt_engine.cu:282] Info: Pipeline statistics
 	module(s)                            :     1
 	entry function(s)                    :     2
 	trace call(s)                        :     1
@@ -32,7 +16,7 @@ I0929 10:34:59.611913 67464 rt_engine.cu:282] Info: Pipeline statistics
 	basic block(s) in non-entry functions:     1
 	instruction(s) in non-entry functions:     1
 	debug information                    :    no
-I0929 10:34:59.616735 67464 rt_engine.cu:282] Info: Pipeline statistics
+I1010 14:24:00.478196 1923624 rt_engine.cu:282] Info: Pipeline statistics
 	module(s)                            :     1
 	entry function(s)                    :     2
 	trace call(s)                        :     1
@@ -44,54 +28,54 @@ I0929 10:34:59.616735 67464 rt_engine.cu:282] Info: Pipeline statistics
 	basic block(s) in non-entry functions:     1
 	instruction(s) in non-entry functions:     1
 	debug information                    :    no
-I0929 10:34:59.616804 67464 lsi.h:22] Queue size: 113 MB
-I0929 10:34:59.617985 67464 primitive.h:252] Enlarge limit: 5 max iter:5 ne: 1024843 aabbs: 55074 Compress ratio: 0.946261 Time: 0.564 ms
-I0929 10:34:59.618145 67464 rt_engine.cu:397] Building AS, num prims: 55074, Required Temp Size: 4196352 Output Size: 2063488
-I0929 10:34:59.631690 67464 primitive.h:252] Enlarge limit: 5 max iter:5 ne: 23759781 aabbs: 1406359 Compress ratio: 0.940809 Time: 12.76 ms
-I0929 10:34:59.631709 67464 rt_engine.cu:397] Building AS, num prims: 1406359, Required Temp Size: 107105024 Output Size: 52620672
-I0929 10:34:59.636191 67464 lsi_rt.h:50] queries: 1024843
-I0929 10:34:59.636225 67464 rt_engine.h:159] Parm size: 176
-I0929 10:34:59.636240 67464 rt_engine.cu:554] optixLaunch, [w,h,d] = 1024843,1,1
-I0929 10:34:59.645349 67464 rt_engine.h:159] Parm size: 152
-I0929 10:34:59.645356 67464 rt_engine.cu:554] optixLaunch, [w,h,d] = 1028000,1,1
-I0929 10:34:59.648098 67464 rt_engine.h:159] Parm size: 152
-I0929 10:34:59.648106 67464 rt_engine.cu:554] optixLaunch, [w,h,d] = 23894675,1,1
-I0929 10:34:59.664089 67464 rt_engine.h:159] Parm size: 152
-I0929 10:34:59.664101 67464 rt_engine.cu:554] optixLaunch, [w,h,d] = 14783,1,1
-I0929 10:34:59.674947 67464 rt_engine.h:159] Parm size: 152
-I0929 10:34:59.674957 67464 rt_engine.cu:554] optixLaunch, [w,h,d] = 19033,1,1
-I0929 10:34:59.675829 67464 lsi.h:22] Queue size: 113 MB
-I0929 10:34:59.676514 67464 uniform_grid.h:148] Creating the uniform grid, resolution: 2048, Size: 112 MB
-I0929 10:34:59.679164 67464 uniform_grid.h:207] Total Edges in the grid: 25029685, Size: 190 MB
-E0929 10:35:00.782771 67464 run_overlay.cu:37] LSI  xsects (Answer): 131522 xsects (Result): 131600 Error rate: 0.0593057 %
-I0929 10:35:00.782930 67464 run_overlay.cu:48] Checking point in polygon
-I0929 10:35:00.782958 67464 rt_engine.h:159] Parm size: 152
-I0929 10:35:00.782965 67464 rt_engine.cu:554] optixLaunch, [w,h,d] = 1028000,1,1
-I0929 10:35:00.863775 67464 run_overlay.cu:112] Map: 0 passed check
-I0929 10:35:00.863781 67464 run_overlay.cu:48] Checking point in polygon
-I0929 10:35:00.864009 67464 rt_engine.h:159] Parm size: 152
-I0929 10:35:00.864027 67464 rt_engine.cu:554] optixLaunch, [w,h,d] = 23894675,1,1
-I0929 10:35:02.207393 67464 run_overlay.cu:112] Map: 1 passed check
+I1010 14:24:00.478276 1923624 lsi.h:22] Queue size: 113 MB
+I1010 14:24:00.479525 1923624 primitive.h:252] Enlarge limit: 3.5 max iter:5 ne: 1024843 aabbs: 144362 Compress ratio: 0.859137 Time: 0.641 ms
+I1010 14:24:00.479578 1923624 rt_engine.cu:397] Building AS, num prims: 144362, Required Temp Size: 10996096 Output Size: 5404032
+I1010 14:24:00.495424 1923624 primitive.h:252] Enlarge limit: 3.5 max iter:5 ne: 23759781 aabbs: 3404015 Compress ratio: 0.856732 Time: 14.735 ms
+I1010 14:24:00.495441 1923624 rt_engine.cu:397] Building AS, num prims: 3404015, Required Temp Size: 259239040 Output Size: 127361280
+I1010 14:24:00.505501 1923624 lsi_rt.h:50] queries: 1024843
+I1010 14:24:00.505546 1923624 rt_engine.h:159] Parm size: 176
+I1010 14:24:00.505561 1923624 rt_engine.cu:554] optixLaunch, [w,h,d] = 1024843,1,1
+I1010 14:24:00.511996 1923624 rt_engine.h:159] Parm size: 152
+I1010 14:24:00.512003 1923624 rt_engine.cu:554] optixLaunch, [w,h,d] = 1028000,1,1
+I1010 14:24:00.514452 1923624 rt_engine.h:159] Parm size: 152
+I1010 14:24:00.514459 1923624 rt_engine.cu:554] optixLaunch, [w,h,d] = 23894675,1,1
+I1010 14:24:00.532238 1923624 rt_engine.h:159] Parm size: 152
+I1010 14:24:00.532250 1923624 rt_engine.cu:554] optixLaunch, [w,h,d] = 14783,1,1
+I1010 14:24:00.543803 1923624 rt_engine.h:159] Parm size: 152
+I1010 14:24:00.543812 1923624 rt_engine.cu:554] optixLaunch, [w,h,d] = 19033,1,1
+I1010 14:24:00.544574 1923624 lsi.h:22] Queue size: 113 MB
+I1010 14:24:00.545301 1923624 uniform_grid.h:148] Creating the uniform grid, resolution: 2048, Size: 112 MB
+I1010 14:24:00.548264 1923624 uniform_grid.h:207] Total Edges in the grid: 25029685, Size: 190 MB
+E1010 14:24:01.647444 1923624 run_overlay.cu:37] LSI  xsects (Answer): 131522 xsects (Result): 131600 Error rate: 0.0593057 %
+I1010 14:24:01.647590 1923624 run_overlay.cu:48] Checking point in polygon
+I1010 14:24:01.647626 1923624 rt_engine.h:159] Parm size: 152
+I1010 14:24:01.647635 1923624 rt_engine.cu:554] optixLaunch, [w,h,d] = 1028000,1,1
+I1010 14:24:01.726707 1923624 run_overlay.cu:112] Map: 0 passed check
+I1010 14:24:01.726716 1923624 run_overlay.cu:48] Checking point in polygon
+I1010 14:24:01.726944 1923624 rt_engine.h:159] Parm size: 152
+I1010 14:24:01.726953 1923624 rt_engine.cu:554] optixLaunch, [w,h,d] = 23894675,1,1
+I1010 14:24:03.091876 1923624 run_overlay.cu:112] Map: 1 passed check
 Timing results:
- - Read map 0: 1971.46 ms
+ - Read map 0: 163.188 ms
 
- - Read map 1: 10368.6 ms
+ - Read map 1: 1091.73 ms
 
- - Create Context: 1891.83 ms
+ - Create Context: 2063.78 ms
 
- - Create App: 0.170946 ms
+ - Create App: 0.192881 ms
 
- - Init: 369.073 ms
+ - Init: 217.064 ms
 
- - Build Index: 18.774 ms
+ - Build Index: 26.618 ms
 
- - Intersection edges: 9.1331 ms
+ - Intersection edges: 6.46782 ms
 
- - Map 0: Locate vertices in other map: 2.54297 ms
+ - Map 0: Locate vertices in other map: 2.2521 ms
 
- - Map 1: Locate vertices in other map: 5.4419 ms
+ - Map 1: Locate vertices in other map: 5.35893 ms
 
- - Computer output polygons: 22.0492 ms
+ - Computer output polygons: 24.5411 ms
 
- - Check result: 2544.99 ms
+ - Check result: 2564.36 ms
 

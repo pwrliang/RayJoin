@@ -37,7 +37,7 @@ series_id = 1
 
 def draw(prefix):
     labels = (
-        r"BlockGroup $\bowtie$ WaterBodies",
+        r"Block $\bowtie$ Water",
         r"LKAS $\bowtie$ PKAS",
         r"LKEU $\bowtie$ PKEU",
         r"LKNA $\bowtie$ PKNA",
@@ -68,7 +68,7 @@ def draw(prefix):
         algo=""
         if 'lsi' in prefix:
             marker = '*'
-            method = "map"
+            method = "edges"
             algo="LSI"
         else:
             marker = 'x'

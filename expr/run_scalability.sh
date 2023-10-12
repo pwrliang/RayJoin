@@ -24,7 +24,7 @@ function run() {
              -sample_rate=$sample_rate \
              -warmup=$n_warmup \
              -repeat=$n_repeat \
-             -enlarge=1 \
+             -ag=0 \
              -check=false"
 
     echo "$cmd" >"${log_file}.tmp"

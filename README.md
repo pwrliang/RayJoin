@@ -139,7 +139,7 @@ evalute RayJoin with the following commands.
 
 ### Reproduce
 ### Scalability
-1. LSI `./run_scalability.sh -s=map --lsi-query`
+1. LSI `./run_scalability.sh -s=edges --lsi-query`
 2. PIP `./run_scalability.sh -s=points --pip-query`
 ### AG
 1. LSI `./run_ag.sh --lsi-vary-enlarge-lim`

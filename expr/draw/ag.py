@@ -192,7 +192,7 @@ def draw_enlarge_lim_pick(prefix):
         ylabel = y_labels[i]
         ax.set_xticks(loc, enlarge_list, rotation=0)
         ax.set_title(title, verticalalignment="top")
-        ax.set_xlabel(xlabel='Parameter $s$')
+        ax.set_xlabel(xlabel='Merging Threshold $s$')
         ax.set_ylabel(ylabel=ylabel, labelpad=1)
         ax.autoscale(tight=True)
 
@@ -200,13 +200,15 @@ def draw_enlarge_lim_pick(prefix):
         # ax.set_ylim((0, 1))
         # if i == 0:
         ax.legend(loc='upper left', ncol=2, handletextpad=0.3,
-                      fontsize='medium', borderaxespad=0.2, frameon=False)
+                      fontsize=11, borderaxespad=0.2, frameon=False)
         # else:
         #     ax.legend(loc='upper left', ncol=3, handletextpad=0.3,
         #               fontsize='medium', borderaxespad=0.2, frameon=False)
-    fig.tight_layout(pad=0.2)
+    plt.subplots_adjust(wspace=0.01, hspace=0)
+    fig.tight_layout(pad=0.1)
     fig.savefig(os.path.join(prefix, 'ag_varying_enlarge.pdf'), format='pdf',
                 bbox_inches='tight')
+
     plt.show()
 
 
