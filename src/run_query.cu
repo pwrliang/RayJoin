@@ -273,7 +273,7 @@ void RunLSIQuery(const QueryConfig& config) {
 
     timer_next("Adaptive Grouping");
     if (config.ag == 0) {
-      FillPrimitives(stream, d_base_map, scaling, aabbs);
+      FillPrimitives(stream, d_base_map, scaling, aabbs, *eid_range);
     } else if (config.ag == 1) {
       FillPrimitivesGroupNew(stream, d_base_map, scaling, comp_iter,
                              area_enlarge, aabbs, *eid_range);
@@ -464,7 +464,7 @@ void RunPIPQuery(const QueryConfig& config) {
 
     timer_next("Adaptive Grouping");
     if (config.ag == 0) {
-      FillPrimitives(stream, d_base_map, scaling, aabbs);
+      FillPrimitives(stream, d_base_map, scaling, aabbs, *eid_range);
     } else if (config.ag == 1) {
       FillPrimitivesGroupNew(stream, d_base_map, scaling, config.ag_iter,
                              config.enlarge, aabbs, *eid_range);

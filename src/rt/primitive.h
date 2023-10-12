@@ -86,10 +86,13 @@ struct Uint2Less {
 template <typename MAP_T, typename SCALING_T>
 void FillPrimitives(Stream& stream, const MAP_T& d_map,
                     const SCALING_T& scaling,
-                    thrust::device_vector<OptixAabb>& aabbs) {
+                    thrust::device_vector<OptixAabb>& aabbs,
+                    thrust::device_vector<thrust::pair<size_t, size_t>>& eid_range) {
   auto ne = d_map.get_edges_num();
   aabbs.resize(ne);
+  eid_range.resize(ne);
   ArrayView<OptixAabb> d_aabbs(aabbs);
+  ArrayView<thrust::pair<size_t, size_t>> d_eid_range(eid_range);
 
   ForEach(stream, ne, [=] __device__(size_t eid) mutable {
     const auto& e = d_map.get_edge(eid);
@@ -102,6 +105,7 @@ void FillPrimitives(Stream& stream, const MAP_T& d_map,
     auto x2 = scaling.UnscaleX(p2.x);
     auto y2 = scaling.UnscaleY(p2.y);
     auto& aabb = d_aabbs[eid];
+    d_eid_range[eid] = thrust::make_pair(eid, eid + 1);
 
     aabb.minX = next_float_from_double(min(x1, x2), -1, ROUNDING_ITER);
     aabb.maxX = next_float_from_double(max(x1, x2), 1, ROUNDING_ITER);
