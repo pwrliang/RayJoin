@@ -47,7 +47,6 @@ struct np_local {
   TMetaData meta_data;
 };
 
-// TODO(liang): revisit CTAWorkScheduler and #define NO_CTA_WARP_INTRINSICS
 template <typename TMetaData>
 struct CTAWorkScheduler {
   template <typename TWork>
