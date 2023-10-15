@@ -6,9 +6,7 @@ function run() {
   map1=$1
   map2=$2
   query=$3
-  sample=$4
-  sample_rate=$5
-  log_file=$6
+  log_file=$4
 
   if [[ ! -f "${log_file}" ]]; then
     cmd="$exec -poly1 $map1 \
@@ -18,10 +16,7 @@ function run() {
              -v=1 \
              -query=$query \
              -seed=1 \
-             -xsect_factor $DEFAULT_XSECT_FACTOR \
-             -sample_map_id=1 \
-             -sample=$sample \
-             -sample_rate=$sample_rate \
+             -xsect_factor 1 \
              -warmup=$n_warmup \
              -repeat=$n_repeat \
              -ag=0 \
@@ -36,10 +31,9 @@ function run() {
   fi
 }
 
-function lsi_varying_sample_rate() {
+function lsi_scalability() {
   debug=$1
-  sample=$2
-  out_dir="scal_lsi"
+  out_dir="scal_lsi_synthetic"
   exec="${BIN_HOME_RELEASE}"/bin/query_exec
   if [[ $debug -eq 1 ]]; then
     out_dir="${out_dir}_debug"
@@ -54,30 +48,19 @@ function lsi_varying_sample_rate() {
     n_repeat=1
   fi
 
-  for ((j = 0; j < "${#SAMPLE_RATES[@]}"; j++)); do
-    sample_rate="${SAMPLE_RATES[j]}"
-
-    for ((i = 0; i < "${#MAPS1[@]}"; i++)); do
-      map1=${MAPS1[$i]}
-      map2=${MAPS2[$i]}
-      out_prefix="${out_dir}/${map1}_${map2}_${sample}_${sample_rate}"
+  for dist in uniform gaussian; do
+    for n in 1000000 2000000 3000000 4000000 5000000; do
+      out_prefix="${out_dir}/${dist}_${n}"
       log_file="${out_prefix}.log"
-      run "$DATASET_ROOT/point_cdb/${map1}/${map1}_Point.cdb" "$DATASET_ROOT/point_cdb/${map2}/${map2}_Point.cdb" "lsi" "$sample" "$sample_rate" "$log_file"
-    done
-
-    for ((i = 0; i < "${#CONTINENTS[@]}"; i++)); do
-      con=${CONTINENTS[$i]}
-      out_prefix="${out_dir}/lakes_parks_${con}_${sample}_${sample_rate}"
-      log_file="${out_prefix}.log"
-      run "$DATASET_ROOT/point_cdb/lakes/$con/lakes_${con}_Point.cdb" "$DATASET_ROOT/point_cdb/parks/$con/parks_${con}_Point.cdb" "lsi" "$sample" "$sample_rate" "$log_file"
+      run "$DATASET_ROOT/point_cdb/synthetic/${dist}_n_5000000_seed_1.cdb" \
+        "$DATASET_ROOT/point_cdb/synthetic/${dist}_n_${n}_seed_2.cdb" "lsi" "$log_file"
     done
   done
 }
 
-function pip_varying_sample_rate() {
+function pip_scalability() {
   debug=$1
-  sample=$2
-  out_dir="scal_pip"
+  out_dir="scal_pip_synthetic"
   exec="${BIN_HOME_RELEASE}"/bin/query_exec
   if [[ $debug -eq 1 ]]; then
     out_dir="${out_dir}_debug"
@@ -92,28 +75,17 @@ function pip_varying_sample_rate() {
     n_repeat=1
   fi
 
-  for ((j = 0; j < "${#SAMPLE_RATES[@]}"; j++)); do
-    sample_rate="${SAMPLE_RATES[j]}"
-
-    for ((i = 0; i < "${#MAPS1[@]}"; i++)); do
-      map1=${MAPS1[$i]}
-      map2=${MAPS2[$i]}
-      out_prefix="${out_dir}/${map1}_${map2}_${sample}_${sample_rate}"
+  for dist in uniform gaussian; do
+    for n in 1000000 2000000 3000000 4000000 5000000; do
+      out_prefix="${out_dir}/${dist}_${n}"
       log_file="${out_prefix}.log"
-      run "$DATASET_ROOT/point_cdb/${map1}/${map1}_Point.cdb" "$DATASET_ROOT/point_cdb/${map2}/${map2}_Point.cdb" "pip" "$sample" "$sample_rate" "$log_file"
-    done
-
-    for ((i = 0; i < "${#CONTINENTS[@]}"; i++)); do
-      con=${CONTINENTS[$i]}
-      out_prefix="${out_dir}/lakes_parks_${con}_${sample}_${sample_rate}"
-      log_file="${out_prefix}.log"
-      run "$DATASET_ROOT/point_cdb/lakes/$con/lakes_${con}_Point.cdb" "$DATASET_ROOT/point_cdb/parks/$con/parks_${con}_Point.cdb" "pip" "$sample" "$sample_rate" "$log_file"
+      run "$DATASET_ROOT/point_cdb/synthetic/${dist}_n_5000000_seed_1.cdb" \
+        "$DATASET_ROOT/point_cdb/synthetic/${dist}_n_${n}_seed_2.cdb" "pip" "$log_file"
     done
   done
 }
 
 DEBUG=0
-SAMPLE=""
 for i in "$@"; do
   case $i in
   -b | --build)
@@ -129,16 +101,12 @@ for i in "$@"; do
     DEBUG=1
     shift
     ;;
-  -s=* | --sample=*)
-    SAMPLE="${i#*=}"
-    shift
-    ;;
   --lsi-query)
-    lsi_varying_sample_rate $DEBUG "$SAMPLE"
+    lsi_scalability $DEBUG
     shift
     ;;
   --pip-query)
-    pip_varying_sample_rate $DEBUG "$SAMPLE"
+    pip_scalability $DEBUG
     shift
     ;;
   --* | -*)
