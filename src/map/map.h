@@ -111,7 +111,6 @@ class Map {
       const pinned_vector<typename cuda_vec<SRC_COORD_T>::type_2d>& points,
       const pinned_vector<edge_t>& edges) {
     points_.resize(points.size());
-    // copy to device and calculate edge equations
     edges_ = edges;
 
     ArrayView<typename PlanarGraph<SRC_COORD_T>::point_t> src_points(
@@ -127,6 +126,7 @@ class Map {
               dst_points[point_idx].y = scaling.ScaleY(y);
             });
 
+    // copy to device and calculate edge equations
     LaunchKernel(
         stream,
         [=] __device__(ArrayView<point_t> points, ArrayView<edge_t> edges) {
@@ -161,13 +161,11 @@ class Map {
   template <typename SRC_COORD_T>
   void LoadFrom(Stream& stream, const Scaling<SRC_COORD_T, COORD_T>& scaling,
                 const PlanarGraph<SRC_COORD_T>& pgraph) {
-    std::vector<edge_t> edges;
-
-    edges.reserve(pgraph.row_index.size());
     points_.resize(pgraph.points.size());
+    edges_.resize(pgraph.points.size() - pgraph.chains.size());
 
     ArrayView<typename PlanarGraph<SRC_COORD_T>::point_t> src_points(
-        pgraph.points);  // src_points is pinned memory
+        pgraph.points);
     ArrayView<point_t> dst_points(points_);
 
     LaunchKernel(stream, [=] __device__() mutable {
@@ -181,62 +179,69 @@ class Map {
       }
     });
 
-    // split chains into edges
-    for (size_t ichain = 0; ichain < pgraph.chains.size(); ichain++) {
-      const auto& chain = pgraph.chains[ichain];
-
-      for (auto p_idx = pgraph.row_index[ichain];
-           p_idx < pgraph.row_index[ichain + 1] - 1; p_idx++) {
-        edge_t e;
-        e.eid = p_idx - ichain;  // n points n-1 edges
-        e.p1_idx = p_idx;
-        e.p2_idx = p_idx + 1;
-        e.left_polygon_id = chain.left_polygon_id;
-        e.right_polygon_id = chain.right_polygon_id;
-
-        if (pgraph.points[e.p1_idx].x == pgraph.points[e.p2_idx].x &&
-            pgraph.points[e.p1_idx].y == pgraph.points[e.p2_idx].y) {
-          LOG(FATAL) << "Map " << id_ << " Chain " << chain.id << " lpol "
-                     << e.left_polygon_id << ", rpol " << e.right_polygon_id
-                     << ", edge " << p_idx - 1 << " has zero-len edge.";
-        }
-        edges.push_back(e);
-      }
-    }
-
     // copy to device and calculate edge equations
-    edges_ = edges;
+
+    ArrayView<Chain> v_chains(pgraph.chains);
+    ArrayView<index_t> v_row_index(pgraph.row_index);
+
     LaunchKernel(
         stream,
         [=] __device__(ArrayView<point_t> points, ArrayView<edge_t> edges) {
-          for (unsigned int eid = TID_1D; eid < edges.size();
-               eid += TOTAL_THREADS_1D) {
-            auto& e = edges[eid];
-            const auto& p1 = points[e.p1_idx];
-            const auto& p2 = points[e.p2_idx];
-            auto x1 = p1.x;
-            auto y1 = p1.y;
-            auto x2 = p2.x;
-            auto y2 = p2.y;
+          auto warp_id = TID_1D / 32;
+          auto n_warps = TOTAL_THREADS_1D / 32;
+          auto lane_id = threadIdx.x % 32;
 
-            e.a = y1 - y2;
-            e.b = x2 - x1;
-            e.c = -(COEFFICIENT_T) x1 * e.a - (COEFFICIENT_T) y1 * e.b;
+          for (size_t ichain = warp_id; ichain < v_chains.size();
+               ichain += n_warps) {
+            const auto& chain = v_chains[ichain];
 
-            assert(e.a != 0 || e.b != 0);
+            for (auto p_idx = v_row_index[ichain] + lane_id;
+                 p_idx < v_row_index[ichain + 1] - 1; p_idx += 32) {
+              auto eid = p_idx - ichain;  // n points n-1 edges
+              auto& e = edges[eid];
 
-            if (e.b < 0) {
-              e.a = -e.a;
-              e.b = -e.b;
-              e.c = -e.c;
+              e.eid = p_idx - ichain;  // n points n-1 edges
+              e.p1_idx = p_idx;
+              e.p2_idx = p_idx + 1;
+              e.left_polygon_id = chain.left_polygon_id;
+              e.right_polygon_id = chain.right_polygon_id;
+
+              const auto& p1 = points[e.p1_idx];
+              const auto& p2 = points[e.p2_idx];
+              auto x1 = p1.x;
+              auto y1 = p1.y;
+              auto x2 = p2.x;
+              auto y2 = p2.y;
+
+              e.a = y1 - y2;
+              e.b = x2 - x1;
+              e.c = -(COEFFICIENT_T) x1 * e.a - (COEFFICIENT_T) y1 * e.b;
+
+              assert(e.a != 0 || e.b != 0);
+
+              if (e.b < 0) {
+                e.a = -e.a;
+                e.b = -e.b;
+                e.c = -e.c;
+              }
             }
           }
         },
         ArrayView<point_t>(points_), ArrayView<edge_t>(edges_));
 
     stream.Sync();
-    h_points_ = points_;
-    h_edges_ = edges;
+  }
+
+  /**
+   * Copy points and edges from device to host for debugging only
+   */
+  void D2H() {
+    if (h_points_.empty()) {
+      h_points_ = points_;
+    }
+    if (h_edges_.empty()) {
+      h_edges_ = edges_;
+    }
   }
 
   dev_map_t DeviceObject() const {

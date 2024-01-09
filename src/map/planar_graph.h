@@ -32,7 +32,7 @@ struct Chain {
 template <class COORD_T>
 struct PlanarGraph {
   using point_t = typename cuda_vec<COORD_T>::type_2d;
-  std::vector<Chain> chains;
+  pinned_vector<Chain> chains;
   pinned_vector<index_t> row_index;  // organized in chains
   pinned_vector<point_t> points;
   BoundingBox<COORD_T> bb;
@@ -62,7 +62,7 @@ inline std::shared_ptr<PlanarGraph<COORD_T>> read_pgraph(const char* path) {
     bool bad_line;
 
     if (np == 0) {
-      g.chains.template emplace_back();
+      g.chains.push_back(Chain());
       curr_chain = &g.chains.back();
 
       bad_line = !(iss >> curr_chain->id >> np >> curr_chain->first_point_idx >>
@@ -122,7 +122,6 @@ inline std::shared_ptr<PlanarGraph<COORD_T>> read_pgraph(const char* path) {
           << ", max seg len: "
           << *std::max_element(seg_lens.begin(), seg_lens.end())
           << ", avg seg len: " << mean << ", stdev: " << stdev;
-
   return pgraph;
 }
 
@@ -217,7 +216,6 @@ inline std::shared_ptr<PlanarGraph<COORD_T>> deserialize_pgraph(
           << " is deserialized, chains: " << pgraph->chains.size()
           << " points: " << pgraph->points.size()
           << " edges: " << pgraph->points.size() - pgraph->chains.size();
-
   return pgraph;
 }
 

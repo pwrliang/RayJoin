@@ -61,6 +61,9 @@ void CheckResult(CONTEXT_T& ctx, std::shared_ptr<OVERLAY_IMPL_T> overlay,
     auto base_map = ctx.get_map(1 - im);
     auto scaling = ctx.get_scaling();
 
+    query_map->D2H();
+    base_map->D2H();
+
     for (size_t point_idx = 0; point_idx < n_points; point_idx++) {
       auto closest_eid_ans = closest_eids_ans[point_idx];
       auto closest_eid_res = closest_eids_res[point_idx];
@@ -123,10 +126,8 @@ void RunOverlay(const OverlayConfig& config) {
   timer_next("Read map 1");
   auto g2 = load_from<coord_t>(config.map2_path, config.serialize_prefix);
 
-  timer_next("Create Context");
-  context_t ctx({g1, g2});
-
   timer_next("Create App");
+  context_t ctx({g1, g2});
   std::shared_ptr<MapOverlay<context_t>> overlay;
 
   if (config.mode == "rt") {
@@ -166,6 +167,9 @@ void RunOverlay(const OverlayConfig& config) {
   } else {
     LOG(FATAL) << "Illegal mode: " << config.mode;
   }
+
+  timer_next("Load Data");
+  ctx.LoadToDevice();
 
   timer_next("Init");
   overlay->Init();

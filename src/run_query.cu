@@ -194,11 +194,9 @@ void RunLSIQuery(const QueryConfig& config) {
     base_pgraph = sample(base_pgraph);
   }
 
-  timer_next("Create Context");
+  timer_next("Generate Workloads");
   context_t* ctx;
   LSI<context_t>* lsi;
-
-  timer_next("Generate Workloads");
 
   if (config.query_path.empty()) {
     ctx = new context_t(base_pgraph);
@@ -240,6 +238,9 @@ void RunLSIQuery(const QueryConfig& config) {
   } else {
     LOG(FATAL) << "Invalid index type: " << config.mode;
   }
+
+  timer_next("Load Data");
+  ctx->LoadToDevice();
 
   timer_next("Init");
   auto d_base_map = ctx->get_map(base_map_id)->DeviceObject();
@@ -364,12 +365,10 @@ void RunPIPQuery(const QueryConfig& config) {
     base_pgraph = sample(base_pgraph);
   }
 
-  timer_next("Create Context");
+  timer_next("Generate Workloads");
   context_t* ctx;
   PIP<context_t>* pip;
   thrust::device_vector<point_t> query_points;
-
-  timer_next("Generate Workloads");
 
   if (config.query_path.empty()) {
     ctx = new context_t(base_pgraph);
@@ -440,6 +439,9 @@ void RunPIPQuery(const QueryConfig& config) {
   } else {
     LOG(FATAL) << "Invalid index type: " << config.mode;
   }
+
+  timer_next("Load Data");
+  ctx->LoadToDevice();
 
   timer_next("Init");
   auto d_base_map = ctx->get_map(base_map_id)->DeviceObject();
