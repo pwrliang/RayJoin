@@ -13,14 +13,14 @@ jobs:
         run: |
           mkdir debug
           cd debug
-          cmake .. -DCMAKE_BUILD_TYPE=Debug
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=/home/geng.161/.local/NVIDIA-OptiX-SDK-8.0.0-linux64-x86_64
           make
 
       - name: Build Release
         run: |
           mkdir release
           cd release
-          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/home/geng.161/.local/NVIDIA-OptiX-SDK-8.0.0-linux64-x86_64
           make
       - name: Test
         run: |
