@@ -4,7 +4,6 @@
 #define RAYJOIN_SHARED_ARRAY_H
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
-#include <thrust/system/cuda/experimental/pinned_allocator.h>
 
 #include "util/util.h"
 #include "util/stream.h"
@@ -16,8 +15,7 @@ class SharedArray {
 
  public:
   using device_t = thrust::device_vector<T>;
-  using host_t =
-      thrust::host_vector<T, thrust::cuda::experimental::pinned_allocator<T>>;
+  using host_t = pinned_vector<T>;
 
   SharedArray() = default;
 

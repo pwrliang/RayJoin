@@ -3,7 +3,6 @@
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 #include <thrust/swap.h>
-#include <thrust/system/cuda/experimental/pinned_allocator.h>
 
 #include "util/util.h"
 namespace rayjoin {
@@ -16,8 +15,7 @@ class ArrayView {
       : data_(const_cast<T*>(thrust::raw_pointer_cast(vec.data()))),
         size_(vec.size()) {}
 
-  ArrayView(const thrust::host_vector<
-            T, thrust::cuda::experimental::pinned_allocator<T>>& vec)
+  ArrayView(const pinned_vector<T>& vec)
       : data_(const_cast<T*>(thrust::raw_pointer_cast(vec.data()))),
         size_(vec.size()) {}
 

@@ -2,7 +2,8 @@
 #define RAYJOIN_UTIL_H
 #include <cuda_runtime.h>
 #include <thrust/host_vector.h>
-#include <thrust/system/cuda/experimental/pinned_allocator.h>
+#include <thrust/mr/allocator.h>
+#include <thrust/system/cuda/memory_resource.h>
 
 #if defined(__CUDACC__) || defined(__CUDABE__)
 #define DEV_HOST __device__ __host__
@@ -57,8 +58,10 @@ inline void KernelSizing(dim3& grid_dims, dim3& block_dims, size_t work_size) {
   block_dims = {MAX_BLOCK_SIZE, 1, 1};
   grid_dims = {(unsigned int) round_up(work_size, block_dims.x), 1, 1};
 }
-
+// CUDA 12
+using mr_pinned = thrust::system::cuda::universal_host_pinned_memory_resource;
 template <typename T>
 using pinned_vector =
-    thrust::host_vector<T, thrust::cuda::experimental::pinned_allocator<T>>;
+    thrust::host_vector<T,
+                        thrust::mr::stateless_resource_allocator<T, mr_pinned>>;
 #endif  // RAYJOIN_UTIL_H

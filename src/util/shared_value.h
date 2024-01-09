@@ -3,7 +3,6 @@
 
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
-#include <thrust/system/cuda/experimental/pinned_allocator.h>
 
 #include "util/stream.h"
 #include "util/util.h"
@@ -65,8 +64,7 @@ class SharedValue {
 
  private:
   thrust::device_vector<T> d_buffer_;
-  thrust::host_vector<T, thrust::cuda::experimental::pinned_allocator<T>>
-      h_buffer_;
+  pinned_vector<T> h_buffer_;
 };
 }  // namespace rayjoin
 

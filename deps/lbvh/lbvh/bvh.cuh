@@ -15,6 +15,7 @@
 #include <thrust/swap.h>
 #include <thrust/transform.h>
 #include <thrust/tuple.h>
+#include <thrust/unique.h>
 
 #include "aabb.cuh"
 #include "morton_code.cuh"
@@ -150,7 +151,7 @@ void construct_internal_nodes(
   thrust::for_each(
       thrust::device, thrust::make_counting_iterator<unsigned int>(0),
       thrust::make_counting_iterator<unsigned int>(num_objects - 1),
-      [self, node_code, num_objects] __device__(const unsigned int idx) {
+      [self, node_code, num_objects] __device__ __host__ (const unsigned int idx) {
         self.nodes[idx].object_idx = 0xFFFFFFFF;  //  internal nodes
 
         const uint2 ij = determine_range(node_code, num_objects, idx);
@@ -218,7 +219,10 @@ class bvh {
   using aabb_getter_type = AABBGetter;
   using morton_code_calculator_type = MortonCodeCalculator;
   using pinned_vector = thrust::host_vector<
-      object_type, thrust::cuda::experimental::pinned_allocator<object_type>>;
+      object_type,
+      thrust::mr::stateless_resource_allocator<
+          object_type,
+          thrust::system::cuda::universal_host_pinned_memory_resource>>;
 
  public:
   bvh(const thrust::device_vector<object_type>& objects,
@@ -313,7 +317,7 @@ class bvh {
 
     const auto aabb_whole = thrust::reduce(
         aabbs_.begin() + num_internal_nodes, aabbs_.end(), default_aabb,
-        [] __device__(const aabb_type& lhs, const aabb_type& rhs) {
+        [] __device__ __host__(const aabb_type& lhs, const aabb_type& rhs) {
           return merge(lhs, rhs);
         });
     t2 = std::chrono::high_resolution_clock::now();
@@ -365,7 +369,7 @@ class bvh {
     if (!morton_code_is_unique) {
       thrust::transform(
           morton.begin(), morton.end(), indices.begin(), morton64.begin(),
-          [] __device__(const unsigned int m, const unsigned int idx) {
+          [] __device__ __host__(const unsigned int m, const unsigned int idx) {
             unsigned long long int m64 = m;
             m64 <<= 32;
             m64 |= idx;
@@ -391,7 +395,7 @@ class bvh {
     t1 = std::chrono::high_resolution_clock::now();
     thrust::transform(indices.begin(), indices.end(),
                       this->nodes_.begin() + num_internal_nodes,
-                      [] __device__(const index_type idx) {
+                      [] __device__ __host__(const index_type idx) {
                         node_type n;
                         n.parent_idx = 0xFFFFFFFF;
                         n.left_idx = 0xFFFFFFFF;
@@ -429,7 +433,7 @@ class bvh {
         thrust::device,
         thrust::make_counting_iterator<index_type>(num_internal_nodes),
         thrust::make_counting_iterator<index_type>(num_nodes),
-        [self, flags] __device__(index_type idx) {
+        [self, flags] __device__ (index_type idx) {
           unsigned int parent = self.nodes[idx].parent_idx;
           while (parent != 0xFFFFFFFF)  // means idx == 0
           {
