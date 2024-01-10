@@ -7,6 +7,10 @@ function run() {
   map2=$2
   enlarge=$3
   log_file=$4
+  ag=1
+  if [[ $enlarge -eq 0 ]]; then
+    ag=0
+  fi
 
   cmd="$exec -poly1 ${map1} \
              -poly2 ${map2} \
@@ -17,6 +21,7 @@ function run() {
              -fau \
              -xsect_factor $DEFAULT_XSECT_FACTOR \
              -enlarge=$enlarge \
+             -ag=$ag \
              -check=false"
 
   if [[ ! -f "${log_file}" ]]; then
@@ -32,7 +37,7 @@ function run() {
 function ag_varying_enlarge_lim() {
   debug=$1
   query=$2
-  enlarge_lims=(1 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0)
+  enlarge_lims=(0 1 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0)
   out_dir="ag_${query}_varying_enlarge"
   exec="${BIN_HOME_RELEASE}"/bin/query_exec
   if [[ $debug -eq 1 ]]; then

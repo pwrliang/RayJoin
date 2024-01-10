@@ -23,22 +23,27 @@ void CheckResult(CONTEXT_T& ctx, std::shared_ptr<OVERLAY_IMPL_T> overlay,
 
   QueryConfigGrid query_config;
 
+  LOG(INFO) << "Checking LSI Results";
   query_config.xsect_factor = config.xsect_factor;
+  query_config.grid_size = config.grid_size;
+  query_config.lb = true;
   cuda_grid.set_config(query_config);
   cuda_grid.Init();
   cuda_grid.BuildIndex();
-  cuda_grid.IntersectEdge(0);
+  cuda_grid.IntersectEdge(1);
   {
     auto n_xsects_ans = cuda_grid.get_xsect_edges().size();
     auto n_xsects_res = overlay->get_xsect_edges().size();
-    int n_diff = abs((int) (n_xsects_ans - n_xsects_res));
 
-    if (n_diff != 0) {
+    // it is possible that rt finds more xsects than the grid due to the
+    // numerical issue of the grid
+    if (n_xsects_ans > n_xsects_res) {
+      int n_diff = n_xsects_ans - n_xsects_res;
       LOG(ERROR) << "LSI "
                  << " xsects (Answer): " << n_xsects_ans
                  << " xsects (Result): " << n_xsects_res
-                 << " Error rate: " << (double) n_diff / n_xsects_ans * 100
-                 << " %";
+                 << " False negative rate: "
+                 << (double) n_diff / n_xsects_ans * 100 << " %";
     } else {
       LOG(INFO) << "LSI passed check";
     }
@@ -47,7 +52,6 @@ void CheckResult(CONTEXT_T& ctx, std::shared_ptr<OVERLAY_IMPL_T> overlay,
   FOR2 {
     LOG(INFO) << "Checking point in polygon";
 
-    overlay->LocateVerticesInOtherMap(im);
     cuda_grid.LocateVerticesInOtherMap(im);
 
     auto closest_eids_ans = cuda_grid.get_closet_eids(im);
@@ -112,7 +116,7 @@ void CheckResult(CONTEXT_T& ctx, std::shared_ptr<OVERLAY_IMPL_T> overlay,
                  << " n diff: " << n_diff
                  << " Error rate: " << (double) n_diff / n_points * 100 << " %";
     } else {
-      LOG(INFO) << "Map: " << im << " passed check";
+      LOG(INFO) << "Map: " << im << " PIP passed check";
     }
   }
 }
@@ -122,8 +126,11 @@ void RunOverlay(const OverlayConfig& config) {
   timer_start();
 
   timer_next("Read map 0");
+  LOG(INFO) << "Reading map 0 from " << config.map1_path;
   auto g1 = load_from<coord_t>(config.map1_path, config.serialize_prefix);
+
   timer_next("Read map 1");
+  LOG(INFO) << "Reading map 1 from " << config.map2_path;
   auto g2 = load_from<coord_t>(config.map2_path, config.serialize_prefix);
 
   timer_next("Create App");
