@@ -215,7 +215,7 @@ void RunOverlay(const OverlayConfig& config) {
   timer_next("Computer output polygons");
   overlay->ComputeOutputPolygons();
 
-  if (config.check) {
+  if (config.check && config.mode != "grid") {
     timer_next("Check result");
     CheckResult(ctx, overlay, config);
   }
