@@ -1,0 +1,35 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/query_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Asia/lakes_Asia_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/Asia/parks_Asia_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=grid              -lb=false              -v=1              -query=lsi              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0110 12:28:12.450152 1516722 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-Asia-lakes_Asia_Point.cdb.bin is deserialized, chains: 194573 points: 10541220 edges: 10346647
+I0110 12:28:12.724982 1516722 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-Asia-parks_Asia_Point.cdb.bin is deserialized, chains: 277198 points: 12209639 edges: 11932441
+I0110 12:28:12.725008 1516722 context.h:51] Bounding Box, Bottom-left: (-179.972, -10.8197), Top-right: (179.984, 81.2255)
+I0110 12:28:12.725024 1516722 context.h:58] Scaled Bounding Box, Bottom-left: (-69979919611218, -68872256062147), Top-right: (69979919611217, 68872256062146)
+I0110 12:28:12.725026 1516722 context.h:61] Unscaled Bounding Box, Bottom-left: (-179.972, -10.8197), Top-right: (179.984, 81.2255)
+I0110 12:28:12.752370 1516722 run_query.cu:228] Queue capacity: 2227908
+I0110 12:28:12.752377 1516722 lsi.h:22] Queue size: 101 MB
+I0110 12:28:12.761719 1516722 uniform_grid.h:148] Creating the uniform grid, resolution: 15000, Size: 6008 MB
+I0110 12:28:12.776675 1516722 uniform_grid.h:207] Total Edges in the grid: 24355492, Size: 185 MB
+I0110 12:28:17.361742 1516722 run_query.cu:300] Iter: 0
+I0110 12:28:18.271081 1516722 run_query.cu:300] Iter: 1
+I0110 12:28:19.208747 1516722 run_query.cu:300] Iter: 2
+I0110 12:28:20.117354 1516722 run_query.cu:300] Iter: 3
+I0110 12:28:21.032625 1516722 run_query.cu:300] Iter: 4
+I0110 12:28:21.940228 1516722 run_query.cu:305] Intersections: 37333 Queue Load Factor: 0.016757
+Timing results:
+ - Read map 0: 307.436 ms
+
+ - Read map 1: 274.691 ms
+
+ - Create App: 0.191927 ms
+
+ - Load Data: 27.138 ms
+
+ - Init: 0.362158 ms
+
+ - Build Index: 37.8389 ms
+
+ - Warmup: 4571.17 ms
+
+ - Query: 915.699 ms
+
+ - Cleanup: 29.7561 ms
+

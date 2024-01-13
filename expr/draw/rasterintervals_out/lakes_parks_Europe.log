@@ -1,9 +1,17 @@
 Setting universal min/max...
 Done: -31.2515 35.0264,68.8331 82.5
+Creating Raster Intervals approximations...
+  Average intervals per polygon: 5.55662 intervals/polygon.
+  Average cells per interval: 15.0238 cells/interval.
+Computed intervals for dataset lakes_Europe in 93.712484 seconds
+Creating Raster Intervals approximations...
+  Average intervals per polygon: 7.574596 intervals/polygon.
+  Average cells per interval: 27.747771 cells/interval.
+Computed intervals for dataset parks_Europe in 418.110522 seconds
 Loading rasterintervals/interval_data/lakes_Europe_binary_interval_data.dat...
-Loaded in 0.276714 seconds
+Loaded in 0.179299 seconds
 Loading rasterintervals/interval_data/parks_Europe_binary_interval_data.dat...
-Loaded in 0.959438 seconds
+Loaded in 0.633855 seconds
 Loading MBRs...
 lakes_Europe: 654836 polygons.
 parks_Europe: 1856318 polygons.
@@ -12,10 +20,10 @@ Join in pipeline:
 -----------------------------------
 MBR Filter -> Raster Intervals Filter -> Refinement -> result
 -----------------------------------
-Finished in 15.291114 seconds.
-   MBR Filter time: 0.858596 seconds.
-   Raster Intervals time: 3.746565 seconds.
-   Refinement time: 10.685953 seconds.
+Finished in 15.474054 seconds.
+   MBR Filter time: 0.851081 seconds.
+   Raster Intervals time: 3.790046 seconds.
+   Refinement time: 10.832927 seconds.
 Candidate pairs analysis: 
    Candidates after MBR Filter: 782534
    Accepted by RI: 13.059752%

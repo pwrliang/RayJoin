@@ -1,9 +1,17 @@
 Setting universal min/max...
 Done: -166.841 18.9107,-66.9496 71.2973
+Creating Raster Intervals approximations...
+  Average intervals per polygon: 41.5526 intervals/polygon.
+  Average cells per interval: 109.351 cells/interval.
+Computed intervals for dataset USACensusBlockGroupBoundaries in 974.201328 seconds
+Creating Raster Intervals approximations...
+  Average intervals per polygon: 9.880580 intervals/polygon.
+  Average cells per interval: 9.800026 cells/interval.
+Computed intervals for dataset USADetailedWaterBodies in 140.320519 seconds
 Loading rasterintervals/interval_data/USACensusBlockGroupBoundaries_binary_interval_data.dat...
-Loaded in 0.368499 seconds
+Loaded in 0.194337 seconds
 Loading rasterintervals/interval_data/USADetailedWaterBodies_binary_interval_data.dat...
-Loaded in 0.229747 seconds
+Loaded in 0.189945 seconds
 Loading MBRs...
 USADetailedWaterBodies: 463590 polygons.
 USACensusBlockGroupBoundaries: 236966 polygons.
@@ -12,10 +20,10 @@ Join in pipeline:
 -----------------------------------
 MBR Filter -> Raster Intervals Filter -> Refinement -> result
 -----------------------------------
-Finished in 10.479122 seconds.
-   MBR Filter time: 0.793125 seconds.
-   Raster Intervals time: 5.713428 seconds.
-   Refinement time: 3.972569 seconds.
+Finished in 10.539883 seconds.
+   MBR Filter time: 0.796586 seconds.
+   Raster Intervals time: 5.734641 seconds.
+   Refinement time: 4.008656 seconds.
 Candidate pairs analysis: 
    Candidates after MBR Filter: 968252
    Accepted by RI: 50.267905%

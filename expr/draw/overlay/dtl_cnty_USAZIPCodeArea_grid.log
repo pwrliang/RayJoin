@@ -1,40 +1,32 @@
-/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/dtl_cnty/dtl_cnty_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/USAZIPCodeArea/USAZIPCodeArea_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=grid              -lb=false              -v=1              -fau              -xsect_factor 0.2              -win=32              -enlarge=2
-I0919 15:42:23.602082 2389466 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-dtl_cnty-dtl_cnty_Point.cdb.bin is deserialized, chains: 3157 points: 1028000 edges: 1024843
-I0919 15:42:24.133466 2389466 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-USAZIPCodeArea-USAZIPCodeArea_Point.cdb.bin is deserialized, chains: 134894 points: 23894675 edges: 23759781
-I0919 15:42:24.133499 2389466 context.h:51] Bounding Box, Bottom-left: (-179.147, -14.5487), Top-right: (179.778, 71.3905)
-I0919 15:42:24.133515 2389466 context.h:58] Scaled Bounding Box, Bottom-left: (-69978809497444, -68768348336364), Top-right: (69978809497443, 68768348336363)
-I0919 15:42:24.133517 2389466 context.h:61] Unscaled Bounding Box, Bottom-left: (-179.147, -14.5487), Top-right: (179.778, 71.3905)
-I0919 15:42:26.109879 2389466 lsi.h:22] Queue size: 226 MB
-I0919 15:42:26.119976 2389466 uniform_grid.h:148] Creating the uniform grid, resolution: 15000, Size: 6008 MB
-I0919 15:42:26.135421 2389466 uniform_grid.h:206] Total Edges in the grid: 26632579, Size: 203 MB
-I0919 15:42:36.709441 2389466 lsi.h:22] Queue size: 226 MB
-I0919 15:42:36.710500 2389466 uniform_grid.h:148] Creating the uniform grid, resolution: 2048, Size: 112 MB
-I0919 15:42:36.713143 2389466 uniform_grid.h:206] Total Edges in the grid: 25029685, Size: 190 MB
-I0919 15:42:37.818450 2389466 run_overlay.cu:43] LSI passed check
-I0919 15:42:37.818456 2389466 run_overlay.cu:48] Checking point in polygon
-I0919 15:42:37.932634 2389466 run_overlay.cu:112] Map: 0 passed check
-I0919 15:42:37.932642 2389466 run_overlay.cu:48] Checking point in polygon
-I0919 15:42:48.412787 2389466 run_overlay.cu:112] Map: 1 passed check
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/dtl_cnty/dtl_cnty_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/USAZIPCodeArea/USAZIPCodeArea_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=grid              -v=1              -fau              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0113 14:10:16.167250 1220863 run_overlay.cu:148] Reading map 0 from /local/storage/liang/Downloads/Datasets/point_cdb/dtl_cnty/dtl_cnty_Point.cdb
+I0113 14:10:16.419217 1220863 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-dtl_cnty-dtl_cnty_Point.cdb.bin is deserialized, chains: 21620 points: 7134426 edges: 7112806
+I0113 14:10:16.419231 1220863 run_overlay.cu:152] Reading map 1 from /local/storage/liang/Downloads/Datasets/point_cdb/USAZIPCodeArea/USAZIPCodeArea_Point.cdb
+I0113 14:10:16.924675 1220863 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-USAZIPCodeArea-USAZIPCodeArea_Point.cdb.bin is deserialized, chains: 134894 points: 23894675 edges: 23759781
+I0113 14:10:16.924697 1220863 context.h:51] Bounding Box, Bottom-left: (-179.149, -14.5487), Top-right: (179.778, 71.3905)
+I0113 14:10:16.924715 1220863 context.h:58] Scaled Bounding Box, Bottom-left: (-69978811192544, -68768348336364), Top-right: (69978811192543, 68768348336363)
+I0113 14:10:16.924717 1220863 context.h:61] Unscaled Bounding Box, Bottom-left: (-179.149, -14.5487), Top-right: (179.778, 71.3905)
+I0113 14:10:16.964684 1220863 lsi.h:22] Queue size: 141 MB
+I0113 14:10:16.974710 1220863 uniform_grid.h:148] Creating the uniform grid, resolution: 15000, Size: 6008 MB
+I0113 14:10:16.990803 1220863 uniform_grid.h:207] Total Edges in the grid: 33360767, Size: 254 MB
 Timing results:
- - Read map 0: 132.179 ms
+ - Read map 0: 251.997 ms
 
- - Read map 1: 531.212 ms
+ - Read map 1: 505.456 ms
 
- - Create Context: 1975.69 ms
+ - Create App: 0.0450611 ms
 
- - Create App: 0.00214577 ms
+ - Load Data: 39.3679 ms
 
- - Init: 1.60885 ms
+ - Init: 1.14608 ms
 
- - Build Index: 39.1321 ms
+ - Build Index: 41.9261 ms
 
- - Intersection edges: 1293.59 ms
+ - Intersection edges: 1316.22 ms
 
- - Map 0: Locate vertices in other map: 37.5268 ms
+ - Map 0: Locate vertices in other map: 76.4799 ms
 
- - Map 1: Locate vertices in other map: 9171.22 ms
+ - Map 1: Locate vertices in other map: 334.985 ms
 
- - Computer output polygons: 56.746 ms
-
- - Check result: 11717.7 ms
+ - Computer output polygons: 88.552 ms
 

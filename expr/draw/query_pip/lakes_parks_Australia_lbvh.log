@@ -1,0 +1,25 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/query_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Australia/lakes_Australia_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/Australia/parks_Australia_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=lbvh              -lb=false              -v=1              -query=pip              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0110 12:35:27.143844 1517278 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-Australia-lakes_Australia_Point.cdb.bin is deserialized, chains: 16702 points: 1254743 edges: 1238041
+I0110 12:35:27.158445 1517278 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-Australia-parks_Australia_Point.cdb.bin is deserialized, chains: 22386 points: 589464 edges: 567078
+I0110 12:35:27.158460 1517278 context.h:51] Bounding Box, Bottom-left: (112.971, -54.7384), Top-right: (158.947, -10.1168)
+I0110 12:35:27.158473 1517278 context.h:58] Scaled Bounding Box, Bottom-left: (-67435232688127, -67350025946940), Top-right: (67435232688126, 67350025946939)
+I0110 12:35:27.158474 1517278 context.h:61] Unscaled Bounding Box, Bottom-left: (112.971, -54.7384), Top-right: (158.947, -10.1168)
+Timing results:
+ - Read map 0: 103.04 ms
+
+ - Read map 1: 14.4379 ms
+
+ - Load Data: 2.58803 ms
+
+ - Create App: 0.0720024 ms
+
+ - Init: 0.0240803 ms
+
+ - Build Index: 6.01411 ms
+
+ - Warmup: 74.5499 ms
+
+ - Query: 14.8866 ms
+
+ - Cleanup: 3.299 ms
+

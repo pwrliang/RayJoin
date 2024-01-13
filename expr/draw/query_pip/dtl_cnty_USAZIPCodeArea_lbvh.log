@@ -1,0 +1,25 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/query_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/dtl_cnty/dtl_cnty_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/USAZIPCodeArea/USAZIPCodeArea_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=lbvh              -lb=false              -v=1              -query=pip              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0110 12:30:48.350457 1517186 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-dtl_cnty-dtl_cnty_Point.cdb.bin is deserialized, chains: 21620 points: 7134426 edges: 7112806
+I0110 12:30:48.842664 1517186 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-USAZIPCodeArea-USAZIPCodeArea_Point.cdb.bin is deserialized, chains: 134894 points: 23894675 edges: 23759781
+I0110 12:30:48.842689 1517186 context.h:51] Bounding Box, Bottom-left: (-179.149, -14.5487), Top-right: (179.778, 71.3905)
+I0110 12:30:48.842706 1517186 context.h:58] Scaled Bounding Box, Bottom-left: (-69978811192544, -68768348336364), Top-right: (69978811192543, 68768348336363)
+I0110 12:30:48.842708 1517186 context.h:61] Unscaled Bounding Box, Bottom-left: (-179.149, -14.5487), Top-right: (179.778, 71.3905)
+Timing results:
+ - Read map 0: 211.83 ms
+
+ - Read map 1: 492.069 ms
+
+ - Load Data: 39.624 ms
+
+ - Create App: 0.0910759 ms
+
+ - Init: 0.0579357 ms
+
+ - Build Index: 21.703 ms
+
+ - Warmup: 8587.57 ms
+
+ - Query: 1709.42 ms
+
+ - Cleanup: 6.62804 ms
+

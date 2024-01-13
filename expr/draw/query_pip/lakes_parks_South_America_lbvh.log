@@ -1,0 +1,25 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/query_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/South_America/lakes_South_America_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/South_America/parks_South_America_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=lbvh              -lb=false              -v=1              -query=pip              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0110 12:50:30.275985 1517471 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-South_America-lakes_South_America_Point.cdb.bin is deserialized, chains: 43757 points: 2418375 edges: 2374618
+I0110 12:50:30.351308 1517471 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-South_America-parks_South_America_Point.cdb.bin is deserialized, chains: 85371 points: 3264379 edges: 3179008
+I0110 12:50:30.351323 1517471 context.h:51] Bounding Box, Bottom-left: (-92.6829, -55.9828), Top-right: (-34.788, 12.5803)
+I0110 12:50:30.351339 1517471 context.h:58] Scaled Bounding Box, Bottom-left: (-68019003758318, -68374252432450), Top-right: (68019003758317, 68374252432449)
+I0110 12:50:30.351341 1517471 context.h:61] Unscaled Bounding Box, Bottom-left: (-92.6829, -55.9828), Top-right: (-34.788, 12.5803)
+Timing results:
+ - Read map 0: 189.24 ms
+
+ - Read map 1: 75.1779 ms
+
+ - Load Data: 7.77602 ms
+
+ - Create App: 0.0710487 ms
+
+ - Init: 0.025034 ms
+
+ - Build Index: 9.71985 ms
+
+ - Warmup: 470.725 ms
+
+ - Query: 93.3832 ms
+
+ - Cleanup: 4.287 ms
+

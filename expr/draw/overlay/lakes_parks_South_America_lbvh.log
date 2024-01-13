@@ -1,58 +1,30 @@
-/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/South_America/lakes_South_America_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/South_America/parks_South_America_Point.cdb              -serialize=/dev/shm              -grid_size=20000              -mode=lbvh              -lb=false              -v=1              -fau              -xsect_factor 0.5              -win=32              -enlarge=2
-I0919 15:30:31.599701 2379823 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-South_America-lakes_South_America_Point.cdb.bin is deserialized, chains: 43757 points: 2418375 edges: 2374618
-I0919 15:30:31.677383 2379823 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-South_America-parks_South_America_Point.cdb.bin is deserialized, chains: 85371 points: 3264379 edges: 3179008
-I0919 15:30:31.677417 2379823 context.h:51] Bounding Box, Bottom-left: (-92.6829, -55.9828), Top-right: (-34.788, 12.5803)
-I0919 15:30:31.677433 2379823 context.h:58] Scaled Bounding Box, Bottom-left: (-68019003758318, -68374252432450), Top-right: (68019003758317, 68374252432449)
-I0919 15:30:31.677435 2379823 context.h:61] Unscaled Bounding Box, Bottom-left: (-92.6829, -55.9828), Top-right: (-34.788, 12.5803)
-I0919 15:30:32.160809 2379823 lsi.h:22] Queue size: 127 MB
-I0919 15:30:32.444257 2379823 lsi.h:22] Queue size: 381 MB
-I0919 15:30:32.445825 2379823 uniform_grid.h:148] Creating the uniform grid, resolution: 2048, Size: 112 MB
-I0919 15:30:32.446712 2379823 uniform_grid.h:206] Total Edges in the grid: 5786246, Size: 44 MB
-I0919 15:30:32.488816 2379823 run_overlay.cu:42] LSI passed check
-I0919 15:30:32.488819 2379823 run_overlay.cu:47] Checking point in polygon
-I0919 15:30:32.691658 2379823 run_overlay.cu:111] Map: 0 passed check
-I0919 15:30:32.691665 2379823 run_overlay.cu:47] Checking point in polygon
-E0919 15:30:32.880777 2379823 run_overlay.cu:107] Map: 1 Total points: 3264379 n diff: 4328 Error rate: 0.132583 %
-point 1404898 (-42.14601810, -22.44348000) ans 1164745, res 1387449 (-42.14490690, -19.07552250) - (-42.14624690, -19.07600330) (-42.14539300, -14.03927400) - (-42.14648740, -14.04031480)
-scaled point 1404898 (50729500965235, -1480308480391) ans 1164745, res 1387449 (50732111996789, 5237054949592) - (50728963344627, 5236095997961) (50730969787972, 15281811009683) - (50728398232057, 15279735142675)
-point 1404899 (-42.14443880, -22.44309280) ans 1164744, res 1794691 (-42.14267360, -19.07499490) - (-42.14490690, -19.07552250) (-42.14442260, -3.37178490) - (-42.14500740, -3.37617170)
-scaled point 1404899 (50733211910280, -1479536213188) ans 1164744, res 1794691 (50737359672068, 5238107243436) - (50732111996789, 5237054949592) (50733249976074, 36558029961784) - (50731875847877, 36549280525396)
-point 1404900 (-42.14231020, -22.44316340) ans 1164743, res 1794686 (-42.14144530, -19.07476040) - (-42.14267360, -19.07499490) (-42.14218390, -3.35462880) - (-42.14269610, -3.35475860)
-scaled point 1404900 (50738213567736, -1479677024305) ans 1164743, res 1794686 (50740245858225, 5238574951751) - (50737359672068, 5238107243436) (50738510339951, 36592247661614) - (50737306802908, 36591988776585)
-point 1404901 (-42.14076140, -22.44282770) ans 1164742, res 1794684 (-42.13975790, -19.07477210) - (-42.14144530, -19.07476040) (-42.14039560, -3.35282100) - (-42.14141940, -3.35320980)
-scaled point 1404901 (50741852845698, -1479007473426) ans 1164742, res 1794684 (50744210810209, 5238551616197) - (50740245858225, 5238574951751) (50742712380743, 36595853303791) - (50740306716502, 36595077845400)
-point 1404902 (-42.13984210, -22.44257970) ans 1164742, res 1794682 (-42.13975790, -19.07477210) - (-42.14144530, -19.07476040) (-42.13732740, -3.35049420) - (-42.14014230, -3.35179020)
-scaled point 1404902 (50744012962065, -1478512841468) ans 1164742, res 1794682 (50744210810209, 5238551616197) - (50740245858225, 5238574951751) (50749921854298, 36600494087184) - (50743307569991, 36597909225882)
-point 1404903 (-42.13671010, -22.44241570) ans 1164740, res 1794680 (-42.13583730, -19.07486590) - (-42.13733860, -19.07487760) (-42.13399530, -3.35087030) - (-42.13732600, -3.35100930)
-scaled point 1404903 (50751372349059, -1478185744821) ans 1164740, res 1794680 (50753423202497, 5238364532872) - (50749895537205, 5238341197318) (50757751424349, 36599743958838) - (50749925143934, 36599466724486)
-point 1404904 (-42.13504310, -22.44249390) ans 1164738, res 1794680 (-42.13495640, -19.07439680) - (-42.13547750, -19.07461960) (-42.13399530, -3.35087030) - (-42.13732600, -3.35100930)
-scaled point 1404904 (50755289366338, -1478341714076) ans 1164738, res 1794680 (50755493088832, 5239300148949) - (50754268639100, 5238855776188) (50757751424349, 36599743958838) - (50749925143934, 36599466724486)
-point 1404905 (-42.13416190, -22.44309090) ans 1164736, res 1794680 (-42.13375290, -19.07386920) - (-42.13459660, -19.07429130) (-42.13399530, -3.35087030) - (-42.13732600, -3.35100930)
-scaled point 1404905 (50757359957595, -1479532423653) ans 1164736, res 1794680 (50758321001427, 5240352442794) - (50756338525435, 5239510567828) (50757751424349, 36599743958838) - (50749925143934, 36599466724486)
-point 1404906 (-42.13249110, -22.44518520) ans 1164734, res 1794679 (-42.13233850, -19.07226270) - (-42.13313260, -19.07323600) (-42.13130340, -3.35150670) - (-42.13399530, -3.35087030)
-scaled point 1404906 (50761285903888, -1483709487715) ans 1164734, res 1794679 (50761644474276, 5243556593783) - (50759778545409, 5241615354967) (50764076690584, 36598474664292) - (50757751424349, 36599743958838)
-point 1404907 (-42.12919510, -22.44739200) ans 1164730, res 1794668 (-42.12911270, -19.06929600) - (-42.12978260, -19.06988230) (-42.12911320, -3.35549120) - (-42.12936690, -3.35639370)
-scaled point 1404907 (50769030648310, -1488110934093) ans 1164730, res 1794668 (50769224266921, 5249473652443) - (50767650175814, 5248304281933) (50769223092050, 36590527611933) - (50768626962906, 36588727583133)
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/South_America/lakes_South_America_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/South_America/parks_South_America_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=lbvh              -v=1              -fau              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0113 14:14:12.944139 1222555 run_overlay.cu:148] Reading map 0 from /local/storage/liang/Downloads/Datasets/point_cdb/lakes/South_America/lakes_South_America_Point.cdb
+I0113 14:14:13.136034 1222555 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-South_America-lakes_South_America_Point.cdb.bin is deserialized, chains: 43757 points: 2418375 edges: 2374618
+I0113 14:14:13.136046 1222555 run_overlay.cu:152] Reading map 1 from /local/storage/liang/Downloads/Datasets/point_cdb/parks/South_America/parks_South_America_Point.cdb
+I0113 14:14:13.220742 1222555 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-South_America-parks_South_America_Point.cdb.bin is deserialized, chains: 85371 points: 3264379 edges: 3179008
+I0113 14:14:13.220779 1222555 context.h:51] Bounding Box, Bottom-left: (-92.6829, -55.9828), Top-right: (-34.788, 12.5803)
+I0113 14:14:13.220794 1222555 context.h:58] Scaled Bounding Box, Bottom-left: (-68019003758318, -68374252432450), Top-right: (68019003758317, 68374252432449)
+I0113 14:14:13.220796 1222555 context.h:61] Unscaled Bounding Box, Bottom-left: (-92.6829, -55.9828), Top-right: (-34.788, 12.5803)
+I0113 14:14:13.229758 1222555 lsi.h:22] Queue size: 25 MB
 Timing results:
- - Read map 0: 156.831 ms
+ - Read map 0: 191.913 ms
 
- - Read map 1: 76.2012 ms
+ - Read map 1: 84.7061 ms
 
- - Create Context: 483.057 ms
+ - Create App: 1.54209 ms
 
- - Create App: 0.168085 ms
+ - Load Data: 7.27606 ms
 
- - Init: 0.693083 ms
+ - Init: 0.394821 ms
 
- - Build Index: 22.9859 ms
+ - Build Index: 23.083 ms
 
- - Intersection edges: 3.10898 ms
+ - Intersection edges: 2.75707 ms
 
- - Map 0: Locate vertices in other map: 143.34 ms
+ - Map 0: Locate vertices in other map: 140.69 ms
 
- - Map 1: Locate vertices in other map: 94.2469 ms
+ - Map 1: Locate vertices in other map: 97.4269 ms
 
- - Computer output polygons: 19.0442 ms
-
- - Check result: 443.918 ms
+ - Computer output polygons: 18.7011 ms
 

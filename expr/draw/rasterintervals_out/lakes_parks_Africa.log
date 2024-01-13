@@ -1,9 +1,17 @@
 Setting universal min/max...
 Done: -25.2135 -34.7852,63.4371 37.3456
+Creating Raster Intervals approximations...
+  Average intervals per polygon: 22.5874 intervals/polygon.
+  Average cells per interval: 37.9389 cells/interval.
+Computed intervals for dataset lakes_Africa in 28.650976 seconds
+Creating Raster Intervals approximations...
+  Average intervals per polygon: 12.519558 intervals/polygon.
+  Average cells per interval: 187.506440 cells/interval.
+Computed intervals for dataset parks_Africa in 52.550245 seconds
 Loading rasterintervals/interval_data/lakes_Africa_binary_interval_data.dat...
-Loaded in 0.012117 seconds
+Loaded in 0.006947 seconds
 Loading rasterintervals/interval_data/parks_Africa_binary_interval_data.dat...
-Loaded in 0.022061 seconds
+Loaded in 0.012599 seconds
 Loading MBRs...
 parks_Africa: 25718 polygons.
 lakes_Africa: 18156 polygons.
@@ -12,10 +20,10 @@ Join in pipeline:
 -----------------------------------
 MBR Filter -> Raster Intervals Filter -> Refinement -> result
 -----------------------------------
-Finished in 0.137959 seconds.
-   MBR Filter time: 0.014231 seconds.
-   Raster Intervals time: 0.032186 seconds.
-   Refinement time: 0.091542 seconds.
+Finished in 0.140539 seconds.
+   MBR Filter time: 0.014854 seconds.
+   Raster Intervals time: 0.032614 seconds.
+   Refinement time: 0.093071 seconds.
 Candidate pairs analysis: 
    Candidates after MBR Filter: 4865
    Accepted by RI: 21.623844%

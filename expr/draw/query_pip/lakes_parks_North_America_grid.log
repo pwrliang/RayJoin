@@ -1,0 +1,27 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/query_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/North_America/lakes_North_America_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/North_America/parks_North_America_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=grid              -lb=false              -v=1              -query=pip              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0110 12:30:23.675505 1517052 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-North_America-lakes_North_America_Point.cdb.bin is deserialized, chains: 1910184 points: 69273661 edges: 67363477
+I0110 12:30:24.290339 1517052 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-North_America-parks_North_America_Point.cdb.bin is deserialized, chains: 603325 points: 27465008 edges: 26861683
+I0110 12:30:24.290364 1517052 context.h:51] Bounding Box, Bottom-left: (-178.058, 7.22476), Top-right: (-45.5202, 71.2885)
+I0110 12:30:24.290382 1517052 context.h:58] Scaled Bounding Box, Bottom-left: (-69322661498935, -68238415890814), Top-right: (69322661498934, 68238415890813)
+I0110 12:30:24.290385 1517052 context.h:61] Unscaled Bounding Box, Bottom-left: (-178.058, 7.22476), Top-right: (-45.5202, 71.2885)
+I0110 12:30:24.415396 1517052 uniform_grid.h:267] Creating the uniform grid, resolution: 15000, Size: 6008 MB
+I0110 12:30:24.435285 1517052 uniform_grid.h:323] Total Edges in the grid: 71620806, Size: 546 MB
+Timing results:
+ - Read map 0: 1781.67 ms
+
+ - Read map 1: 614.672 ms
+
+ - Load Data: 112.942 ms
+
+ - Create App: 0.521898 ms
+
+ - Init: 0.0760555 ms
+
+ - Build Index: 67.0121 ms
+
+ - Warmup: 3105.63 ms
+
+ - Query: 624.483 ms
+
+ - Cleanup: 12.151 ms
+

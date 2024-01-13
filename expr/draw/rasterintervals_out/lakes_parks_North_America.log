@@ -1,9 +1,17 @@
 Setting universal min/max...
 Done: -178.058 7.22476,179.302 83.4028
+Creating Raster Intervals approximations...
+  Average intervals per polygon: 2.75026 intervals/polygon.
+  Average cells per interval: 5.9869 cells/interval.
+Computed intervals for dataset lakes_North_America in 131.557096 seconds
+Creating Raster Intervals approximations...
+  Average intervals per polygon: 6.759875 intervals/polygon.
+  Average cells per interval: 21.559055 cells/interval.
+Computed intervals for dataset parks_North_America in 71.893155 seconds
 Loading rasterintervals/interval_data/lakes_North_America_binary_interval_data.dat...
-Loaded in 0.691588 seconds
+Loaded in 0.682030 seconds
 Loading rasterintervals/interval_data/parks_North_America_binary_interval_data.dat...
-Loaded in 0.134155 seconds
+Loaded in 0.142803 seconds
 Loading MBRs...
 parks_North_America: 303013 polygons.
 lakes_North_America: 1584556 polygons.
@@ -12,10 +20,10 @@ Join in pipeline:
 -----------------------------------
 MBR Filter -> Raster Intervals Filter -> Refinement -> result
 -----------------------------------
-Finished in 21.235513 seconds.
-   MBR Filter time: 0.744126 seconds.
-   Raster Intervals time: 2.042208 seconds.
-   Refinement time: 18.449179 seconds.
+Finished in 21.521225 seconds.
+   MBR Filter time: 0.725173 seconds.
+   Raster Intervals time: 2.068202 seconds.
+   Refinement time: 18.727850 seconds.
 Candidate pairs analysis: 
    Candidates after MBR Filter: 714830
    Accepted by RI: 45.376663%

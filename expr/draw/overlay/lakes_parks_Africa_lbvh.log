@@ -1,38 +1,30 @@
-/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Africa/lakes_Africa_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/Africa/parks_Africa_Point.cdb              -serialize=/dev/shm              -grid_size=20000              -mode=lbvh              -lb=false              -v=1              -fau              -xsect_factor 0.5              -win=32              -enlarge=2
-I0919 15:29:45.466835 2379419 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-Africa-lakes_Africa_Point.cdb.bin is deserialized, chains: 27178 points: 1872496 edges: 1845318
-I0919 15:29:45.499193 2379419 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-Africa-parks_Africa_Point.cdb.bin is deserialized, chains: 41991 points: 1358103 edges: 1316112
-I0919 15:29:45.499228 2379419 context.h:51] Bounding Box, Bottom-left: (-25.2135, -34.7852), Top-right: (63.4371, 37.3456)
-I0919 15:29:45.499246 2379419 context.h:58] Scaled Bounding Box, Bottom-left: (-68816217462298, -68470241806767), Top-right: (68816217462297, 68470241806766)
-I0919 15:29:45.499248 2379419 context.h:61] Unscaled Bounding Box, Bottom-left: (-25.2135, -34.7852), Top-right: (63.4371, 37.3456)
-I0919 15:29:45.783167 2379419 lsi.h:22] Queue size: 72 MB
-I0919 15:29:45.843536 2379419 lsi.h:22] Queue size: 217 MB
-I0919 15:29:45.844579 2379419 uniform_grid.h:148] Creating the uniform grid, resolution: 2048, Size: 112 MB
-I0919 15:29:45.845256 2379419 uniform_grid.h:206] Total Edges in the grid: 3268606, Size: 24 MB
-I0919 15:29:45.884193 2379419 run_overlay.cu:42] LSI passed check
-I0919 15:29:45.884197 2379419 run_overlay.cu:47] Checking point in polygon
-I0919 15:29:45.979555 2379419 run_overlay.cu:111] Map: 0 passed check
-I0919 15:29:45.979565 2379419 run_overlay.cu:47] Checking point in polygon
-I0919 15:29:46.033943 2379419 run_overlay.cu:111] Map: 1 passed check
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Africa/lakes_Africa_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/Africa/parks_Africa_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=lbvh              -v=1              -fau              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0113 14:12:48.891634 1221998 run_overlay.cu:148] Reading map 0 from /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Africa/lakes_Africa_Point.cdb
+I0113 14:12:49.033571 1221998 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-Africa-lakes_Africa_Point.cdb.bin is deserialized, chains: 27178 points: 1872496 edges: 1845318
+I0113 14:12:49.033584 1221998 run_overlay.cu:152] Reading map 1 from /local/storage/liang/Downloads/Datasets/point_cdb/parks/Africa/parks_Africa_Point.cdb
+I0113 14:12:49.067312 1221998 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-Africa-parks_Africa_Point.cdb.bin is deserialized, chains: 41991 points: 1358103 edges: 1316112
+I0113 14:12:49.067330 1221998 context.h:51] Bounding Box, Bottom-left: (-25.2135, -34.7852), Top-right: (63.4371, 37.3456)
+I0113 14:12:49.067345 1221998 context.h:58] Scaled Bounding Box, Bottom-left: (-68816217462298, -68470241806767), Top-right: (68816217462297, 68470241806766)
+I0113 14:12:49.067348 1221998 context.h:61] Unscaled Bounding Box, Bottom-left: (-25.2135, -34.7852), Top-right: (63.4371, 37.3456)
+I0113 14:12:49.071766 1221998 lsi.h:22] Queue size: 14 MB
 Timing results:
- - Read map 0: 108.681 ms
+ - Read map 0: 141.955 ms
 
- - Read map 1: 32.1522 ms
+ - Read map 1: 33.7369 ms
 
- - Create Context: 283.639 ms
+ - Create App: 0.253916 ms
 
- - Create App: 0.157833 ms
+ - Load Data: 4.03905 ms
 
- - Init: 0.507116 ms
+ - Init: 0.307083 ms
 
- - Build Index: 14.2031 ms
+ - Build Index: 14.689 ms
 
- - Intersection edges: 1.42789 ms
+ - Intersection edges: 1.27602 ms
 
- - Map 0: Locate vertices in other map: 21.291 ms
+ - Map 0: Locate vertices in other map: 21.565 ms
 
- - Map 1: Locate vertices in other map: 13.5901 ms
+ - Map 1: Locate vertices in other map: 13.201 ms
 
- - Computer output polygons: 9.32884 ms
-
- - Check result: 195.006 ms
+ - Computer output polygons: 9.39083 ms
 

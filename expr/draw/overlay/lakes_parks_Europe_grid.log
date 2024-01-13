@@ -1,40 +1,32 @@
-/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Europe/lakes_Europe_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/Europe/parks_Europe_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=grid              -lb=false              -v=1              -fau              -xsect_factor 0.2              -win=32              -enlarge=2
-I0919 15:43:15.756841 2389890 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-Europe-lakes_Europe_Point.cdb.bin is deserialized, chains: 831264 points: 28687526 edges: 27856262
-I0919 15:43:17.395305 2389890 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-Europe-parks_Europe_Point.cdb.bin is deserialized, chains: 3299874 points: 69273661 edges: 65973787
-I0919 15:43:17.395339 2389890 context.h:51] Bounding Box, Bottom-left: (-31.2515, 35.0264), Top-right: (68.8331, 81.3082)
-I0919 15:43:17.395357 2389890 context.h:58] Scaled Bounding Box, Bottom-left: (-68990108085658, -67453827351386), Top-right: (68990108085657, 67453827351385)
-I0919 15:43:17.395359 2389890 context.h:61] Unscaled Bounding Box, Bottom-left: (-31.2515, 35.0264), Top-right: (68.8331, 81.3082)
-I0919 15:43:25.016798 2389890 lsi.h:22] Queue size: 859 MB
-I0919 15:43:25.029148 2389890 uniform_grid.h:148] Creating the uniform grid, resolution: 15000, Size: 6008 MB
-I0919 15:43:25.050978 2389890 uniform_grid.h:206] Total Edges in the grid: 108783300, Size: 829 MB
-I0919 15:43:34.672197 2389890 lsi.h:22] Queue size: 859 MB
-I0919 15:43:34.675312 2389890 uniform_grid.h:148] Creating the uniform grid, resolution: 2048, Size: 112 MB
-I0919 15:43:34.684460 2389890 uniform_grid.h:206] Total Edges in the grid: 95698823, Size: 730 MB
-I0919 15:43:35.874840 2389890 run_overlay.cu:43] LSI passed check
-I0919 15:43:35.874851 2389890 run_overlay.cu:48] Checking point in polygon
-I0919 15:43:43.240281 2389890 run_overlay.cu:112] Map: 0 passed check
-I0919 15:43:43.243997 2389890 run_overlay.cu:48] Checking point in polygon
-I0919 15:43:48.287644 2389890 run_overlay.cu:112] Map: 1 passed check
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Europe/lakes_Europe_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/Europe/parks_Europe_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=grid              -v=1              -fau              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0113 14:10:28.466702 1220992 run_overlay.cu:148] Reading map 0 from /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Europe/lakes_Europe_Point.cdb
+I0113 14:10:29.239151 1220992 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-Europe-lakes_Europe_Point.cdb.bin is deserialized, chains: 831264 points: 28687526 edges: 27856262
+I0113 14:10:29.239166 1220992 run_overlay.cu:152] Reading map 1 from /local/storage/liang/Downloads/Datasets/point_cdb/parks/Europe/parks_Europe_Point.cdb
+I0113 14:10:31.045876 1220992 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-Europe-parks_Europe_Point.cdb.bin is deserialized, chains: 3299874 points: 69273661 edges: 65973787
+I0113 14:10:31.045907 1220992 context.h:51] Bounding Box, Bottom-left: (-31.2515, 35.0264), Top-right: (68.8331, 81.3082)
+I0113 14:10:31.045923 1220992 context.h:58] Scaled Bounding Box, Bottom-left: (-68990108085658, -67453827351386), Top-right: (68990108085657, 67453827351385)
+I0113 14:10:31.045925 1220992 context.h:61] Unscaled Bounding Box, Bottom-left: (-31.2515, 35.0264), Top-right: (68.8331, 81.3082)
+I0113 14:10:31.155321 1220992 lsi.h:22] Queue size: 429 MB
+I0113 14:10:31.165686 1220992 uniform_grid.h:148] Creating the uniform grid, resolution: 15000, Size: 6008 MB
+I0113 14:10:31.187497 1220992 uniform_grid.h:207] Total Edges in the grid: 108783300, Size: 829 MB
 Timing results:
- - Read map 0: 724.502 ms
+ - Read map 0: 772.471 ms
 
- - Read map 1: 1638.26 ms
+ - Read map 1: 1806.72 ms
 
- - Create Context: 7619.41 ms
+ - Create App: 0.0522137 ms
 
- - Create App: 0.00190735 ms
+ - Load Data: 107.623 ms
 
- - Init: 4.93598 ms
+ - Init: 3.08013 ms
 
- - Build Index: 92.38 ms
+ - Build Index: 91.769 ms
 
- - Intersection edges: 595.068 ms
+ - Intersection edges: 565.555 ms
 
- - Map 0: Locate vertices in other map: 5874.43 ms
+ - Map 0: Locate vertices in other map: 5770.57 ms
 
- - Map 1: Locate vertices in other map: 2934.92 ms
+ - Map 1: Locate vertices in other map: 2912.51 ms
 
- - Computer output polygons: 154.402 ms
-
- - Check result: 13638.8 ms
+ - Computer output polygons: 156.331 ms
 

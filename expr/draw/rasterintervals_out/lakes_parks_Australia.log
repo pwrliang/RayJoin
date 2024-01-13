@@ -1,9 +1,17 @@
 Setting universal min/max...
 Done: 112.971 -54.7384,158.947 -10.1168
+Creating Raster Intervals approximations...
+  Average intervals per polygon: 13.7841 intervals/polygon.
+  Average cells per interval: 49.1759 cells/interval.
+Computed intervals for dataset lakes_Australia in 13.678227 seconds
+Creating Raster Intervals approximations...
+  Average intervals per polygon: 23.347490 intervals/polygon.
+  Average cells per interval: 110.139988 cells/interval.
+Computed intervals for dataset parks_Australia in 35.042312 seconds
 Loading rasterintervals/interval_data/lakes_Australia_binary_interval_data.dat...
-Loaded in 0.008714 seconds
+Loaded in 0.005091 seconds
 Loading rasterintervals/interval_data/parks_Australia_binary_interval_data.dat...
-Loaded in 0.013576 seconds
+Loaded in 0.007475 seconds
 Loading MBRs...
 parks_Australia: 12809 polygons.
 lakes_Australia: 14475 polygons.
@@ -12,10 +20,10 @@ Join in pipeline:
 -----------------------------------
 MBR Filter -> Raster Intervals Filter -> Refinement -> result
 -----------------------------------
-Finished in 0.120389 seconds.
-   MBR Filter time: 0.014820 seconds.
-   Raster Intervals time: 0.049989 seconds.
-   Refinement time: 0.055580 seconds.
+Finished in 0.121553 seconds.
+   MBR Filter time: 0.015222 seconds.
+   Raster Intervals time: 0.050178 seconds.
+   Refinement time: 0.056153 seconds.
 Candidate pairs analysis: 
    Candidates after MBR Filter: 6842
    Accepted by RI: 43.189126%

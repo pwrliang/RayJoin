@@ -1,0 +1,33 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/query_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/South_America/lakes_South_America_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/South_America/parks_South_America_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=lbvh              -lb=false              -v=1              -query=lsi              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0110 12:29:26.297298 1516966 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-South_America-lakes_South_America_Point.cdb.bin is deserialized, chains: 43757 points: 2418375 edges: 2374618
+I0110 12:29:26.376137 1516966 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-South_America-parks_South_America_Point.cdb.bin is deserialized, chains: 85371 points: 3264379 edges: 3179008
+I0110 12:29:26.376150 1516966 context.h:51] Bounding Box, Bottom-left: (-92.6829, -55.9828), Top-right: (-34.788, 12.5803)
+I0110 12:29:26.376189 1516966 context.h:58] Scaled Bounding Box, Bottom-left: (-68019003758318, -68374252432450), Top-right: (68019003758317, 68374252432449)
+I0110 12:29:26.376191 1516966 context.h:61] Unscaled Bounding Box, Bottom-left: (-92.6829, -55.9828), Top-right: (-34.788, 12.5803)
+I0110 12:29:26.384792 1516966 run_query.cu:228] Queue capacity: 555362
+I0110 12:29:26.384797 1516966 lsi.h:22] Queue size: 25 MB
+I0110 12:29:26.423192 1516966 run_query.cu:300] Iter: 0
+I0110 12:29:26.428845 1516966 run_query.cu:300] Iter: 1
+I0110 12:29:26.434525 1516966 run_query.cu:300] Iter: 2
+I0110 12:29:26.440162 1516966 run_query.cu:300] Iter: 3
+I0110 12:29:26.445816 1516966 run_query.cu:300] Iter: 4
+I0110 12:29:26.451478 1516966 run_query.cu:305] Intersections: 22350 Queue Load Factor: 0.040244
+Timing results:
+ - Read map 0: 187.516 ms
+
+ - Read map 1: 78.696 ms
+
+ - Create App: 1.31488 ms
+
+ - Load Data: 7.27296 ms
+
+ - Init: 0.195026 ms
+
+ - Build Index: 9.64713 ms
+
+ - Warmup: 28.5559 ms
+
+ - Query: 5.65844 ms
+
+ - Cleanup: 18.991 ms
+

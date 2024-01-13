@@ -1,0 +1,33 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/query_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Asia/lakes_Asia_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/Asia/parks_Asia_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=lbvh              -lb=false              -v=1              -query=lsi              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0110 12:29:17.611728 1516922 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-Asia-lakes_Asia_Point.cdb.bin is deserialized, chains: 194573 points: 10541220 edges: 10346647
+I0110 12:29:17.887241 1516922 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-Asia-parks_Asia_Point.cdb.bin is deserialized, chains: 277198 points: 12209639 edges: 11932441
+I0110 12:29:17.887264 1516922 context.h:51] Bounding Box, Bottom-left: (-179.972, -10.8197), Top-right: (179.984, 81.2255)
+I0110 12:29:17.887279 1516922 context.h:58] Scaled Bounding Box, Bottom-left: (-69979919611218, -68872256062147), Top-right: (69979919611217, 68872256062146)
+I0110 12:29:17.887281 1516922 context.h:61] Unscaled Bounding Box, Bottom-left: (-179.972, -10.8197), Top-right: (179.984, 81.2255)
+I0110 12:29:17.914779 1516922 run_query.cu:228] Queue capacity: 2227908
+I0110 12:29:17.914784 1516922 lsi.h:22] Queue size: 101 MB
+I0110 12:29:18.017664 1516922 run_query.cu:300] Iter: 0
+I0110 12:29:18.032562 1516922 run_query.cu:300] Iter: 1
+I0110 12:29:18.047793 1516922 run_query.cu:300] Iter: 2
+I0110 12:29:18.062851 1516922 run_query.cu:300] Iter: 3
+I0110 12:29:18.077939 1516922 run_query.cu:300] Iter: 4
+I0110 12:29:18.093189 1516922 run_query.cu:305] Intersections: 37411 Queue Load Factor: 0.016792
+Timing results:
+ - Read map 0: 295.058 ms
+
+ - Read map 1: 275.363 ms
+
+ - Create App: 0.230074 ms
+
+ - Load Data: 27.2539 ms
+
+ - Init: 0.431061 ms
+
+ - Build Index: 27.154 ms
+
+ - Warmup: 75.299 ms
+
+ - Query: 15.106 ms
+
+ - Cleanup: 27.3969 ms
+

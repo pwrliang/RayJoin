@@ -1,0 +1,27 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/query_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Europe/lakes_Europe_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/Europe/parks_Europe_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=grid              -lb=false              -v=1              -query=pip              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0110 12:29:51.792423 1517039 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-Europe-lakes_Europe_Point.cdb.bin is deserialized, chains: 831264 points: 28687526 edges: 27856262
+I0110 12:29:53.556304 1517039 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-Europe-parks_Europe_Point.cdb.bin is deserialized, chains: 3299874 points: 69273661 edges: 65973787
+I0110 12:29:53.556334 1517039 context.h:51] Bounding Box, Bottom-left: (-31.2515, 35.0264), Top-right: (68.8331, 81.3082)
+I0110 12:29:53.556349 1517039 context.h:58] Scaled Bounding Box, Bottom-left: (-68990108085658, -67453827351386), Top-right: (68990108085657, 67453827351385)
+I0110 12:29:53.556351 1517039 context.h:61] Unscaled Bounding Box, Bottom-left: (-31.2515, 35.0264), Top-right: (68.8331, 81.3082)
+I0110 12:29:53.679001 1517039 uniform_grid.h:267] Creating the uniform grid, resolution: 15000, Size: 6008 MB
+I0110 12:29:53.694536 1517039 uniform_grid.h:323] Total Edges in the grid: 31191716, Size: 237 MB
+Timing results:
+ - Read map 0: 749.559 ms
+
+ - Read map 1: 1763.74 ms
+
+ - Load Data: 110.651 ms
+
+ - Create App: 0.464916 ms
+
+ - Init: 0.118017 ms
+
+ - Build Index: 46.608 ms
+
+ - Warmup: 14007.7 ms
+
+ - Query: 2785.03 ms
+
+ - Cleanup: 12.2261 ms
+

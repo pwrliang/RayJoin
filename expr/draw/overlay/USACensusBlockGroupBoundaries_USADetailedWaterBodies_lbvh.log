@@ -1,60 +1,30 @@
-/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/USACensusBlockGroupBoundaries/USACensusBlockGroupBoundaries_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/USADetailedWaterBodies/USADetailedWaterBodies_Point.cdb              -serialize=/dev/shm              -grid_size=20000              -mode=lbvh              -lb=false              -v=1              -fau              -xsect_factor 0.5              -win=32              -enlarge=2
-I0919 15:27:46.848359 2378588 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-USACensusBlockGroupBoundaries-USACensusBlockGroupBoundaries_Point.cdb.bin is deserialized, chains: 872624 points: 29345959 edges: 28473335
-I0919 15:27:47.581516 2378588 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-USADetailedWaterBodies-USADetailedWaterBodies_Point.cdb.bin is deserialized, chains: 2442900 points: 28007655 edges: 25564755
-I0919 15:27:47.581548 2378588 context.h:51] Bounding Box, Bottom-left: (-179.149, 18.9107), Top-right: (-66.9496, 71.3652)
-I0919 15:27:47.581566 2378588 context.h:58] Scaled Bounding Box, Bottom-left: (-69136359329185, -67784245771247), Top-right: (69136359329184, 67784245771246)
-I0919 15:27:47.581568 2378588 context.h:61] Unscaled Bounding Box, Bottom-left: (-179.149, 18.9107), Top-right: (-66.9496, 71.3652)
-I0919 15:27:52.062305 2378588 lsi.h:22] Queue size: 1236 MB
-I0919 15:28:47.177413 2378588 lsi.h:22] Queue size: 3710 MB
-I0919 15:28:47.189831 2378588 uniform_grid.h:148] Creating the uniform grid, resolution: 2048, Size: 112 MB
-I0919 15:28:47.195323 2378588 uniform_grid.h:206] Total Edges in the grid: 55273774, Size: 421 MB
-E0919 15:28:47.540179 2378588 run_overlay.cu:36] LSI  xsects (Answer): 771537 xsects (Result): 771529 Error rate: 0.00103689 %
-I0919 15:28:47.540369 2378588 run_overlay.cu:47] Checking point in polygon
-point 4194475 (-91.14515497, 31.34289467) ans 3615023, res 3686526 (-91.14478796, 31.88466030) - (-91.14613044, 31.88411044) (-91.14511956, 31.95718437) - (-91.14536130, 31.95727606)
-scaled point 4194475 (39318133750285, -35653240353964) ans 3615023, res 3686526 (39318586051545, -34253047969839) - (39316931597069, -34254469064041) (39318177387800, -34065609618744) - (39317879476016, -34065372638331)
-point 4194481 (-91.14524897, 31.34521868) ans 3615023, res 3686526 (-91.14478796, 31.88466030) - (-91.14613044, 31.88411044) (-91.14511956, 31.95718437) - (-91.14536130, 31.95727606)
-scaled point 4194481 (39318017907342, -35647233977083) ans 3615023, res 3686526 (39318586051545, -34253047969839) - (39316931597069, -34254469064041) (39318177387800, -34065609618744) - (39317879476016, -34065372638331)
-point 4194483 (-91.14473297, 31.34689368) ans 3615022, res 3686525 (-91.14465385, 31.88484355) - (-91.14478796, 31.88466030) (-91.14420593, 31.95640555) - (-91.14511956, 31.95718437)
-scaled point 4194483 (39318653816691, -35642904942253) ans 3615022, res 3686525 (39318751326677, -34252574350168) - (39318586051545, -34253047969839) (39319303327872, -34067622485546) - (39318177387800, -34065609618744)
-point 4194484 (-91.14518697, 31.34754068) ans 3615023, res 3686526 (-91.14478796, 31.88466030) - (-91.14613044, 31.88411044) (-91.14511956, 31.95718437) - (-91.14536130, 31.95727606)
-scaled point 4194484 (39318094315202, -35641232771784) ans 3615023, res 3686526 (39318586051545, -34253047969839) - (39316931597069, -34254469064041) (39318177387800, -34065609618744) - (39317879476016, -34065372638331)
-point 4194485 (-91.14652697, 31.34777468) ans 3615024, res 3686528 (-91.14613044, 31.88411044) - (-91.14666718, 31.88365228) (-91.14614047, 31.95741321) - (-91.14724204, 31.95745897)
-scaled point 4194485 (39316442918273, -35640627999157) ans 3615024, res 3686528 (39316931597069, -34254469064041) - (39316270125593, -34255653177831) (39316919237481, -34065018176959) - (39315561676839, -34064899912897)
-point 4194486 (-91.14666797, 31.34770167) ans 3615025, res 3686528 (-91.14666718, 31.88365228) - (-91.14677463, 31.88349186) (-91.14614047, 31.95741321) - (-91.14724204, 31.95745897)
-scaled point 4194486 (39316269153242, -35640816667540) ans 3615025, res 3686528 (39316270125593, -34255653177831) - (39316137703376, -34256067780481) (39316919237481, -34065018176959) - (39315561676839, -34064899912897)
-point 4194487 (-91.14682997, 31.34754567) ans 3615026, res 3686528 (-91.14677463, 31.88349186) - (-91.14685512, 31.88326272) (-91.14614047, 31.95741321) - (-91.14724204, 31.95745897)
-scaled point 4194487 (39316069505664, -35641219849292) ans 3615026, res 3686528 (39316137703376, -34256067780481) - (39316038506255, -34256660005368) (39316919237481, -34065018176959) - (39315561676839, -34064899912897)
-point 4194488 (-91.14706397, 31.34730468) ans 3615028, res 3686528 (-91.14688178, 31.88275880) - (-91.14712351, 31.88266706) (-91.14614047, 31.95741321) - (-91.14724204, 31.95745897)
-scaled point 4194488 (39315781127609, -35641842713408) ans 3615028, res 3686528 (39316005654572, -34257962380636) - (39315707744021, -34258199474766) (39316919237481, -34065018176959) - (39315561676839, -34064899912897)
-point 4194489 (-91.14729897, 31.34709967) ans 3615029, res 3686529 (-91.14712351, 31.88266706) - (-91.14755298, 31.88266706) (-91.14724204, 31.95745897) - (-91.14828995, 31.95720703)
-scaled point 4194489 (39315491517170, -35642372535581) ans 3615029, res 3686529 (39315707744021, -34258199474766) - (39315178481559, -34258199474766) (39315561676839, -34064899912897) - (39314270248433, -34065551046256)
-point 11169648 (-91.14700598, 31.54635572) ans 3615028, res 3686528 (-91.14688178, 31.88275880) - (-91.14712351, 31.88266706) (-91.14614047, 31.95741321) - (-91.14724204, 31.95745897)
-scaled point 11169648 (39315852594839, -35127395615148) ans 3615028, res 3686528 (39316005654572, -34257962380636) - (39315707744021, -34258199474766) (39316919237481, -34065018176959) - (39315561676839, -34064899912897)
-E0919 15:29:20.053169 2378588 run_overlay.cu:107] Map: 0 Total points: 29345959 n diff: 30 Error rate: 0.000102229 %
-I0919 15:29:20.056967 2378588 run_overlay.cu:47] Checking point in polygon
-E0919 15:29:44.893385 2378588 run_overlay.cu:107] Map: 1 Total points: 28007655 n diff: 1 Error rate: 3.57045e-06 %
-point 10093883 (-82.02016251, 33.62318689) ans 12538457, res 12538450 (-82.02007751, 33.71408251) - (-82.02026551, 33.71381751) (-82.02027251, 33.71494951) - (-82.02010451, 33.71464351)
-scaled point 10093883 (50563636199234, -29759828752965) ans 12538457, res 12538450 (50563740948249, -29524909165340) - (50563509259898, -29525594057418) (50563500633204, -29522668405222) - (50563707675091, -29523459261734)
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/USACensusBlockGroupBoundaries/USACensusBlockGroupBoundaries_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/USADetailedWaterBodies/USADetailedWaterBodies_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=lbvh              -v=1              -fau              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0113 14:11:52.020267 1221698 run_overlay.cu:148] Reading map 0 from /local/storage/liang/Downloads/Datasets/point_cdb/USACensusBlockGroupBoundaries/USACensusBlockGroupBoundaries_Point.cdb
+I0113 14:11:52.809720 1221698 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-USACensusBlockGroupBoundaries-USACensusBlockGroupBoundaries_Point.cdb.bin is deserialized, chains: 872624 points: 29345959 edges: 28473335
+I0113 14:11:52.809733 1221698 run_overlay.cu:152] Reading map 1 from /local/storage/liang/Downloads/Datasets/point_cdb/USADetailedWaterBodies/USADetailedWaterBodies_Point.cdb
+I0113 14:11:53.670795 1221698 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-USADetailedWaterBodies-USADetailedWaterBodies_Point.cdb.bin is deserialized, chains: 2442900 points: 28007655 edges: 25564755
+I0113 14:11:53.670825 1221698 context.h:51] Bounding Box, Bottom-left: (-179.149, 18.9107), Top-right: (-66.9496, 71.3652)
+I0113 14:11:53.670837 1221698 context.h:58] Scaled Bounding Box, Bottom-left: (-69136359329185, -67784245771247), Top-right: (69136359329184, 67784245771246)
+I0113 14:11:53.670840 1221698 context.h:61] Unscaled Bounding Box, Bottom-left: (-179.149, 18.9107), Top-right: (-66.9496, 71.3652)
+I0113 14:11:53.736789 1221698 lsi.h:22] Queue size: 247 MB
 Timing results:
- - Read map 0: 761.473 ms
+ - Read map 0: 789.473 ms
 
- - Read map 1: 732.964 ms
+ - Read map 1: 861.074 ms
 
- - Create Context: 4479.25 ms
+ - Create App: 0.813007 ms
 
- - Create App: 0.720978 ms
+ - Load Data: 64.3859 ms
 
- - Init: 4.95386 ms
+ - Init: 1.64914 ms
 
- - Build Index: 119.433 ms
+ - Build Index: 118.023 ms
 
- - Intersection edges: 87.2669 ms
+ - Intersection edges: 75.376 ms
 
- - Map 0: Locate vertices in other map: 29845.1 ms
+ - Map 0: Locate vertices in other map: 29760.8 ms
 
- - Map 1: Locate vertices in other map: 24496.7 ms
+ - Map 1: Locate vertices in other map: 24420.3 ms
 
- - Computer output polygons: 561.617 ms
-
- - Check result: 57733.2 ms
+ - Computer output polygons: 561.737 ms
 

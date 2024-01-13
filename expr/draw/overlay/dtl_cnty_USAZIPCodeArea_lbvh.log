@@ -1,58 +1,30 @@
-/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/dtl_cnty/dtl_cnty_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/USAZIPCodeArea/USAZIPCodeArea_Point.cdb              -serialize=/dev/shm              -grid_size=20000              -mode=lbvh              -lb=false              -v=1              -fau              -xsect_factor 0.5              -win=32              -enlarge=2
-I0919 15:27:38.366844 2378512 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-dtl_cnty-dtl_cnty_Point.cdb.bin is deserialized, chains: 3157 points: 1028000 edges: 1024843
-I0919 15:27:38.901074 2378512 planar_graph.h:216] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-USAZIPCodeArea-USAZIPCodeArea_Point.cdb.bin is deserialized, chains: 134894 points: 23894675 edges: 23759781
-I0919 15:27:38.901125 2378512 context.h:51] Bounding Box, Bottom-left: (-179.147, -14.5487), Top-right: (179.778, 71.3905)
-I0919 15:27:38.901142 2378512 context.h:58] Scaled Bounding Box, Bottom-left: (-69978809497444, -68768348336364), Top-right: (69978809497443, 68768348336363)
-I0919 15:27:38.901144 2378512 context.h:61] Unscaled Bounding Box, Bottom-left: (-179.147, -14.5487), Top-right: (179.778, 71.3905)
-I0919 15:27:40.874941 2378512 lsi.h:22] Queue size: 567 MB
-I0919 15:27:42.121345 2378512 lsi.h:22] Queue size: 1701 MB
-I0919 15:27:42.127132 2378512 uniform_grid.h:148] Creating the uniform grid, resolution: 2048, Size: 112 MB
-I0919 15:27:42.129810 2378512 uniform_grid.h:206] Total Edges in the grid: 25029685, Size: 190 MB
-E0919 15:27:43.244647 2378512 run_overlay.cu:36] LSI  xsects (Answer): 131522 xsects (Result): 131078 Error rate: 0.337586 %
-I0919 15:27:43.244830 2378512 run_overlay.cu:47] Checking point in polygon
-E0919 15:27:44.417050 2378512 run_overlay.cu:107] Map: 0 Total points: 1028000 n diff: 1433 Error rate: 0.139397 %
-I0919 15:27:44.417078 2378512 run_overlay.cu:47] Checking point in polygon
-point 940080 (-95.99839011, 28.58810693) ans 416399, res 412300 (-95.99835990, 28.58876690) - (-95.99868100, 28.58860900) (-95.99841600, 28.59790000) - (-95.99827200, 28.59775200)
-scaled point 940080 (-37556150313432, 267605286189) ans 416399, res 412300 (-37556138531945, 268661491430) - (-37556263739971, 268408788927) (-37556160407281, 283278066688) - (-37556104256687, 283041208104)
-point 940081 (-96.00000911, 28.58752394) ans 416403, res 412294 (-95.99951310, 28.58836300) - (-96.00048200, 28.58817100) (-96.00009700, 28.59876800) - (-95.99993900, 28.59871100)
-scaled point 940081 (-37556781618069, 266672255413) ans 416403, res 412294 (-37556588204228, 268015091550) - (-37556966012330, 267707815548) (-37556815887478, 284667208678) - (-37556754277409, 284575987716)
-point 940082 (-96.00199812, 28.58696393) ans 416405, res 412269 (-96.00121500, 28.58804300) - (-96.00242900, 28.58775200) (-96.00204100, 28.59847300) - (-96.00194000, 28.59844200)
-scaled point 940082 (-37557557198148, 265776032142) ans 416405, res 412269 (-37557251834451, 267502963280) - (-37557725215152, 267037249691) (-37557573920496, 284195093506) - (-37557534537094, 284145481234)
-point 940083 (-96.00406612, 28.58637093) ans 416406, res 412122 (-96.00242900, 28.58775200) - (-96.00438400, 28.58705700) (-96.00413900, 28.59284400) - (-96.00398300, 28.59251400)
-scaled point 940083 (-37558363583456, 264826997408) ans 416406, res 412122 (-37557725215152, 267037249691) - (-37558487537452, 265924974581) (-37558392003456, 275186465315) - (-37558331173645, 274658334687)
-point 940084 (-96.00937312, 28.58457093) ans 416410, res 412088 (-96.00832800, 28.58596100) - (-96.01042400, 28.58532000) (-96.00969800, 28.60029700) - (-96.00931900, 28.60002300)
-scaled point 940084 (-37560432967194, 261946284894) ans 416410, res 412088 (-37560025439831, 264170940739) - (-37560842742921, 263145087005) (-37560559650343, 287114215520) - (-37560411864709, 286675707060)
-point 940085 (-96.01458012, 28.58285793) ans 416412, res 411825 (-96.01272100, 28.58445900) - (-96.01496000, 28.58339400) (-96.01466600, 28.59278900) - (-96.01456700, 28.59289300)
-scaled point 940085 (-37562463357464, 259204806817) ans 416412, res 411825 (-37561738422881, 261767146186) - (-37562611486630, 260062724615) (-37562496845834, 275098443544) - (-37562458242301, 275264884711)
-point 940086 (-96.01806112, 28.58165593) ans 416415, res 411642 (-96.01681500, 28.58265500) - (-96.01871400, 28.58186800) (-96.01826100, 28.59058000) - (-96.01797700, 28.59040800)
-scaled point 940086 (-37563820720476, 257281127815) ans 416415, res 411642 (-37563334815462, 258880032088) - (-37564075301420, 257620520561) (-37563898661010, 271563169130) - (-37563787919170, 271287901045)
-point 940087 (-96.02269512, 28.57979993) ans 416421, res 411400 (-96.02210900, 28.58077700) - (-96.02283700, 28.58058700) (-96.02286400, 28.59162400) - (-96.02259000, 28.59114400)
-scaled point 940087 (-37565627678174, 254310794734) ans 416421, res 411400 (-37565399129659, 255874488698) - (-37565683002106, 255570413488) (-37565693530343, 273233982388) - (-37565586688240, 272465790784)
-point 940088 (-96.02691212, 28.57812393) ans 416430, res 411274 (-96.02649100, 28.57908200) - (-96.02721900, 28.57875300) (-96.02696900, 28.58957900) - (-96.02666500, 28.58960900)
-scaled point 940088 (-37567272033110, 251628528104) ans 416430, res 411274 (-37567107823428, 253161817747) - (-37567391695875, 252635287515) (-37567294212205, 269961172893) - (-37567175672062, 270009184768)
-point 940089 (-96.03305912, 28.57561993) ans 416437, res 1345923 (-96.03187200, 28.57692700) - (-96.03344800, 28.57640800) (-96.03295400, 28.65279000) - (-96.03310300, 28.65281600)
-scaled point 940089 (-37569668961980, 247621138517) ans 416437, res 1345923 (-37569206061942, 249712963108) - (-37569820598998, 248882359267) (-37569627971266, 371123794417) - (-37569686071533, 371165404709)
-I0919 15:27:45.836221 2378512 run_overlay.cu:111] Map: 1 passed check
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/polyover_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/dtl_cnty/dtl_cnty_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/USAZIPCodeArea/USAZIPCodeArea_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=lbvh              -v=1              -fau              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0113 14:11:42.946835 1221612 run_overlay.cu:148] Reading map 0 from /local/storage/liang/Downloads/Datasets/point_cdb/dtl_cnty/dtl_cnty_Point.cdb
+I0113 14:11:43.166078 1221612 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-dtl_cnty-dtl_cnty_Point.cdb.bin is deserialized, chains: 21620 points: 7134426 edges: 7112806
+I0113 14:11:43.166091 1221612 run_overlay.cu:152] Reading map 1 from /local/storage/liang/Downloads/Datasets/point_cdb/USAZIPCodeArea/USAZIPCodeArea_Point.cdb
+I0113 14:11:43.672784 1221612 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-USAZIPCodeArea-USAZIPCodeArea_Point.cdb.bin is deserialized, chains: 134894 points: 23894675 edges: 23759781
+I0113 14:11:43.672812 1221612 context.h:51] Bounding Box, Bottom-left: (-179.149, -14.5487), Top-right: (179.778, 71.3905)
+I0113 14:11:43.672828 1221612 context.h:58] Scaled Bounding Box, Bottom-left: (-69978811192544, -68768348336364), Top-right: (69978811192543, 68768348336363)
+I0113 14:11:43.672830 1221612 context.h:61] Unscaled Bounding Box, Bottom-left: (-179.149, -14.5487), Top-right: (179.778, 71.3905)
+I0113 14:11:43.712385 1221612 lsi.h:22] Queue size: 141 MB
 Timing results:
- - Read map 0: 92.5682 ms
+ - Read map 0: 219.261 ms
 
- - Read map 1: 534.025 ms
+ - Read map 1: 506.706 ms
 
- - Create Context: 1973.12 ms
+ - Create App: 0.429153 ms
 
- - Create App: 0.272989 ms
+ - Load Data: 38.6789 ms
 
- - Init: 2.50292 ms
+ - Init: 1.0221 ms
 
- - Build Index: 54.0862 ms
+ - Build Index: 75.8989 ms
 
- - Intersection edges: 9.84287 ms
+ - Intersection edges: 54.9769 ms
 
- - Map 0: Locate vertices in other map: 1084.78 ms
+ - Map 0: Locate vertices in other map: 6079.69 ms
 
- - Map 1: Locate vertices in other map: 46.56 ms
+ - Map 1: Locate vertices in other map: 1735.53 ms
 
- - Computer output polygons: 48.655 ms
-
- - Check result: 3730.69 ms
+ - Computer output polygons: 196.293 ms
 

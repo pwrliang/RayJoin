@@ -1,0 +1,35 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/query_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/Europe/lakes_Europe_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/Europe/parks_Europe_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=grid              -lb=false              -v=1              -query=lsi              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0110 12:28:23.462672 1516744 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-Europe-lakes_Europe_Point.cdb.bin is deserialized, chains: 831264 points: 28687526 edges: 27856262
+I0110 12:28:25.232973 1516744 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-Europe-parks_Europe_Point.cdb.bin is deserialized, chains: 3299874 points: 69273661 edges: 65973787
+I0110 12:28:25.233019 1516744 context.h:51] Bounding Box, Bottom-left: (-31.2515, 35.0264), Top-right: (68.8331, 81.3082)
+I0110 12:28:25.233034 1516744 context.h:58] Scaled Bounding Box, Bottom-left: (-68990108085658, -67453827351386), Top-right: (68990108085657, 67453827351385)
+I0110 12:28:25.233036 1516744 context.h:61] Unscaled Bounding Box, Bottom-left: (-31.2515, 35.0264), Top-right: (68.8331, 81.3082)
+I0110 12:28:25.341609 1516744 run_query.cu:228] Queue capacity: 9383005
+I0110 12:28:25.341615 1516744 lsi.h:22] Queue size: 429 MB
+I0110 12:28:25.351924 1516744 uniform_grid.h:148] Creating the uniform grid, resolution: 15000, Size: 6008 MB
+I0110 12:28:25.373623 1516744 uniform_grid.h:207] Total Edges in the grid: 108783300, Size: 829 MB
+I0110 12:28:28.288193 1516744 run_query.cu:300] Iter: 0
+I0110 12:28:28.858867 1516744 run_query.cu:300] Iter: 1
+I0110 12:28:29.429224 1516744 run_query.cu:300] Iter: 2
+I0110 12:28:29.994397 1516744 run_query.cu:300] Iter: 3
+I0110 12:28:30.560740 1516744 run_query.cu:300] Iter: 4
+I0110 12:28:31.125690 1516744 run_query.cu:305] Intersections: 278461 Queue Load Factor: 0.0296772
+Timing results:
+ - Read map 0: 756.476 ms
+
+ - Read map 1: 1770.19 ms
+
+ - Create App: 0.643969 ms
+
+ - Load Data: 107.908 ms
+
+ - Init: 1.32203 ms
+
+ - Build Index: 91.7649 ms
+
+ - Warmup: 2853.5 ms
+
+ - Query: 567.501 ms
+
+ - Cleanup: 92.7491 ms
+

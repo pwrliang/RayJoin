@@ -1,0 +1,35 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/query_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/lakes/South_America/lakes_South_America_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/parks/South_America/parks_South_America_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=grid              -lb=false              -v=1              -query=lsi              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0110 12:28:59.816926 1516774 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-lakes-South_America-lakes_South_America_Point.cdb.bin is deserialized, chains: 43757 points: 2418375 edges: 2374618
+I0110 12:28:59.895215 1516774 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-parks-South_America-parks_South_America_Point.cdb.bin is deserialized, chains: 85371 points: 3264379 edges: 3179008
+I0110 12:28:59.895232 1516774 context.h:51] Bounding Box, Bottom-left: (-92.6829, -55.9828), Top-right: (-34.788, 12.5803)
+I0110 12:28:59.895246 1516774 context.h:58] Scaled Bounding Box, Bottom-left: (-68019003758318, -68374252432450), Top-right: (68019003758317, 68374252432449)
+I0110 12:28:59.895248 1516774 context.h:61] Unscaled Bounding Box, Bottom-left: (-92.6829, -55.9828), Top-right: (-34.788, 12.5803)
+I0110 12:28:59.904332 1516774 run_query.cu:228] Queue capacity: 555362
+I0110 12:28:59.904337 1516774 lsi.h:22] Queue size: 25 MB
+I0110 12:28:59.913491 1516774 uniform_grid.h:148] Creating the uniform grid, resolution: 15000, Size: 6008 MB
+I0110 12:28:59.927817 1516774 uniform_grid.h:207] Total Edges in the grid: 8405145, Size: 64 MB
+I0110 12:29:00.568382 1516774 run_query.cu:300] Iter: 0
+I0110 12:29:00.689831 1516774 run_query.cu:300] Iter: 1
+I0110 12:29:00.813104 1516774 run_query.cu:300] Iter: 2
+I0110 12:29:00.934357 1516774 run_query.cu:300] Iter: 3
+I0110 12:29:01.055557 1516774 run_query.cu:300] Iter: 4
+I0110 12:29:01.177043 1516774 run_query.cu:305] Intersections: 22383 Queue Load Factor: 0.0403034
+Timing results:
+ - Read map 0: 171.427 ms
+
+ - Read map 1: 78.1412 ms
+
+ - Create App: 1.84393 ms
+
+ - Load Data: 7.22694 ms
+
+ - Init: 0.144958 ms
+
+ - Build Index: 55.918 ms
+
+ - Warmup: 607.987 ms
+
+ - Query: 121.733 ms
+
+ - Cleanup: 22.9239 ms
+

@@ -1,0 +1,35 @@
+/local/storage/liang/.clion/RayJoin/cmake-build-release-dl190/bin/query_exec -poly1 /local/storage/liang/Downloads/Datasets/point_cdb/dtl_cnty/dtl_cnty_Point.cdb              -poly2 /local/storage/liang/Downloads/Datasets/point_cdb/USAZIPCodeArea/USAZIPCodeArea_Point.cdb              -serialize=/dev/shm              -grid_size=15000              -mode=grid              -lb=false              -v=1              -query=lsi              -xsect_factor 0.1              -enlarge=3.5              -check=false
+I0110 12:27:52.389446 1516679 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-dtl_cnty-dtl_cnty_Point.cdb.bin is deserialized, chains: 21620 points: 7134426 edges: 7112806
+I0110 12:27:52.886574 1516679 planar_graph.h:215] Map /dev/shm/-local-storage-liang-Downloads-Datasets-point_cdb-USAZIPCodeArea-USAZIPCodeArea_Point.cdb.bin is deserialized, chains: 134894 points: 23894675 edges: 23759781
+I0110 12:27:52.886618 1516679 context.h:51] Bounding Box, Bottom-left: (-179.149, -14.5487), Top-right: (179.778, 71.3905)
+I0110 12:27:52.886634 1516679 context.h:58] Scaled Bounding Box, Bottom-left: (-69978811192544, -68768348336364), Top-right: (69978811192543, 68768348336363)
+I0110 12:27:52.886636 1516679 context.h:61] Unscaled Bounding Box, Bottom-left: (-179.149, -14.5487), Top-right: (179.778, 71.3905)
+I0110 12:27:52.926005 1516679 run_query.cu:228] Queue capacity: 3087258
+I0110 12:27:52.926012 1516679 lsi.h:22] Queue size: 141 MB
+I0110 12:27:52.935915 1516679 uniform_grid.h:148] Creating the uniform grid, resolution: 15000, Size: 6008 MB
+I0110 12:27:52.952051 1516679 uniform_grid.h:207] Total Edges in the grid: 33360767, Size: 254 MB
+I0110 12:27:59.592180 1516679 run_query.cu:300] Iter: 0
+I0110 12:28:00.893955 1516679 run_query.cu:300] Iter: 1
+I0110 12:28:02.244244 1516679 run_query.cu:300] Iter: 2
+I0110 12:28:03.563794 1516679 run_query.cu:300] Iter: 3
+I0110 12:28:04.850010 1516679 run_query.cu:300] Iter: 4
+I0110 12:28:06.171627 1516679 run_query.cu:305] Intersections: 832973 Queue Load Factor: 0.26981
+Timing results:
+ - Read map 0: 242.983 ms
+
+ - Read map 1: 496.997 ms
+
+ - Create App: 0.196934 ms
+
+ - Load Data: 39.155 ms
+
+ - Init: 0.524998 ms
+
+ - Build Index: 41.8961 ms
+
+ - Warmup: 6623.75 ms
+
+ - Query: 1315.89 ms
+
+ - Cleanup: 40.4749 ms
+
