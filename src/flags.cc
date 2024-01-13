@@ -8,7 +8,6 @@ DEFINE_double(xsect_factor, 0.2, "For preallocate intersection space");
 DEFINE_string(mode, "", "grid,rt,lbvh");
 DEFINE_bool(box, false, "");
 DEFINE_bool(check, true, "Compare RT result with CUDA");
-DEFINE_bool(lb, true, "Load balancing");
 DEFINE_bool(fau, false, "Free after use");
 DEFINE_int32(warmup, 5, "");
 DEFINE_int32(repeat, 5, "");

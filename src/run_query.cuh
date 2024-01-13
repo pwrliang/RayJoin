@@ -19,7 +19,6 @@ struct QueryConfig {
   int random_seed;
   std::string mode;
   bool check;
-  bool lb;
   bool print_histo;
   bool profile;
   bool fau;

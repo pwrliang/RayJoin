@@ -31,7 +31,6 @@ int main(int argc, char* argv[]) {
   config.mode = FLAGS_mode;
   config.exec_root = exec_path.substr(0, exec_path.find_last_of("/"));
   config.check = FLAGS_check;
-  config.lb = FLAGS_lb;
   config.fau = FLAGS_fau;
   config.profile = FLAGS_profile;
   config.win = FLAGS_win;

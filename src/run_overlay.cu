@@ -26,24 +26,43 @@ void CheckResult(CONTEXT_T& ctx, std::shared_ptr<OVERLAY_IMPL_T> overlay,
   LOG(INFO) << "Checking LSI Results";
   query_config.xsect_factor = config.xsect_factor;
   query_config.grid_size = config.grid_size;
-  query_config.lb = true;
   cuda_grid.set_config(query_config);
   cuda_grid.Init();
   cuda_grid.BuildIndex();
-  cuda_grid.IntersectEdge(1);
+  cuda_grid.IntersectEdge(0);
   {
-    auto n_xsects_ans = cuda_grid.get_xsect_edges().size();
-    auto n_xsects_res = overlay->get_xsect_edges().size();
+    auto xsects_ans = cuda_grid.get_xsect_edges();
+    auto xsects_res = overlay->get_xsect_edges();
+    auto n_xsects_ans = xsects_ans.size();
+    auto n_xsects_res = xsects_res.size();
+    auto write_to = [](const char* path, thrust::host_vector<xsect_t>& xsects) {
+      thrust::sort(xsects.begin(), xsects.end(),
+                   [](const xsect_t& a, const xsect_t& b) {
+                     if (a.eid[0] != b.eid[0]) {
+                       return a.eid[0] < b.eid[0];
+                     }
+                     return a.eid[1] < b.eid[1];
+                   });
+
+      std::ofstream ofs(path);
+      for (auto& xsect : xsects) {
+        ofs << xsect.eid[0] << " " << xsect.eid[1] << "\n";
+      }
+      ofs.close();
+    };
 
     // it is possible that rt finds more xsects than the grid due to the
     // numerical issue of the grid
-    if (n_xsects_ans > n_xsects_res) {
-      int n_diff = n_xsects_ans - n_xsects_res;
+    if (n_xsects_ans != n_xsects_res) {
+      auto n_diff = abs((int64_t) n_xsects_ans - (int64_t) n_xsects_res);
+
       LOG(ERROR) << "LSI "
                  << " xsects (Answer): " << n_xsects_ans
                  << " xsects (Result): " << n_xsects_res
                  << " False negative rate: "
                  << (double) n_diff / n_xsects_ans * 100 << " %";
+      write_to("/tmp/xsects_answer.txt", xsects_ans);
+      write_to("/tmp/xsects_result.txt", xsects_res);
     } else {
       LOG(INFO) << "LSI passed check";
     }
@@ -158,7 +177,6 @@ void RunOverlay(const OverlayConfig& config) {
     query_config.grid_size = config.grid_size;
     query_config.profile = config.profile;
     query_config.xsect_factor = config.xsect_factor;
-    query_config.lb = config.lb;
 
     overlay_grid->set_config(query_config);
     overlay = overlay_grid;

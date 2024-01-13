@@ -7,7 +7,6 @@ struct QueryConfigGrid {
   unsigned int grid_size = 2048;
   bool profile = false;
   float xsect_factor = 1.5;
-  bool lb = true;
 };
 
 struct QueryConfigRT {

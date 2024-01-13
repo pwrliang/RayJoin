@@ -15,7 +15,6 @@ DECLARE_double(xsect_factor);
 DECLARE_string(mode);
 DECLARE_bool(box);
 DECLARE_bool(check);
-DECLARE_bool(lb);
 DECLARE_int32(ag);
 DECLARE_int32(ag_iter);
 DECLARE_bool(fau);

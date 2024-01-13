@@ -10,7 +10,6 @@
 #include "map/map.h"
 #include "map/scaling.h"
 #include "query_config.h"
-#include "util/cta_scheduler.h"
 #include "util/queue.h"
 
 namespace rayjoin {
@@ -58,6 +57,7 @@ DEV_INLINE void intersect_one_cell(
       }
 #endif
 #endif
+
       tcb::rational<__int128> xsect_x, xsect_y;
       if (intersect_test(e1, e1_p1, e1_p2, e2, e2_p1, e2_p2, xsect_x,
                          xsect_y)) {
@@ -75,63 +75,6 @@ DEV_INLINE void intersect_one_cell(
       }
     }
   }
-}
-
-template <typename COORD_T, typename INTERNAL_COORD_T, typename COEFFICIENT_T>
-DEV_INLINE void intersect_one_cell_lb(
-    int cell_idx, dev::UniformGrid& grid,
-    const Scaling<COORD_T, INTERNAL_COORD_T>& scaling,
-    dev::Map<INTERNAL_COORD_T, COEFFICIENT_T> map1,
-    dev::Map<INTERNAL_COORD_T, COEFFICIENT_T> map2,
-    dev::Queue<Intersection<INTERNAL_COORD_T>, uint32_t> xsect_edges) {
-  auto gsize = grid.get_grid_size();
-  auto work_size = gsize * gsize;
-  dev::np_local<index_t> np_local = {0, 0};
-
-  if (cell_idx < work_size) {
-    auto& cell = grid.get_cell(cell_idx);
-    auto ne1 = cell.ne[0], ne2 = cell.ne[1];
-
-    np_local.size = ne1 * ne2;
-    np_local.meta_data = cell_idx;
-  }
-
-  dev::CTAWorkScheduler<index_t>::template schedule(
-      np_local, [=](index_t edge_2d, index_t cell_idx) mutable {
-        const auto& cell = grid.get_cell(cell_idx);
-        auto begin = cell.begin;
-        auto ne1 = cell.ne[0], ne2 = cell.ne[1];
-        auto ie1 = edge_2d / ne2;
-        auto ie2 = edge_2d % ne2;
-        auto eid1 = grid.get_eid(begin + ie1);
-        auto eid2 = grid.get_eid(begin + ne1 + ie2);
-
-        const auto& e1 = map1.get_edge(eid1);
-        const auto& e1_p1 = map1.get_point(e1.p1_idx);
-        const auto& e1_p2 = map1.get_point(e1.p2_idx);
-        const auto& e2 = map2.get_edge(eid2);
-        const auto& e2_p1 = map2.get_point(e2.p1_idx);
-        const auto& e2_p2 = map2.get_point(e2.p2_idx);
-        tcb::rational<__int128> xsect_x, xsect_y;
-
-        if (intersect_test(e1, e1_p1, e1_p2, e2, e2_p1, e2_p2, xsect_x,
-                           xsect_y)) {
-          auto xsect_cell_x = dev::calculate_cell(gsize, scaling, xsect_x);
-          auto xsect_cell_y = dev::calculate_cell(gsize, scaling, xsect_y);
-
-          auto cell_x = cell_idx % gsize;
-          auto cell_y = cell_idx / gsize;
-
-          if (xsect_cell_x == cell_x && xsect_cell_y == cell_y) {
-            dev::Intersection<INTERNAL_COORD_T> xsect;
-            xsect.x = xsect_x;
-            xsect.y = xsect_y;
-            xsect.eid[0] = eid1;
-            xsect.eid[1] = eid2;
-            xsect_edges.Append(xsect);
-          }
-        }
-      });
 }
 }  // namespace dev
 
@@ -163,33 +106,19 @@ class LSIGrid : public LSI<CONTEXT_T> {
 
     this->xsect_queue_.Clear(stream);
 
-    if (config_.lb) {
-      size_t work_size = gsize * gsize;
+    grid_->KernelSizingGrid(grid_dim, block_dim);
 
-      KernelSizing(grid_dim, block_dim, work_size);
-      LaunchKernel(stream, grid_dim, block_dim, [=] __device__() mutable {
-        uint32_t work_size_rup = round_up(work_size, blockDim.x) * blockDim.x;
+    // Compute intersections
+    LaunchKernel(stream, grid_dim, block_dim, [=] __device__() mutable {
+      auto cell_x = blockIdx.x * blockDim.x + threadIdx.x;
+      auto cell_y = blockIdx.y * blockDim.y + threadIdx.y;
 
-        for (uint32_t i = TID_1D; i < work_size_rup; i += TOTAL_THREADS_1D) {
-          intersect_one_cell_lb(i, d_grid, scaling, d_base_map, d_query_map,
-                                d_xsect_queue);
-        }
-      });
-    } else {
-      grid_->KernelSizingGrid(grid_dim, block_dim);
-
-      // Compute intersections
-      LaunchKernel(stream, grid_dim, block_dim, [=] __device__() mutable {
-        auto cell_x = blockIdx.x * blockDim.x + threadIdx.x;
-        auto cell_y = blockIdx.y * blockDim.y + threadIdx.y;
-
-        if (cell_x < gsize && cell_y < gsize) {
-          dev::intersect_one_cell<coord_t, internal_coord_t>(
-              cell_x, cell_y, d_grid, scaling, d_base_map, d_query_map,
-              d_xsect_queue);
-        }
-      });
-    }
+      if (cell_x < gsize && cell_y < gsize) {
+        dev::intersect_one_cell<coord_t, internal_coord_t>(
+            cell_x, cell_y, d_grid, scaling, d_base_map, d_query_map,
+            d_xsect_queue);
+      }
+    });
 #ifndef NDEBUG
     if (config_.profile) {
       SharedValue<uint64_t> total_ne1, total_ne2;
@@ -226,7 +155,7 @@ class LSIGrid : public LSI<CONTEXT_T> {
     }
 #endif
     stream.Sync();
-//    grid_->PrintHistogram1();
+    //    grid_->PrintHistogram1();
   }
 
   void set_config(const QueryConfigGrid& config) { config_ = config; }

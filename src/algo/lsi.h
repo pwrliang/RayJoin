@@ -37,6 +37,7 @@ DEV_INLINE bool intersect_test(const EDGE_T1& e1, const POINT_T& e1_p1,
   auto e1_p1_agst_e2 = SUBEDGE(e1_p1, e2);
   auto e1_p2_agst_e2 = SUBEDGE(e1_p2, e2);
 #undef SUBEDGE
+
   // e1_p1 is on e2
   if (e1_p1_agst_e2 == 0) {
     e1_p1_agst_e2 = -e2.a;

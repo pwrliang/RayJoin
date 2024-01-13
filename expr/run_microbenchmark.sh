@@ -32,12 +32,6 @@ function lsi_varying_seg_len() {
       for mode in rt grid; do
         out_prefix="${out_dir}/lsi_${map}_${mode}_${seg_len}"
 
-        if [[ $mode == "grid_lb" ]]; then
-          mode="grid"
-          lb=true
-        else
-          lb=false
-        fi
         xsect_factor=$DEFAULT_XSECT_FACTOR
 
         log_file="${out_prefix}.log"
@@ -46,7 +40,6 @@ function lsi_varying_seg_len() {
                    -serialize=${SERIALIZE_PREFIX} \
                    -grid_size=$DEFAULT_GRID_SIZE \
                    -mode=$mode \
-                   -lb=$lb \
                    -v=1 \
                    -query=lsi \
                    -seed=1 \
@@ -101,20 +94,12 @@ function lsi_varying_query_size() {
       for mode in rt grid lbvh; do
         out_prefix="${out_dir}/${map}_${mode}_${ne}"
 
-        if [[ $mode == "grid_lb" ]]; then
-          mode="grid"
-          lb=true
-        else
-          lb=false
-        fi
-
         if [[ -z $sample ]]; then
           log_file="${out_prefix}.log"
           cmd="$exec -poly1 ${DATASET_ROOT}/${map} \
                      -serialize=${SERIALIZE_PREFIX} \
                      -grid_size=$DEFAULT_GRID_SIZE \
                      -mode=$mode \
-                     -lb=$lb \
                      -v=1 \
                      -query=lsi \
                      -seed=1 \
@@ -142,7 +127,6 @@ function lsi_varying_query_size() {
                        -sample=$sample \
                        -sample_rate=$rate \
                        -mode=$mode \
-                       -lb=$lb \
                        -v=1 \
                        -query=lsi \
                        -seed=1 \

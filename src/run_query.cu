@@ -197,7 +197,6 @@ void RunLSIQuery(const QueryConfig& config) {
     auto* lsi_pip = new LSIGrid<context_t>(*ctx, grid);
     QueryConfigGrid query_config;
 
-    query_config.lb = config.lb;
     query_config.grid_size = config.grid_size;
     query_config.profile = config.profile;
 

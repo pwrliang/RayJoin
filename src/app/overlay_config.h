@@ -16,7 +16,6 @@ struct OverlayConfig {
   bool fau;
   bool check;
   bool profile;
-  bool lb;
   int win;
   int ag;
   int ag_iter;
