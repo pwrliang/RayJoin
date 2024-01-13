@@ -35,7 +35,7 @@ extern "C" __global__ void __intersection__lsi_custom() {
 
     if (rayjoin::dev::intersect_test<edge_t, edge_t, point_t,
                                      rayjoin::coefficient_t>(
-            base_e, base_e_p1, base_e_p2, query_e, query_e_p1, query_e_p2)) {
+            query_e, query_e_p1, query_e_p2, base_e, base_e_p1, base_e_p2)) {
       xsect_t xsect;
       xsect.eid[query_map_id] = query_eid;
       xsect.eid[1 - query_map_id] = base_eid;
