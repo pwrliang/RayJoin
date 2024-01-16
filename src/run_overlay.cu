@@ -23,22 +23,46 @@ void CheckResult(CONTEXT_T& ctx, std::shared_ptr<OVERLAY_IMPL_T> overlay,
 
   QueryConfigGrid query_config;
 
+  LOG(INFO) << "Checking LSI Results";
   query_config.xsect_factor = config.xsect_factor;
+  query_config.grid_size = config.grid_size;
   cuda_grid.set_config(query_config);
   cuda_grid.Init();
   cuda_grid.BuildIndex();
   cuda_grid.IntersectEdge(0);
   {
-    auto n_xsects_ans = cuda_grid.get_xsect_edges().size();
-    auto n_xsects_res = overlay->get_xsect_edges().size();
-    int n_diff = abs((int) (n_xsects_ans - n_xsects_res));
+    auto xsects_ans = cuda_grid.get_xsect_edges();
+    auto xsects_res = overlay->get_xsect_edges();
+    auto n_xsects_ans = xsects_ans.size();
+    auto n_xsects_res = xsects_res.size();
+    auto write_to = [](const char* path, thrust::host_vector<xsect_t>& xsects) {
+      thrust::sort(xsects.begin(), xsects.end(),
+                   [](const xsect_t& a, const xsect_t& b) {
+                     if (a.eid[0] != b.eid[0]) {
+                       return a.eid[0] < b.eid[0];
+                     }
+                     return a.eid[1] < b.eid[1];
+                   });
 
-    if (n_diff != 0) {
+      std::ofstream ofs(path);
+      for (auto& xsect : xsects) {
+        ofs << xsect.eid[0] << " " << xsect.eid[1] << "\n";
+      }
+      ofs.close();
+    };
+
+    // it is possible that rt finds more xsects than the grid due to the
+    // numerical issue of the grid
+    if (n_xsects_ans != n_xsects_res) {
+      auto n_diff = abs((int64_t) n_xsects_ans - (int64_t) n_xsects_res);
+
       LOG(ERROR) << "LSI "
                  << " xsects (Answer): " << n_xsects_ans
                  << " xsects (Result): " << n_xsects_res
-                 << " Error rate: " << (double) n_diff / n_xsects_ans * 100
-                 << " %";
+                 << " False negative rate: "
+                 << (double) n_diff / n_xsects_ans * 100 << " %";
+      write_to("/tmp/xsects_answer.txt", xsects_ans);
+      write_to("/tmp/xsects_result.txt", xsects_res);
     } else {
       LOG(INFO) << "LSI passed check";
     }
@@ -47,7 +71,6 @@ void CheckResult(CONTEXT_T& ctx, std::shared_ptr<OVERLAY_IMPL_T> overlay,
   FOR2 {
     LOG(INFO) << "Checking point in polygon";
 
-    overlay->LocateVerticesInOtherMap(im);
     cuda_grid.LocateVerticesInOtherMap(im);
 
     auto closest_eids_ans = cuda_grid.get_closet_eids(im);
@@ -60,6 +83,9 @@ void CheckResult(CONTEXT_T& ctx, std::shared_ptr<OVERLAY_IMPL_T> overlay,
     auto query_map = ctx.get_map(im);
     auto base_map = ctx.get_map(1 - im);
     auto scaling = ctx.get_scaling();
+
+    query_map->D2H();
+    base_map->D2H();
 
     for (size_t point_idx = 0; point_idx < n_points; point_idx++) {
       auto closest_eid_ans = closest_eids_ans[point_idx];
@@ -109,7 +135,7 @@ void CheckResult(CONTEXT_T& ctx, std::shared_ptr<OVERLAY_IMPL_T> overlay,
                  << " n diff: " << n_diff
                  << " Error rate: " << (double) n_diff / n_points * 100 << " %";
     } else {
-      LOG(INFO) << "Map: " << im << " passed check";
+      LOG(INFO) << "Map: " << im << " PIP passed check";
     }
   }
 }
@@ -119,14 +145,15 @@ void RunOverlay(const OverlayConfig& config) {
   timer_start();
 
   timer_next("Read map 0");
+  LOG(INFO) << "Reading map 0 from " << config.map1_path;
   auto g1 = load_from<coord_t>(config.map1_path, config.serialize_prefix);
+
   timer_next("Read map 1");
+  LOG(INFO) << "Reading map 1 from " << config.map2_path;
   auto g2 = load_from<coord_t>(config.map2_path, config.serialize_prefix);
 
-  timer_next("Create Context");
-  context_t ctx({g1, g2});
-
   timer_next("Create App");
+  context_t ctx({g1, g2});
   std::shared_ptr<MapOverlay<context_t>> overlay;
 
   if (config.mode == "rt") {
@@ -136,8 +163,8 @@ void RunOverlay(const OverlayConfig& config) {
     query_config.profile = config.profile;
     query_config.fau = config.fau;
     query_config.xsect_factor = config.xsect_factor;
-    query_config.new_compress = config.new_comp;
-    query_config.compress_iter = config.compress_iter;
+    query_config.ag = config.ag;
+    query_config.ag_iter = config.ag_iter;
     query_config.win = config.win;
     query_config.enlarge = config.enlarge;
 
@@ -150,7 +177,6 @@ void RunOverlay(const OverlayConfig& config) {
     query_config.grid_size = config.grid_size;
     query_config.profile = config.profile;
     query_config.xsect_factor = config.xsect_factor;
-    query_config.lb = config.lb;
 
     overlay_grid->set_config(query_config);
     overlay = overlay_grid;
@@ -166,6 +192,9 @@ void RunOverlay(const OverlayConfig& config) {
   } else {
     LOG(FATAL) << "Illegal mode: " << config.mode;
   }
+
+  timer_next("Load Data");
+  ctx.LoadToDevice();
 
   timer_next("Init");
   overlay->Init();

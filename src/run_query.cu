@@ -169,49 +169,23 @@ void RunLSIQuery(const QueryConfig& config) {
   using internal_coord_t = typename context_t::internal_coord_t;
 
   timer_start();
-  timer_next("Read map");
+  timer_next("Read map 0");
   auto base_pgraph =
       load_from<coord_t>(config.map_path, config.serialize_prefix);
   int base_map_id = 0, query_map_id = 1;
 
-  auto sample = [&](std::shared_ptr<PlanarGraph<coord_t>> pgraph) {
-    if (config.sample == "edges") {
-      LOG(INFO) << "Sampling edges from map, sample rate: "
-                << config.sample_rate << ", seed: " << config.random_seed;
-      pgraph =
-          sample_edges_from(pgraph, config.sample_rate, config.random_seed);
-    } else if (config.sample == "map") {
-      LOG(INFO) << "Sampling map, sample rate: " << config.sample_rate
-                << ", seed: " << config.random_seed;
-      pgraph = sample_map_from(pgraph, config.sample_rate, config.random_seed);
-    } else {
-      LOG(FATAL) << "Invalid sample method: " << config.sample;
-    }
-    return pgraph;
-  };
-
-  if (config.sample_map_id == 0) {
-    base_pgraph = sample(base_pgraph);
-  }
-
-  timer_next("Create Context");
   context_t* ctx;
   LSI<context_t>* lsi;
 
-  timer_next("Generate Workloads");
-
   if (config.query_path.empty()) {
+    timer_next("Generate Workloads");
     ctx = new context_t(base_pgraph);
     auto query_map = GenerateLSIQueries(config, *ctx);
     ctx->set_map(query_map_id, query_map);
   } else {
+    timer_next("Read map 1");
     auto query_pgraph =
         load_from<coord_t>(config.query_path, config.serialize_prefix);
-    if (config.sample_map_id == 1) {
-      query_pgraph = sample(query_pgraph);
-    }
-    LOG(INFO) << "After sampling , edges: "
-              << query_pgraph->points.size() - query_pgraph->chains.size();
     ctx = new context_t({base_pgraph, query_pgraph});
   }
   Stream& stream = ctx->get_stream();
@@ -223,7 +197,6 @@ void RunLSIQuery(const QueryConfig& config) {
     auto* lsi_pip = new LSIGrid<context_t>(*ctx, grid);
     QueryConfigGrid query_config;
 
-    query_config.lb = config.lb;
     query_config.grid_size = config.grid_size;
     query_config.profile = config.profile;
 
@@ -240,6 +213,9 @@ void RunLSIQuery(const QueryConfig& config) {
   } else {
     LOG(FATAL) << "Invalid index type: " << config.mode;
   }
+
+  timer_next("Load Data");
+  ctx->LoadToDevice();
 
   timer_next("Init");
   auto d_base_map = ctx->get_map(base_map_id)->DeviceObject();
@@ -263,7 +239,7 @@ void RunLSIQuery(const QueryConfig& config) {
         std::make_shared<thrust::device_vector<thrust::pair<size_t, size_t>>>();
     QueryConfigRT query_config;
     auto rt_engine = lsi_rt->get_rt_engine();
-    auto comp_iter = config.compress_iter;
+    auto comp_iter = config.ag_iter;
     auto win_size = config.win;
     auto area_enlarge = config.enlarge;
     auto ne = d_base_map.get_edges_num();
@@ -272,10 +248,12 @@ void RunLSIQuery(const QueryConfig& config) {
     eid_range->reserve(ne);
 
     timer_next("Adaptive Grouping");
-    if (config.new_compress) {
+    if (config.ag == 0) {
+      FillPrimitives(stream, d_base_map, scaling, aabbs, *eid_range);
+    } else if (config.ag == 1) {
       FillPrimitivesGroupNew(stream, d_base_map, scaling, comp_iter,
                              area_enlarge, aabbs, *eid_range);
-    } else {
+    } else if (config.ag == 2) {
       FillPrimitivesGroup(stream, d_base_map, scaling, win_size, area_enlarge,
                           aabbs, *eid_range);
     }
@@ -290,12 +268,15 @@ void RunLSIQuery(const QueryConfig& config) {
 
     lsi_rt->set_config(query_config);
   } else if (config.mode == "lbvh") {
-    timer_next("Build Index");
     auto lsi_lbvh = dynamic_cast<LSILBVH<context_t>*>(lsi);
     QueryConfigLBVH query_config;
     thrust::device_vector<segment> primitives;
     auto bvh = std::make_shared<lbvh::bvh<float, segment, aabb_getter>>();
+    auto ne = d_base_map.get_edges_num();
 
+    primitives.reserve(ne);
+
+    timer_next("Build Index");
     FillPrimitivesLBVH(stream, d_base_map, scaling, primitives);
     stream.Sync();
     bvh->assign(primitives);
@@ -321,7 +302,6 @@ void RunLSIQuery(const QueryConfig& config) {
   d_xsects = lsi->get_xsects();
 
   LOG(INFO) << "Intersections: " << d_xsects.size()
-            << " Selective: " << (double) d_xsects.size() / config.gen_n
             << " Queue Load Factor: " << (double) d_xsects.size() / queue_cap;
 
   timer_next("Cleanup");
@@ -337,79 +317,31 @@ void RunPIPQuery(const QueryConfig& config) {
   using point_t = typename context_t::map_t::point_t;
 
   timer_start();
-  timer_next("Read map");
+  timer_next("Read map 0");
   auto base_pgraph =
       load_from<coord_t>(config.map_path, config.serialize_prefix);
   int base_map_id = 0, query_map_id = 1;
 
-  auto sample = [&](std::shared_ptr<PlanarGraph<coord_t>> pgraph) {
-    if (config.sample == "edges") {
-      LOG(INFO) << "Sampling edges from map, sample rate: "
-                << config.sample_rate << ", seed: " << config.random_seed;
-      pgraph =
-          sample_edges_from(pgraph, config.sample_rate, config.random_seed);
-    } else if (config.sample == "map") {
-      LOG(INFO) << "Sampling map, sample rate: " << config.sample_rate
-                << ", seed: " << config.random_seed;
-      pgraph = sample_map_from(pgraph, config.sample_rate, config.random_seed);
-    } else {
-      LOG(FATAL) << "Invalid sample method: " << config.sample;
-    }
-    return pgraph;
-  };
-
-  if (config.sample_map_id == 0) {
-    base_pgraph = sample(base_pgraph);
-  }
-
-  timer_next("Create Context");
   context_t* ctx;
   PIP<context_t>* pip;
   thrust::device_vector<point_t> query_points;
 
-  timer_next("Generate Workloads");
-
   if (config.query_path.empty()) {
+    timer_next("Generate Workloads");
     ctx = new context_t(base_pgraph);
+
     query_points = rayjoin::GeneratePIPQueries(config, *ctx);
+    timer_next("Load Data");
+    ctx->LoadToDevice();
   } else {
+    timer_next("Read map 1");
     auto query_pgraph =
         load_from<coord_t>(config.query_path, config.serialize_prefix);
     ctx = new context_t({base_pgraph, query_pgraph});
-    auto points = query_pgraph->points;
-    pinned_vector<point_t> scaled_points;
-    auto scaling = ctx->get_scaling();
 
-    if (config.sample_map_id == 1) {
-      if (config.sample == "points") {
-        auto gen = std::mt19937{std::random_device{}()};
-        size_t k = points.size() * config.sample_rate;
-
-        std::shuffle(points.begin(), points.end(), gen);
-
-        scaled_points.resize(k);
-
-        for (int i = 0; i < k; i++) {
-          scaled_points[i].x = scaling.ScaleX(points[i].x);
-          scaled_points[i].y = scaling.ScaleY(points[i].y);
-        }
-
-        query_points = scaled_points;
-        LOG(INFO) << "Sampling points, sample rate: " << config.sample_rate
-                  << ", seed: " << config.random_seed << " Points: " << k;
-      } else {
-        query_pgraph = sample(query_pgraph);
-        query_points = ctx->get_map(query_map_id)->get_points();
-      }
-    } else {
-      scaled_points.resize(points.size());
-
-      for (int i = 0; i < points.size(); i++) {
-        scaled_points[i].x = scaling.ScaleX(points[i].x);
-        scaled_points[i].y = scaling.ScaleY(points[i].y);
-      }
-      query_points = scaled_points;
-    }
+    timer_next("Load Data");
+    ctx->LoadToDevice();
+    query_points = ctx->get_map(1)->get_points();
   }
 
   Stream& stream = ctx->get_stream();
@@ -461,8 +393,10 @@ void RunPIPQuery(const QueryConfig& config) {
     eid_range->reserve(ne);
 
     timer_next("Adaptive Grouping");
-    if (config.new_compress) {
-      FillPrimitivesGroupNew(stream, d_base_map, scaling, config.compress_iter,
+    if (config.ag == 0) {
+      FillPrimitives(stream, d_base_map, scaling, aabbs, *eid_range);
+    } else if (config.ag == 1) {
+      FillPrimitivesGroupNew(stream, d_base_map, scaling, config.ag_iter,
                              config.enlarge, aabbs, *eid_range);
     } else {
       FillPrimitivesGroup(stream, d_base_map, scaling, config.win,

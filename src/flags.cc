@@ -8,13 +8,12 @@ DEFINE_double(xsect_factor, 0.2, "For preallocate intersection space");
 DEFINE_string(mode, "", "grid,rt,lbvh");
 DEFINE_bool(box, false, "");
 DEFINE_bool(check, true, "Compare RT result with CUDA");
-DEFINE_bool(lb, true, "Load balancing");
 DEFINE_bool(fau, false, "Free after use");
 DEFINE_int32(warmup, 5, "");
 DEFINE_int32(repeat, 5, "");
 DEFINE_string(serialize, "", "");
-DEFINE_bool(new_compress, true, "Use new compression method");
-DEFINE_int32(compress_iter, 5, "Max iteration of compression");
+DEFINE_int32(ag, 1, "AG method, 0: disable, 1: paper stated, 2: simple");
+DEFINE_int32(ag_iter, 5, "Max iteration of grouping");
 DEFINE_int32(win, 32, "Window size for AABB compression");
 DEFINE_double(enlarge, 5, "Threshold for AABB merge");
 // Queries

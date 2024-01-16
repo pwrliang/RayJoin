@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <fstream>
 #include <random>
-#include <unordered_map>
+#include <map>
 #include <vector>
 
 #include "config.h"
@@ -32,7 +32,7 @@ struct Chain {
 template <class COORD_T>
 struct PlanarGraph {
   using point_t = typename cuda_vec<COORD_T>::type_2d;
-  std::vector<Chain> chains;
+  pinned_vector<Chain> chains;
   pinned_vector<index_t> row_index;  // organized in chains
   pinned_vector<point_t> points;
   BoundingBox<COORD_T> bb;
@@ -62,7 +62,7 @@ inline std::shared_ptr<PlanarGraph<COORD_T>> read_pgraph(const char* path) {
     bool bad_line;
 
     if (np == 0) {
-      g.chains.template emplace_back();
+      g.chains.push_back(Chain());
       curr_chain = &g.chains.back();
 
       bad_line = !(iss >> curr_chain->id >> np >> curr_chain->first_point_idx >>
@@ -122,7 +122,6 @@ inline std::shared_ptr<PlanarGraph<COORD_T>> read_pgraph(const char* path) {
           << ", max seg len: "
           << *std::max_element(seg_lens.begin(), seg_lens.end())
           << ", avg seg len: " << mean << ", stdev: " << stdev;
-
   return pgraph;
 }
 
@@ -217,7 +216,6 @@ inline std::shared_ptr<PlanarGraph<COORD_T>> deserialize_pgraph(
           << " is deserialized, chains: " << pgraph->chains.size()
           << " points: " << pgraph->points.size()
           << " edges: " << pgraph->points.size() - pgraph->chains.size();
-
   return pgraph;
 }
 
@@ -324,9 +322,7 @@ inline std::shared_ptr<PlanarGraph<COORD_T>> sample_edges_from(
   for (size_t i_chain = 0; i_chain < p_graph->chains.size(); i_chain++) {
     for (auto pid = p_graph->row_index[i_chain];
          pid < p_graph->row_index[i_chain + 1] - 1; pid++) {
-      auto eid = pid - i_chain;
-
-      sampled_edges.emplace_back(i_chain, eid);
+      sampled_edges.emplace_back(i_chain, pid);
     }
   }
 
@@ -337,14 +333,14 @@ inline std::shared_ptr<PlanarGraph<COORD_T>> sample_edges_from(
 
   sampled_edges.resize(sampled_edges.size() * sample_rate);
 
-  std::unordered_map<size_t, std::vector<size_t>> chain_edges;
+  std::map<size_t, std::vector<size_t>> chain_edges;
 
   // collect eids by chain ids
   for (const auto& e : sampled_edges) {
     auto i_chain = e.first;
-    auto eid = e.second;
+    auto pid = e.second;
 
-    chain_edges[i_chain].push_back(eid);
+    chain_edges[i_chain].push_back(pid);
   }
 
   auto sampled_graph = std::make_shared<PlanarGraph<COORD_T>>();
@@ -352,19 +348,21 @@ inline std::shared_ptr<PlanarGraph<COORD_T>> sample_edges_from(
 
   sampled_graph->chains.reserve(chain_edges.size());
   size_t n_edges = 0;
+  int64_t chain_id = 0;
 
   for (auto& e : chain_edges) {
     auto i_chain = e.first;
-    const auto& eids = chain_edges.at(i_chain);
+    const auto& begin_pids = chain_edges.at(i_chain);
+    Chain chain = p_graph->chains[i_chain];
 
-    sampled_graph->chains.push_back(p_graph->chains[i_chain]);
+    chain.id = chain_id++;
+    sampled_graph->chains.push_back(chain);
 
-    n_edges += eids.size();
+    n_edges += begin_pids.size();
 
     std::vector<size_t> pids;
 
-    for (auto eid : eids) {
-      auto p1_idx = eid + i_chain;
+    for (auto p1_idx : begin_pids) {
       auto p2_idx = p1_idx + 1;
 
       pids.push_back(p1_idx);

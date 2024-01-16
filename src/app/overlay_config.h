@@ -16,10 +16,9 @@ struct OverlayConfig {
   bool fau;
   bool check;
   bool profile;
-  bool lb;
   int win;
-  bool new_comp;
-  int compress_iter;
+  int ag;
+  int ag_iter;
   float enlarge;
 };
 }  // namespace rayjoin

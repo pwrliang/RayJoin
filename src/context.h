@@ -64,8 +64,18 @@ class Context {
               << scaling_.UnscaleX(internal_max_x) << ", "
               << scaling_.UnscaleY(internal_max_y) << ")";
 
-    for (size_t im = 0; im < planar_graphs.size(); im++) {
-      auto pgraph = planar_graphs[im];
+    char result[PATH_MAX];
+    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+    const char* path;
+    if (count != -1) {
+      path = dirname(result);
+    }
+    exec_root = std::string(path);
+  }
+
+  void LoadToDevice() {
+    for (size_t im = 0; im < planar_graphs_.size(); im++) {
+      auto pgraph = planar_graphs_[im];
 
       if (pgraph != nullptr) {
         auto map = std::make_shared<map_t>(im);
@@ -75,14 +85,6 @@ class Context {
         maps_[im] = map;
       }
     }
-
-    char result[PATH_MAX];
-    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-    const char* path;
-    if (count != -1) {
-      path = dirname(result);
-    }
-    exec_root = std::string(path);
   }
 
   void set_query_map(std::shared_ptr<map_t> query_map) { maps_[1] = query_map; }

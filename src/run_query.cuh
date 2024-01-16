@@ -19,12 +19,11 @@ struct QueryConfig {
   int random_seed;
   std::string mode;
   bool check;
-  bool lb;
   bool print_histo;
   bool profile;
   bool fau;
-  bool new_compress;
-  int compress_iter;
+  int ag;
+  int ag_iter;
   int win;
   float enlarge;
 };
