@@ -125,3 +125,8 @@ Be sure you have built the project in debug and release mode before run the scri
 
 1. Fix weird bug after changing rt code: `rm -rf /var/tmp/OptixCache_${USER}`
 2. To enable printf in Optix Kernel: `export OPTIX_FORCE_DEPRECATED_LAUNCHER=1`
+
+## References
+
+1. [OVERPROP](https://wrfranklin.org/pmwiki/pmwiki.php/Research/OverlayingTwoMaps) helps us a lot for the polygon overlay implementation.
+2. We use [this library](https://github.com/ToruNiina/lbvh) as the LBVH implementation. 
