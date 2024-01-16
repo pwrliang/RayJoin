@@ -5,7 +5,7 @@ PROJ_HOME="$(
   pwd -P
 )"
 
-MAPS="$PROJ_HOME/test/maps"
+MAPS="$PROJ_HOME/test/dataset"
 
 for v in debug release; do
   echo "Test build type = $v"
