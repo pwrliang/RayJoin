@@ -45,6 +45,7 @@ light_colors = ['#6C87EA', 'lightcoral', '#FF3333', 'lemonchiffon', '#FFDF33', '
 series_id = 1
 
 
+
 def draw(prefix):
     labels = (
         r"Uniform",
@@ -99,6 +100,62 @@ def draw(prefix):
     fig.tight_layout()
     fig.savefig(os.path.join(prefix, '../', os.path.dirname(prefix) + '.pdf'), format='pdf', bbox_inches='tight')
     plt.show()
+
+
+# def draw(prefix):
+#     size_list = (1000000, 2000000, 3000000, 4000000, 5000000)
+#     size_str = ("1M", "2M", "3M", "4M", "5M")
+#     loc = [x for x in range(len(size_list))]
+#     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(6.8, 3.2))
+#
+#     ax_time = axes[0]
+#     ax_th = axes[1]
+#
+#     label_time = "({}) {}".format('a', "Query Time")
+#     label_th = "({}) {}".format('b', "Throughput")
+#
+#     algo = ""
+#     th_unit = ""
+#     xsects_uniform, np_uniform, time_uniform = get_run_time(prefix, "uniform", size_list)
+#     xsects_gaussian, np_gaussian, time_gaussian = get_run_time(prefix, "gaussian", size_list)
+#
+#     if 'lsi' in prefix:
+#         algo = "LSI"
+#         throughput_uniform = xsects_uniform / (time_uniform / 1000) / 1000 / 1000
+#         throughput_gaussian = xsects_gaussian / (time_gaussian / 1000) / 1000 / 1000
+#         th_unit = 'M Intersects/s'
+#     else:
+#         algo = "PIP"
+#         throughput_uniform = np_uniform / (time_uniform / 1000) / 1000 / 1000 / 1000
+#         throughput_gaussian = np_gaussian / (time_gaussian / 1000) / 1000 / 1000 / 1000
+#         th_unit = "G Points/s"
+#
+#     ax_time.plot(loc, time_uniform, label="Uniform", color='black')
+#     ax_time.plot(loc, time_gaussian, label="Gaussian", color='black', linestyle='dashed')
+#
+#     ax_th.plot(loc, throughput_uniform, label="Uniform", color='black')
+#     ax_th.plot(loc, throughput_gaussian, label="Gaussian", color='black', linestyle='dashed')
+#
+#     for ax in (ax_time, ax_th):
+#         ax.set_xticks(loc, size_str, rotation=0)
+#         ax.set_xlabel(xlabel='Number of Polygons')
+#         ax.autoscale(tight=True)
+#         ax.margins(x=0.1, y=1.1)
+#         ylim = list(ax.get_ylim())
+#         ylim[0] = 0
+#         ylim[1] *= 1.5
+#         ax.set_ylim(ylim)
+#         ax.legend(loc='upper left', ncol=2, handletextpad=0.2, columnspacing=0.8,
+#                   fontsize='medium', borderaxespad=1, borderpad=0, frameon=False)
+#     ax_time.set_title(label_time, verticalalignment="top")
+#     ax_th.set_title(label_th, verticalalignment="top")
+#
+#     ax_time.set_ylabel(ylabel='Query Time (ms)', labelpad=1)
+#     ax_th.set_ylabel(ylabel=th_unit, labelpad=1)
+#
+#     fig.tight_layout()
+#     fig.savefig(os.path.join(prefix, '../', os.path.dirname(prefix) + '.pdf'), format='pdf', bbox_inches='tight')
+#     plt.show()
 
 
 if __name__ == '__main__':

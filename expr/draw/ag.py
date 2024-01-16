@@ -133,6 +133,17 @@ def draw_enlarge_lim_pick(prefix):
     maps = ["lakes_parks_North_America", ]
     fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(11, 3.5))
 
+    SMALL_SIZE = 8
+    MEDIUM_SIZE = 10
+    BIGGER_SIZE = 12
+
+    plt.rc('font', size=11)          # controls default text sizes
+    # plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+    # plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=BIGGER_SIZE)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=BIGGER_SIZE)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=MEDIUM_SIZE)    # legend fontsize
+    # plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
     map = maps[0]
     ax_total = axes[0]
     ax_bvh_query = axes[1]

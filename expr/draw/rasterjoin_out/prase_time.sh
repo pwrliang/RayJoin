@@ -11,3 +11,4 @@ poly_render_time=$(echo "$timing" | cut -d$'\t' -f11,11)
 triangle_time=$(echo "$timing" | cut -d$'\t' -f13,13)
 echo "Preprocessing time $((triangle_time + pt_mem_time + poly_mem_time)) ms"
 echo "Processing time $((pt_render_time + poly_render_time)) ms"
+echo "Total time $((triangle_time + pt_mem_time + poly_mem_time + pt_render_time + poly_render_time)) ms"
