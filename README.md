@@ -58,8 +58,7 @@ A very small sample dataset is included under the `test` folder, which allows yo
 
 
 ### 2.2 Datasets format
-RayJoin requires CDB format to work, which is described in this [paper](https://dl.acm.org/doi/abs/10.1145/2835185.2835188). We may support more formats in the future, but for now, only CDB format is supported.
-This format allows polygons storing in chains to save space. The chain also carries neighboring information of polygons,
+RayJoin requires CDB format to work. This format allows polygons storing in chains to save space. The chain also carries neighboring information of polygons,
 which makes point-in-polygon (PIP) test easier.
 ```
 <chain id> <number of points in the chain> <first point id> <last point id> <left face id> <right face id>
@@ -99,8 +98,8 @@ You can generate CDB datasets with the following steps:
 ```shell
 ./query_exec -poly1 base_map.cdb \
     -poly2 query_map.cdb \
-    -mode=grid/lbvh/rt \
-    -xsect_factor=0.1 \ 
+    -mode=rt \
+    -xsect_factor=0.5 \ 
     -warmup=5 \ # warmup rounds
     -repeat=5 \ # number of rounds to evaluate. Average time is reported
     -query=lsi/pip
@@ -111,7 +110,7 @@ You can generate CDB datasets with the following steps:
 ./polyover_exec -poly1 dataset1.cdb \
     -poly2 dataset2.cdb \
     -serialize=/dev/shm \ # Serialize CDB to binary format, which saves loading time.
-    -mode=grid/rt \
+    -mode=rt \
     -check=true \ # Compare results with the uniform grid implementation
     -xsect_factor=0.5
 ```
@@ -125,8 +124,3 @@ Be sure you have built the project in debug and release mode before run the scri
 
 1. Fix weird bug after changing rt code: `rm -rf /var/tmp/OptixCache_${USER}`
 2. To enable printf in Optix Kernel: `export OPTIX_FORCE_DEPRECATED_LAUNCHER=1`
-
-## References
-
-1. [OVERPROP](https://wrfranklin.org/pmwiki/pmwiki.php/Research/OverlayingTwoMaps) helps us a lot for the polygon overlay implementation.
-2. We use [this library](https://github.com/ToruNiina/lbvh) as the LBVH implementation. 
