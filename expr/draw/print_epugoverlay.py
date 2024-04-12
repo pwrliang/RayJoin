@@ -14,7 +14,7 @@ h2d = []
 preprocessing_time = []
 processing_time = []
 for n in l:
-    file = "epug-overlay/" + n
+    file = "mri/epug-overlay/" + n
     with open(file, 'r') as fi:
         t_preprocessing = 0
         t_processing = 0

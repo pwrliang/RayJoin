@@ -14,7 +14,7 @@ h2d = []
 preprocessing_time = []
 processing_time = []
 for n in l:
-    file = "GLIN/LSI/" + n
+    file = "mri/GLIN/LSI/" + n
     with open(file, 'r') as fi:
         t_preprocessing = 0
         t_processing = 0
@@ -33,3 +33,7 @@ np.set_printoptions(formatter={'float': lambda x: "{0:0.0f}".format(x)})
 print("Preprocessing", np.asarray(preprocessing_time), " ms")
 print("Processing", np.asarray(processing_time), " ms")
 print("Total", np.asarray(preprocessing_time) + np.asarray(processing_time), " ms")
+
+np.set_printoptions(formatter={'float': lambda x: "{0:0.2f}".format(x)})
+print("Preprocessing", np.asarray(preprocessing_time) / 1000.0, " s")
+print("Processing", np.asarray(processing_time) / 1000.0, " s")

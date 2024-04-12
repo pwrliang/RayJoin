@@ -14,7 +14,7 @@ h2d = []
 preprocessing_time = []
 processing_time = []
 for n in l:
-    file = "rasterintervals_out/" + n
+    file = "mri/rasterintervals_out/" + n
     with open(file, 'r') as fi:
         raster_gen_time = 0
         for line in fi:

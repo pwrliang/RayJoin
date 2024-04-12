@@ -137,12 +137,12 @@ def draw_enlarge_lim_pick(prefix):
     MEDIUM_SIZE = 10
     BIGGER_SIZE = 12
 
-    plt.rc('font', size=11)          # controls default text sizes
+    plt.rc('font', size=11)  # controls default text sizes
     # plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
     # plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
-    plt.rc('xtick', labelsize=BIGGER_SIZE)    # fontsize of the tick labels
-    plt.rc('ytick', labelsize=BIGGER_SIZE)    # fontsize of the tick labels
-    plt.rc('legend', fontsize=MEDIUM_SIZE)    # legend fontsize
+    plt.rc('xtick', labelsize=BIGGER_SIZE)  # fontsize of the tick labels
+    plt.rc('ytick', labelsize=BIGGER_SIZE)  # fontsize of the tick labels
+    plt.rc('legend', fontsize=MEDIUM_SIZE)  # legend fontsize
     # plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
     map = maps[0]
     ax_total = axes[0]
@@ -184,9 +184,9 @@ def draw_enlarge_lim_pick(prefix):
         for patch in bar:
             patch.set_hatch(patterns[i])
 
-    ax_bvh_query.plot(loc, time_build_rt, label="BVH Buildup", color=slicedCM[2], marker='')
-    ax_bvh_query.plot(loc, time_lsi_rt, label="LSI Query", color=slicedCM[3], marker='x')
-    ax_bvh_query.plot(loc, time_pip_rt, label="PIP Query", color=slicedCM[4], marker='*')
+    ax_bvh_query.plot(loc, time_build_rt, label="BVH Buildup", color=slicedCM[1], )
+    ax_bvh_query.plot(loc, time_lsi_rt, label="LSI Query", color=slicedCM[1], marker='x', linestyle='dotted')
+    ax_bvh_query.plot(loc, time_pip_rt, label="PIP Query", color=slicedCM[1], marker='*', linestyle='dashed')
     ax_memory.bar(loc, size_bvh, width=width, label="BVH Memory", color=slicedCM[1])
 
     dydx = diff(ratio_compression) / diff([float(x) for x in enlarge_list])
@@ -211,7 +211,7 @@ def draw_enlarge_lim_pick(prefix):
         # ax.set_ylim((0, 1))
         # if i == 0:
         ax.legend(loc='upper left', ncol=2, handletextpad=0.3,
-                      fontsize=11, borderaxespad=0.2, frameon=False)
+                  fontsize=11, borderaxespad=0.2, frameon=False)
         # else:
         #     ax.legend(loc='upper left', ncol=3, handletextpad=0.3,
         #               fontsize='medium', borderaxespad=0.2, frameon=False)

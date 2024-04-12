@@ -44,6 +44,7 @@ def draw_speedup_lsi():
     ax.bar(loc + gap, speedup_lbvh, label="LBVH", width=width, hatch=patterns[1], color='none', edgecolor='black', )
     ax.bar(loc + 2 * gap, speedup_pssl, label="PSSL", width=width, hatch=patterns[2], color='none', edgecolor='black', )
     ax.bar(loc + 3 * gap, speedup_glin, label="GLIN", width=width, hatch=patterns[3], color='none', edgecolor='black', )
+    ax.axhline(y = 1, color = 'black', linestyle = ':')
 
     ax.set_yscale('log')
     ax.legend(loc='upper left', ncol=4, handletextpad=0.3,
@@ -77,6 +78,7 @@ def draw_speedup_pip():
            edgecolor='black', )
     ax.bar(loc + 3 * gap, speedup_cuspatial, label="cuSpatial", width=width, hatch=patterns[3], color='none',
            edgecolor='black', )
+    ax.axhline(y = 1, color = 'black', linestyle = ':')
     ax.text(5.5, 0.5, "OOM", rotation=90, va='center')
     ax.text(6.3, 1.0, "Timeout", rotation=90, va='center')
 
@@ -120,6 +122,7 @@ def draw_speedup_overlay():
            edgecolor='black', )
     ax.bar(loc + 5 * gap, speedup_lbvh, label="LBVH", width=width, hatch=patterns[5], color='none',
            edgecolor='black', )
+    ax.axhline(y = 1, color = 'black', linestyle = ':')
 
     ax.text(5.65, 0.2, "OOM", rotation=90, va='center')
 
@@ -133,6 +136,6 @@ def draw_speedup_overlay():
     plt.show()
 
 
-# draw_speedup_lsi()
-draw_speedup_pip()
+draw_speedup_lsi()
+# draw_speedup_pip()
 # draw_speedup_overlay()
