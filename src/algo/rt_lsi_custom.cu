@@ -59,31 +59,27 @@ extern "C" __global__ void __raygen__lsi_custom() {
     auto& e = edges[eid];
     auto p1 = params.query_points[e.p1_idx];
     auto p2 = params.query_points[e.p2_idx];
-    float x1, x2, y1, y2;
+    double x1, x2, y1, y2;
 
     if (e.b == 0) {
       assert(p1.x == p2.x);
       if (p1.y > p2.y) {
         SWAP(p1, p2);
       }
+      // y1 < y2
       x1 = x2 = scaling.UnscaleX(p1.x);
-
-      y1 = next_float_from_double(scaling.UnscaleY(p1.y), -1, ROUNDING_ITER);
-      y2 = next_float_from_double(scaling.UnscaleY(p2.y), 1, ROUNDING_ITER);
+      y1 = scaling.UnscaleY(p1.y);
+      y2 = scaling.UnscaleY(p2.y);
     } else {
       assert(p1.x != p2.x);
       if (p1.x > p2.x) {
         SWAP(p1, p2);
       }
 
-      auto a = (double) -e.a / e.b;
-      auto b = (double) -e.c / e.b;
-
-      x1 = next_float_from_double(scaling.UnscaleX(p1.x), -1, ROUNDING_ITER);
-      y1 = scaling.UnscaleY(a * scaling.ScaleX(x1) + b);
-
-      x2 = next_float_from_double(scaling.UnscaleX(p2.x), 1, ROUNDING_ITER);
-      y2 = scaling.UnscaleY(a * scaling.ScaleX(x2) + b);
+      x1 = scaling.UnscaleX(p1.x);
+      y1 = scaling.UnscaleY(p1.y);
+      x2 = scaling.UnscaleX(p2.x);
+      y2 = scaling.UnscaleY(p2.y);
     }
 
     float3 ray_origin = {x1, y1, 0};
