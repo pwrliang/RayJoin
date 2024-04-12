@@ -128,7 +128,6 @@ extern "C" __global__ void __raygen__pip_custom() {
        point_idx += OPTIX_TOTAL_THREADS_1D) {
     const auto& p = query_points[point_idx];
     const auto x = scaling.UnscaleX(p.x), y = scaling.UnscaleY(p.y);
-    const auto fx = static_cast<float>(x), fy = static_cast<float>(y);
     const float tmin = 0;
     const float tmax = RAY_TMAX;
     auto best_y = std::numeric_limits<double>::infinity();
@@ -140,16 +139,9 @@ extern "C" __global__ void __raygen__pip_custom() {
     rayjoin::index_t best_e_eid = std::numeric_limits<rayjoin::index_t>::max();
     float3 ray_origin;
 
-    if (fy > y) {
-      ray_origin.y = next_float_from_double(fy, -1, 1);
-    } else {
-      ray_origin.y = fy;
-    }
-
-    assert(ray_origin.y <= y);
-
+    ray_origin.x = static_cast<float>(x);
+    ray_origin.y = static_cast<float>(y);
     ray_origin.z = 0;
-    ray_origin.x = fx;
 
     optixTrace(params.traversable, ray_origin, ray_dir,
                tmin,  // tmin
