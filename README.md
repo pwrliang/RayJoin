@@ -1,8 +1,20 @@
-# RayJoin: Real-Time Spatial Join Processing with Ray-Tracing
+# **RayJoin**
 
-## 1. Build
+RayJoin utilizes the ray tracing hardware in modern GPUs (e.g., NVIDIA RT Cores) 
+as accelerators to achieve high-performance spatial join processing.
+Specifically, RayJoin consists of a high-performance and high-precision spatial join framework 
+that accelerates two vital spatial join queries: line segment intersection (LSI) and point-in-polygon test (PIP). 
+Polygon overlay analysis is also supported by combining the query results of LSI and PIP. Besides these ray tracing-backed
+algorithms, RayJoin also contains new solutions to address two challenging technical issues: (1) how to meet the high precision
+requirement of spatial data analysis with the insufficient precision support by the underlying hardware, and (2) how to reduce the high
+buildup cost of the hardware-accelerated index, namely Bounding Volume Hierarchy (BVH), while maintaining optimal query exe-
+cution times. RayJoin achieves speedups from 3.0x to 28.3x over any existing highly optimized methods in high precision. To the best of our knowledge, RayJoin
+stands as the sole solution capable of meeting the real-time requirements of diverse workloads, taking under 460ms to join millions of polygons.
 
-### 1.1 Install Dependencies
+## Build
+
+### Install Dependencies
+
 (1) [gflags](https://github.com/gflags/gflags)
 
 (2) [glog](https://github.com/google/glog)
@@ -24,7 +36,7 @@ mkdir -p $OPTIX_HOME
 ./NVIDIA-OptiX-SDK-8.0.0-linux64-x86_64.sh --prefix=$OPTIX_HOME --exclude-subdir --skip-license
 ```
 
-### 1.2 Building Instructions
+### Building Instructions
 
 - Debug (Building the project under the debug mode enables some counter to profile RayJoin)
 ```shell
@@ -42,10 +54,11 @@ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$OPTIX_HOME ..
 make
 ```
 
-After the project is successfully built, two binary called `polyover_exec` and `query_exec` will be generated under the `bin` of building path.
-## 2. Dataset Preparation
+After the project is successfully built, two binary called `polyover_exec` and `query_exec` will be generated under the `bin` of the building path.
+## Dataset Preparation
 
-### 2.1 Download Datasets
+### Download Datasets
+
 We do not provide preprocessed datasets for now, because uploading datasets will expose our identification. 
 You need to download and process by yourself. 
 A very small sample dataset is included under the `test` folder, which allows you to try out RayJoin.
@@ -57,7 +70,8 @@ A very small sample dataset is included under the `test` folder, which allows yo
 - [Lakes and Parks](https://spatialhadoop.cs.umn.edu/datasets.html)
 
 
-### 2.2 Datasets format
+### Datasets format
+
 RayJoin requires CDB format to work, which is described in this [paper](https://dl.acm.org/doi/abs/10.1145/2835185.2835188). We may support more formats in the future, but for now, only CDB format is supported.
 This format allows polygons storing in chains to save space. The chain also carries neighboring information of polygons,
 which makes point-in-polygon (PIP) test easier.
@@ -84,10 +98,12 @@ You can generate CDB datasets with the following steps:
 3. Run the script `misc/shp2cdb.py input.shp output.cdb`
 
 **When the paper is accepted, we will also provide preprocessed datasets and all the baselines for reproducibility. For now, we cannot do that because upload datasets to a public platform will expose our identification.**
- 
 
-## 3. Evaluate RayJoin
-### 3.1 Parameters
+
+## Evaluate **RayJoin**
+
+### Parameters
+
 - `-poly1` path of the base map (*R*) in CDB format
 - `-poly2` path of the query map (*S*) in CDB format
 - `-mode` implementation used to run the query, including `grid`, `lbvh`, `rt`
@@ -95,7 +111,9 @@ You can generate CDB datasets with the following steps:
 - `-query` query type, which can be `lsi` or `pip`. This parameter only works for `query_exec`
 - `-check` compare results with the grid implementation. Only works when the mode is `rt`
 - `-output` output path of polygon overlay results. Only works for `polyover_exec`
-### 3.1 Run LSI and PIP Queries
+
+### Run LSI and PIP Queries
+
 ```shell
 ./query_exec -poly1 base_map.cdb \
     -poly2 query_map.cdb \
@@ -106,7 +124,8 @@ You can generate CDB datasets with the following steps:
     -query=lsi/pip
 ```
 
-### 3.2 Run Overlay Analysis
+### Run Overlay Analysis
+
 ```shell
 ./polyover_exec -poly1 dataset1.cdb \
     -poly2 dataset2.cdb \
@@ -116,7 +135,8 @@ You can generate CDB datasets with the following steps:
     -xsect_factor=0.5
 ```
 
-### 3.3 Examples
+### Examples
+
 We provided a sample dataset and test script under `test`, which allows you to try out RayJoin without figuring out what these parameters work for. 
 Be sure you have built the project in debug and release mode before run the script.
 
