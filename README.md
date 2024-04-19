@@ -89,7 +89,7 @@ Example:
 -3.6594300000e+01 -4.8691000000e+00
 ```
 
-You can generate CDB datasets with the following steps:
+We provide [preprocessed datasets](https://datadryad.org/stash/share/aIs0nLs2TsLE_dcWO2qPHiohRKoOI3kx0WGT5BnATtA) . You can also generate CDB datasets with the following steps:
 
 1. If you use the datasets from ArcGIS hub, you download and save them into shapefile. If the datasets are from SpatialHadoop website, they are in the Well-known Text (WKT) format, and you need to convert them into shapefile with `misc/wkt2shp.py input.wkt output.shp`.
 2. Load the shapefile in ArcGIS, and go through the two following steps. We need to convert polygons in shapefile into polylines with neighboring information.
@@ -97,7 +97,7 @@ You can generate CDB datasets with the following steps:
 - Feature Class To Shapefile. This step dumps polylines to a shapefile.
 3. Run the script `misc/shp2cdb.py input.shp output.cdb`
 
-**When the paper is accepted, we will also provide preprocessed datasets and all the baselines for reproducibility. For now, we cannot do that because upload datasets to a public platform will expose our identification.**
+
 
 
 ## Evaluate **RayJoin**
