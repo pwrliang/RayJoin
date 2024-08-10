@@ -224,7 +224,7 @@ std::shared_ptr<PlanarGraph<COORD_T>> load_from(
     const std::string& path, const std::string& serialize_prefix) {
   std::string escaped_path;
   std::replace_copy(path.begin(), path.end(), std::back_inserter(escaped_path),
-                    '/', '-');
+                    '/', '_');
   if (!serialize_prefix.empty()) {
     DIR* dir = opendir(serialize_prefix.c_str());
     if (dir) {
@@ -238,7 +238,7 @@ std::shared_ptr<PlanarGraph<COORD_T>> load_from(
     }
   }
 
-  auto ser_path = serialize_prefix + '/' + escaped_path + ".bin";
+  auto ser_path = serialize_prefix + "/cdb" + escaped_path + ".bin";
 
   if (access(ser_path.c_str(), R_OK) == 0) {
     return deserialize_pgraph<COORD_T>(ser_path.c_str());

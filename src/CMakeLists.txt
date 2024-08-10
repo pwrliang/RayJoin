@@ -31,7 +31,9 @@ NVCUDA_COMPILE_MODULE(
 
 message("PROGRAM_MODULES: ${PROGRAM_MODULES}")
 
-
+find_package(Boost 1.76 REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
 
 add_executable(polyover_exec
         overlay.cc

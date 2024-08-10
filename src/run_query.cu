@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/register/point.hpp>
 #include <memory>
 #include <random>
 
@@ -15,6 +17,57 @@
 #include "util/array_view.h"
 #include "util/helpers.h"
 #include "util/timer.h"
+
+using boost_point_t = boost::geometry::model::d2::point_xy<double>;
+using boost_polygon_t = boost::geometry::model::polygon<boost_point_t>;
+
+inline bool ends_with(std::string const& value, std::string const& ending) {
+  if (ending.size() > value.size())
+    return false;
+  return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
+
+std::vector<boost_point_t> LoadPoints(
+    const std::string& path, int limit = std::numeric_limits<int>::max()) {
+  std::ifstream ifs(path);
+  std::string line;
+  std::vector<boost_point_t> points;
+
+  while (std::getline(ifs, line)) {
+    if (!line.empty()) {
+      if (line.rfind("MULTIPOLYGON", 0) == 0) {
+        boost::geometry::model::multi_polygon<boost_polygon_t> multi_poly;
+        boost::geometry::read_wkt(line, multi_poly);
+
+        for (auto& poly : multi_poly) {
+          for (auto& p : poly.outer()) {
+            points.push_back(p);
+          }
+        }
+      } else if (line.rfind("POLYGON", 0) == 0) {
+        boost_polygon_t poly;
+        boost::geometry::read_wkt(line, poly);
+
+        for (auto& p : poly.outer()) {
+          points.push_back(p);
+        }
+      } else if (line.rfind("POINT", 0) == 0) {
+        boost_point_t p;
+        boost::geometry::read_wkt(line, p);
+
+        points.push_back(p);
+      } else {
+        std::cerr << "Bad Geometry " << line << "\n";
+        abort();
+      }
+      if (points.size() >= limit) {
+        break;
+      }
+    }
+  }
+  ifs.close();
+  return points;
+}
 
 namespace rayjoin {
 
@@ -44,9 +97,12 @@ void CheckPIPResult(
   auto base_map = ctx.get_map(base_map_id);
   auto scaling = ctx.get_scaling();
 
+  base_map->D2H();
+
   for (size_t point_idx = 0; point_idx < n_points; point_idx++) {
     auto closest_eid_ans = closest_eids_ans[point_idx];
     auto closest_eid_res = closest_eids_res[point_idx];
+
     // different eid does not mean wrong answer because there are two edges
     // having same coordinates but different eid
     if (closest_eid_res != closest_eid_ans) {
@@ -94,6 +150,19 @@ void CheckPIPResult(
   } else {
     LOG(INFO) << "Map: " << base_map_id << " passed check";
   }
+  size_t n_polygons = 0;
+
+  for (auto eid : closest_eids_res) {
+    if (eid != std::numeric_limits<index_t>::max()) {
+      const auto& e = base_map->get_edge(eid);
+      auto face_id = base_map->get_face_id(e);
+
+      if (face_id != -1) {
+        n_polygons++;
+      }
+    }
+  }
+  LOG(INFO) << "# of points in polygons: " << n_polygons;
 }
 
 template <typename CONTEXT_T>
@@ -333,6 +402,32 @@ void RunPIPQuery(const QueryConfig& config) {
     query_points = rayjoin::GeneratePIPQueries(config, *ctx);
     timer_next("Load Data");
     ctx->LoadToDevice();
+  } else if (ends_with(config.query_path, ".wkt")) {
+    ctx = new context_t(base_pgraph);
+    timer_next("Load Data");
+    ctx->LoadToDevice();
+
+    timer_next("Read map 1");
+    auto boost_points = LoadPoints(config.query_path);
+    std::vector<point_t> points;
+    auto scaling = ctx->get_scaling();
+    size_t n_oob = 0;
+
+    for (auto& p : boost_points) {
+      auto x = p.x();
+      auto y = p.y();
+
+      if (x >= ctx->get_bounding_box().min_x &&
+          x <= ctx->get_bounding_box().max_x &&
+          y >= ctx->get_bounding_box().min_y &&
+          y <= ctx->get_bounding_box().max_y) {
+        points.push_back(point_t{scaling.ScaleX(x), scaling.ScaleY(y)});
+      } else {
+        n_oob++;
+      }
+    }
+    LOG(ERROR) << "Point is out of bound: " << n_oob;
+    query_points = points;
   } else {
     timer_next("Read map 1");
     auto query_pgraph =
