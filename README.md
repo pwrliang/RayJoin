@@ -182,6 +182,6 @@ To work around this bug, we process the queries in a batch fashion.
 However, this workaround significantly increases running time due to additional I/O, index construction, and other overheads.
 This bug has been fixed in cuSpatial 24.06. Recently, we have reevaluated cuSpatial on PIP queries. Below are the updated results.
 
-| PIP Running Time | County & Zipcode | Block ⊲⊳ Water | LKAF ⊲⊳ PKAF | LKAS ⊲⊳ PKAS | LKAU ⊲⊳ PKAU | LKEU ⊲⊳ PKEU | LKNA ⊲⊳ PKNA | LKSA ⊲⊳ PKSA |
+| PIP Running Time | County ⋈ Zipcode | Block ⋈ Water | LKAF ⋈ PKAF | LKAS ⋈ PKAS | LKAU ⋈ PKAU | LKEU ⋈ PKEU | LKNA ⋈ PKNA | LKSA ⋈ PKSA |
 |------------------|------------------|----------------|--------------|--------------|--------------|--------------|--------------|------------|
 | cuSpatial 24.06  | 6572.397ms       | 3527.945ms     | 351.548ms    | 2035.707ms   | 236.781ms    | 6830.831ms   | 38799.309ms  | 324.018ms  |
