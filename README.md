@@ -146,6 +146,29 @@ Be sure you have built the project in debug and release mode before run the scri
 1. Fix weird bug after changing rt code: `rm -rf /var/tmp/OptixCache_${USER}`
 2. To enable printf in Optix Kernel: `export OPTIX_FORCE_DEPRECATED_LAUNCHER=1`
 
+## Publication
+
+Please cite this paper if you are using RayJoin.
+
+```bib
+@inproceedings{geng2024rayjoin,
+author = {Geng, Liang and Lee, Rubao and Zhang, Xiaodong},
+title = {RayJoin: Fast and Precise Spatial Join},
+year = {2024},
+isbn = {9798400706103},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3650200.3656610},
+doi = {10.1145/3650200.3656610},
+booktitle = {Proceedings of the 38th ACM International Conference on Supercomputing},
+pages = {124–136},
+numpages = {13},
+keywords = {Hardware Acceleration, Ray Tracing, Spatial Join, Spatial- and Geo-Databases},
+location = {<conf-loc>, <city>Kyoto</city>, <country>Japan</country>, </conf-loc>},
+series = {ICS '24}
+}
+```
+
 ## References
 
 1. [OVERPROP](https://wrfranklin.org/pmwiki/pmwiki.php/Research/OverlayingTwoMaps) helps us a lot for the polygon overlay implementation.
