@@ -44,6 +44,8 @@ void CheckPIPResult(
   auto base_map = ctx.get_map(base_map_id);
   auto scaling = ctx.get_scaling();
 
+  base_map->D2H();
+
   for (size_t point_idx = 0; point_idx < n_points; point_idx++) {
     auto closest_eid_ans = closest_eids_ans[point_idx];
     auto closest_eid_res = closest_eids_res[point_idx];
