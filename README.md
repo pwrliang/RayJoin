@@ -180,7 +180,7 @@ which contains a bug that causes out-of-memory errors when processing large data
 This issue arises due to the conservative memory allocation implementation in cuSpatial.
 To work around this bug, we process the queries in a batch fashion.
 However, this workaround significantly increases running time due to additional I/O, index construction, and other overheads.
-This bug has been fixed in cuSpatial 24.06. Recently, we have reevaluated cuSpatial on PIP queries. Below are the updated results.
+This bug has been [fixed](https://github.com/rapidsai/cuspatial/pull/1381) in cuSpatial 24.06. Recently, we have reevaluated cuSpatial on PIP queries. Below are the updated results.
 
 | PIP Running Time | County ⋈ Zipcode | Block ⋈ Water | LKAF ⋈ PKAF | LKAS ⋈ PKAS | LKAU ⋈ PKAU | LKEU ⋈ PKEU | LKNA ⋈ PKNA | LKSA ⋈ PKSA |
 |------------------|------------------|----------------|--------------|--------------|--------------|--------------|--------------|------------|
