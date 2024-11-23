@@ -6,7 +6,7 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 
 set(OPTIX_MODULE_EXTENSION ".ptx")
 set(OPTIX_PROGRAM_TARGET "--ptx")
-set(ENABLED_ARCHS "86")
+set(ENABLED_ARCHS "75")
 
 set(SHADERS
         algo/rt_lsi_custom.cu
