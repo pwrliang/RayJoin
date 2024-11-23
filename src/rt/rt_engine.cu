@@ -12,7 +12,6 @@
 #include "rt/rt_engine.h"
 #include "rt/sbt_record.h"
 #include "util/exception.h"
-#include "util/markers.h"
 #include "util/stopwatch.h"
 #include "util/stream.h"
 #include "util/util.h"
@@ -412,14 +411,10 @@ OptixTraversableHandle RTEngine::buildAccel(Stream& stream,
   // execute build (main stage)
   // ==================================================================
   {
-    IntervalRangeMarker marker_alloc(
-        blas_buffer_sizes.tempSizeInBytes + blas_buffer_sizes.outputSizeInBytes,
-        "Allocate blas buffer");
     temp_buf_.resize(blas_buffer_sizes.tempSizeInBytes);
     output_buf_.resize(blas_buffer_sizes.outputSizeInBytes);
   }
   {
-    RangeMarker marker(true, "AccelBuild");
     OPTIX_CHECK(
         optixAccelBuild(optix_context_, stream.cuda_stream(), &accelOptions,
                         &build_input, 1, THRUST_TO_CUPTR(temp_buf_.data()),
@@ -432,7 +427,6 @@ OptixTraversableHandle RTEngine::buildAccel(Stream& stream,
   auto as_buffer = std::make_unique<thrust::device_vector<unsigned char>>(
       compacted_size.get(stream));
   {
-    RangeMarker marker(true, "AccelCompact");
     OPTIX_CHECK(optixAccelCompact(
         optix_context_, stream.cuda_stream(), traversable,
         THRUST_TO_CUPTR(as_buffer->data()), as_buffer->size(), &traversable));
